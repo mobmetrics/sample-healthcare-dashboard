@@ -1,0 +1,2075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sample Healthcare Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;display:flex;height:100vh;overflow:hidden;background:#f5f6f8;font-size:14px}
+
+/* SIDEBAR */
+#sidebar{width:210px;min-width:210px;background:#0d2040;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+#sidebar-logo{padding:18px 14px 14px;border-bottom:1px solid rgba(255,255,255,0.1)}
+#sidebar-logo .mw{font-size:10px;color:rgba(255,255,255,0.6);letter-spacing:1px;text-transform:uppercase;margin-top:8px}
+#sidebar nav{padding:10px 0;flex:1}
+#sidebar nav a{display:block;padding:10px 16px;color:rgba(255,255,255,0.75);text-decoration:none;font-size:13px;border-left:3px solid transparent;transition:all 0.15s;cursor:pointer}
+#sidebar nav a:hover{background:rgba(255,255,255,0.07);color:#fff}
+#sidebar nav a.active{background:rgba(255,255,255,0.12);color:#fff;border-left-color:#d6ab5c}
+#sidebar-footer{padding:12px 14px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;color:rgba(255,255,255,0.4)}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:linear-gradient(90deg,#0d2040 0%,#162f58 100%);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:3px solid #d6ab5c}
+#topbar .title{color:#fff;font-size:16px;font-weight:700;letter-spacing:0.2px}
+#topbar .subtitle{color:rgba(255,255,255,0.5);font-size:10px;margin-top:3px}
+#topbar .mw-badge{background:rgba(214,171,92,0.15);border:1px solid rgba(214,171,92,0.4);color:#d6ab5c;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;letter-spacing:0.5px;text-transform:uppercase}
+#kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:12px 20px;background:#fff;border-bottom:1px solid #e0e3e8;flex-shrink:0}
+.kpi-card{background:#0d2040;color:#fff;border-radius:6px;padding:10px 14px;text-align:center;border-bottom:2px solid #d6ab5c}
+.kpi-card .kpi-lbl{font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
+.kpi-card .kpi-val{font-size:17px;font-weight:600}
+#content{flex:1;overflow-y:scroll;min-height:0;max-height:calc(100vh - 160px);padding:16px 20px}
+
+/* SECTIONS */
+.section{display:none}
+.section.active{display:block}
+#sec-opex.active{display:flex;flex-direction:column;height:calc(100vh - 170px)}
+#sec-opex.active .two-col{flex:1;min-height:0;align-items:stretch;align-content:stretch}
+#sec-opex.active .card{display:flex;flex-direction:column;min-height:0}
+#sec-opex.active .tbl-wrap{flex:1;min-height:0;max-height:none}
+.section-title{font-size:15px;font-weight:600;color:#0d2040;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #29374d}
+
+/* GRID */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.full{margin-bottom:14px}
+
+/* CARDS */
+.card{background:#fff;border-radius:8px;border:1px solid #e0e3e8;padding:14px}
+.card-title{font-size:12px;font-weight:600;color:#0d2040;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px}
+.map-container{height:220px;border-radius:6px;overflow:hidden}
+.map-container-lg{height:280px;border-radius:6px;overflow:hidden}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto}
+table.dtbl{width:100%;border-collapse:collapse;font-size:12px}
+table.dtbl th{background:#0d2040;color:#fff;padding:7px 10px;text-align:center;font-weight:500;white-space:normal;line-height:1.3;position:sticky;top:0;min-width:60px}
+table.dtbl td{padding:6px 10px;border-bottom:1px solid #f0f2f5;white-space:nowrap;color:#333;text-align:center;vertical-align:middle}
+table.dtbl tr:hover td{background:#f8f9fb}
+table.dtbl tr:nth-child(even) td{background:#fafbfd}
+table.dtbl tr:nth-child(even):hover td{background:#f0f4f8}
+table.dtbl td.num{text-align:right}
+table.dtbl td.ctr{text-align:center}
+#tbl-sat th,#tbl-sat td{white-space:nowrap}
+#tbl-sat td{text-align:left}
+#tbl-sat th{text-align:left}
+#tbl-sat td:nth-child(n+7),#tbl-sat th:nth-child(n+7){text-align:center}
+#tbl-opex td{text-align:center}
+#tbl-opex td:nth-child(2){text-align:left}
+#tbl-opex th{white-space:normal;text-align:center}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:600;color:#fff}
+.badge-expired{background:#111}
+.badge-red{background:#c62828}
+.badge-orange{background:#e65100}
+.badge-yellow{background:#f9a825;color:#333}
+.badge-green{background:#2e7d32}
+.badge-dash{background:#aaa}
+
+/* PIPELINE */
+.stage{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff}
+.stage-prospect{background:#1565c0}
+.stage-touring{background:#6a1b9a}
+.stage-loi{background:#e65100}
+.stage-negotiating{background:#bf360c}
+.stage-lease{background:#2e7d32}
+.stage-closed{background:#555}
+
+/* DEAL TYPE BADGES */
+.dt-badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:700;white-space:nowrap}
+.dt-expired{background:#111;color:#fff;border:1px solid #111}
+.dt-reloc{background:#e3edf9;color:#1a4f80;border:1px solid #85b7eb}
+.dt-expand{background:#e8f4e8;color:#2a5e2a;border:1px solid #97c459}
+.dt-newloc{background:#eeedf9;color:#3c3489;border:1px solid #afa9ec}
+.dt-blend{background:#fdf3e3;color:#7a4a0a;border:1px solid #ef9f27}
+.dt-bts{background:#f0f0f0;color:#444;border:1px solid #bbb}
+.dt-purchase{background:#e6f4f1;color:#0d6156;border:1px solid #7ecbbe}
+/* holdover row highlight */
+.row-holdover td{background:#fff8f8!important}
+.row-holdover:hover td{background:#fef0f0!important}
+/* prob bar inline */
+.prob-mini{display:inline-block;width:40px;height:4px;background:#e0e3e8;border-radius:2px;vertical-align:middle;margin-left:4px}
+.prob-mini-fill{height:100%;border-radius:2px}
+
+/* COMPARISON */
+.higher{color:#c62828;font-weight:600}
+.lower{color:#2e7d32;font-weight:600}
+
+/* CONTACT */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+.contact-card{background:#0d2040;color:#fff;border-radius:8px;padding:16px}
+.contact-card .role{font-size:10px;opacity:0.65;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.contact-card .name{font-size:14px;font-weight:600;margin-bottom:6px}
+.contact-card .info{font-size:12px;opacity:0.85;line-height:1.7}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#555}
+.leg{display:flex;align-items:center;gap:5px}
+.leg-box{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+
+/* FILTER BAR */
+.filter-bar{margin-bottom:10px;display:flex;align-items:center;gap:10px;font-size:12px}
+.filter-bar select{padding:4px 8px;border-radius:4px;border:1px solid #ccc;font-size:12px}
+
+/* PIPELINE FORM */
+.pipeline-add{background:#fff;border-radius:8px;border:1px solid #e0e3e8;padding:14px;margin-bottom:14px}
+.pipeline-add h4{font-size:13px;font-weight:600;color:#0d2040;margin-bottom:10px}
+.form-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.form-row input,.form-row select{padding:6px 10px;border-radius:4px;border:1px solid #ccc;font-size:12px;flex:1;min-width:120px}
+.btn-add{background:#d6ab5c;color:#fff;border:none;padding:7px 16px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-add:hover{background:#c59d55}
+.btn-del{background:#c62828;color:#fff;border:none;padding:3px 9px;border-radius:3px;font-size:11px;cursor:pointer}
+
+/* PIPELINE EXTRA BUTTONS */
+.pipeline-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.btn-sec{background:#0d2040;color:#fff;border:none;padding:6px 14px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer}
+.btn-sec:hover{background:#1a3560}
+
+/* HEATMAP */
+.heatmap-wrap{overflow-x:auto;padding:4px 0}
+.heatmap-row{display:flex;align-items:center;gap:4px;margin-bottom:3px;font-size:11px}
+.heatmap-lbl{width:110px;text-align:right;padding-right:6px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.heatmap-cell{width:52px;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;justify-content:center;align-items:center}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:10px;padding:20px;width:420px;max-width:90vw;max-height:80vh;overflow-y:auto;position:relative}
+.modal-box h3{font-size:14px;font-weight:600;color:#0d2040;margin-bottom:12px}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;font-size:18px;cursor:pointer;color:#666}
+.modal-form .row{margin-bottom:10px}
+.modal-form label{display:block;font-size:11px;font-weight:600;color:#555;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.3px}
+.modal-form input,.modal-form select,.modal-form textarea{width:100%;padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:12px}
+.modal-form textarea{height:70px;resize:vertical}
+.modal-btn{background:#d6ab5c;color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;margin-top:4px}
+
+/* NOTES TABLE */
+.note-type{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;color:#fff;background:#0d2040}
+
+/* UPDATE BADGE */
+.updated-badge{font-size:11px;color:#888;font-weight:400;margin-left:8px}
+
+/* ANALYTICS SORT */
+.sort-bar{display:flex;gap:8px;align-items:center;font-size:11px;margin-bottom:8px}
+.sort-bar span{color:#666}
+.sort-btn{padding:3px 8px;border-radius:3px;border:1px solid #ccc;background:#fff;font-size:11px;cursor:pointer}
+.sort-btn.active{background:#0d2040;color:#fff;border-color:#0d2040}
+
+/* FULLSCREEN */
+.fullscreen-btn{float:right;background:none;border:none;font-size:14px;cursor:pointer;color:#888;padding:0 0 4px 8px}
+
+/* ADDRESS KEY CARDS */
+.addr-card{background:#fff;border-radius:8px;border:1px solid #e0e3e8;padding:14px 16px;border-left:4px solid #d6ab5c;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:box-shadow 0.15s,transform 0.15s;cursor:pointer}
+.addr-card:hover{box-shadow:0 4px 14px rgba(13,32,64,0.13);transform:translateY(-2px)}
+
+/* CONTACT PAGE */
+.contact-hero{background:linear-gradient(135deg,#0d2040 0%,#1a3a6b 60%,#0d2040 100%);border-radius:10px;padding:36px 40px;display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;position:relative;overflow:hidden}
+.contact-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(214,171,92,0.08);pointer-events:none}
+.contact-hero::after{content:'';position:absolute;bottom:-60px;left:30%;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,0.03);pointer-events:none}
+.contact-hero-text{position:relative;z-index:1}
+.contact-hero-text h2{color:#fff;font-size:26px;font-weight:700;margin-bottom:6px;letter-spacing:0.3px}
+.contact-hero-text p{color:rgba(255,255,255,0.65);font-size:13px;margin:0}
+.contact-hero-logo{position:relative;z-index:1}
+.contact-teams{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.contact-team-panel{background:#fff;border-radius:10px;border:1px solid #e0e3e8;overflow:hidden}
+.contact-team-header{padding:14px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #f0f2f5}
+.contact-team-header.client{background:linear-gradient(90deg,rgba(214,171,92,0.08),transparent)}
+.contact-team-header.medwest{background:linear-gradient(90deg,rgba(13,32,64,0.06),transparent)}
+.contact-team-header .team-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.contact-team-header .team-icon.client{background:rgba(214,171,92,0.15)}
+.contact-team-header .team-icon.medwest{background:rgba(13,32,64,0.1)}
+.contact-team-header .team-label{font-size:12px;font-weight:700;color:#0d2040;text-transform:uppercase;letter-spacing:0.8px}
+.contact-person{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid #f5f6f8;transition:background 0.15s}
+.contact-person:last-child{border-bottom:none}
+.contact-person:hover{background:#fafbfd}
+.contact-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:0.5px}
+.contact-avatar.client{background:linear-gradient(135deg,#d6ab5c,#fbb97a)}
+.contact-avatar.medwest{background:linear-gradient(135deg,#0d2040,#2e5294)}
+.contact-info .cname{font-size:13px;font-weight:700;color:#0d2040;margin-bottom:2px}
+.contact-info .crole{font-size:10px;color:#d6ab5c;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.contact-info .cdetail{font-size:11px;color:#666;line-height:1.7}
+.contact-info .cdetail a{color:#555;text-decoration:none}
+.contact-info .cdetail a:hover{color:#d6ab5c}
+
+/* MAP OVERLAY CONTROLS *//* MAP OVERLAY CONTROLS */
+.map-wrap{position:relative}
+.map-ctrls{position:absolute;bottom:8px;left:8px;z-index:999;display:flex;gap:5px}
+.map-btn{background:rgba(255,255,255,0.93);border:1px solid #ccc;border-radius:4px;padding:5px 11px;font-size:11px;font-weight:600;cursor:pointer;color:#0d2040;box-shadow:0 1px 3px rgba(0,0,0,0.15)}
+.map-btn:hover{background:#fff;border-color:#0d2040}
+.map-btn.sat-active{background:#0d2040;color:#fff;border-color:#0d2040}
+.map-legend{position:absolute;top:8px;right:8px;z-index:999;background:rgba(255,255,255,0.93);border:1px solid #ccc;border-radius:6px;padding:8px 10px;box-shadow:0 1px 3px rgba(0,0,0,0.15);font-size:10px;color:#333}
+.map-legend .map-legend-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#0d2040;margin-bottom:5px}
+.map-legend .map-legend-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.map-legend .map-legend-row:last-child{margin-bottom:0}
+.map-legend .map-legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.map-fullscreen-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(13,32,64,0.85);z-index:10000;padding:24px;box-sizing:border-box}
+.map-fullscreen-overlay.open{display:flex;flex-direction:column}
+.map-fullscreen-overlay .map-wrap{flex:1;border-radius:8px;overflow:hidden}
+.map-fullscreen-overlay .map-wrap>div:first-child{height:100%!important}
+.map-fullscreen-close{align-self:flex-end;margin-bottom:10px;background:#fff;border:none;border-radius:4px;padding:7px 14px;font-size:12px;font-weight:600;color:#0d2040;cursor:pointer}
+
+/* COMMISSION REVEAL-ON-HOVER */
+.comm-reveal-btn{opacity:0;transition:opacity 0.15s}
+.comm-reveal:hover .comm-reveal-btn{opacity:1}
+
+
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div id="sidebar-logo">
+    <svg viewBox="0 0 180 52" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:160px">
+      <circle cx="26" cy="26" r="25" fill="#0d2040" stroke="#d6ab5c" stroke-width="1.5"/>
+      <path d="M14 26 Q14 16 22 16 Q30 16 26 26 Q22 36 30 36 Q38 36 38 26" stroke="#d6ab5c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <circle cx="38" cy="29" r="3.5" fill="#d6ab5c"/>
+      <text x="58" y="22" font-family="Segoe UI,Arial,sans-serif" font-size="13" font-weight="700" fill="#d6ab5c">PulsePath</text>
+      <text x="58" y="36" font-family="Segoe UI,Arial,sans-serif" font-size="10" font-weight="500" fill="rgba(255,255,255,0.7)" letter-spacing="2">HEALTH</text>
+    </svg>
+  </div>
+  <nav>
+    <a onclick="showSection('exec')" class="active">Executive Summary</a>
+    <a onclick="showSection('expir')">Expiration Overview</a>
+    <a onclick="showSection('opex')">Operating Expenses</a>
+    <a onclick="showSection('rate1')">Rate Comparison</a>
+    <a onclick="showSection('addrkey')">Property Address Key</a>
+    <a onclick="showSection('analytics')">Portfolio Analytics</a>
+    <a onclick="showSection('contact')">Contact Us</a>
+    <a onclick="showSection('pipeline')">★ Pipeline Deals</a>
+  </nav>
+  <div id="sidebar-footer">MedWest Realty © 2026<br>Sample Healthcare Dashboard</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div>
+      <div class="title">PulsePath Health — Portfolio Dashboard</div>
+      <div class="subtitle">Updated June 2026</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABhAAAAXdCAYAAAAICBfvAAAACXBIWXMAAC4jAAAuIwF4pT92AAAgAElEQVR4nOzdT2idZ77Y8bflggQCceAgoU1A2ogTCRyiSLJzZHMUCQfnyEoccyBSQiAJAe9L6bK33XTVTZcXhqGrJm1NyNSJJxCSxk3imz9uhgZiTBad6e2iwwwGM9xwk93lUcdhch8nkWxJ7+99n88HZj3v+T1JFu9X7+/5Zw+f3F6vqir9DwAAAAAAIPmPf/XnePDXxgEAAAAAAPzZB//cJAAAAAAAgH9KQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACAjIAAAAAAAABkBAQAAAAAAyAgIAAAAAABARkAAAAAAAAAyAgIAAAAAAJAREAAAAAAAgIyAAAAAAAAAZAQEAAAAAAAgIyAAAAAAAAAZAQEAAAAAAMgICAAAAAAAQEZAAAAAAAAAMgICAAAAAACQERAAAAAAAICMgAAAAAAAAGQEBAAAAAAAICMgAAAAAAAAGQEBAAAAAADICAgAAAAAAEBGQAAAAAAAADICAgAAAAAAkBEQAAAAAACAjIAAAAAAAABkBAQAAAAAACDzV0YCAM327//1v6iGw3WnSGP8y3/176qr/+MTBwb7NDE+Vn3+wX81Lhrl3/zb/1D9l1+/59AAoOF8gQAAwLF69ZVdA4cDGKw+alwAANRCQAAA4Fj1enPV7My0ocM+XbxwzqgAAKiFgAAAwLHbOHPK0GEfpjqTVb+/ZFQAANRCQAAA4Ni9/NLI0GEfnnh8xZgAAKiNgAAAwLHrdjvV8sK8wcPP2HnuaSMCAKA2AgIAALVYO2ktC/yUdFdIujMEAADqIiAAAFCLS5eerybGxwwffoS7QgAAqJuAAABAbZYXe4YPP8JdIQAA1E1AAACgNttbm4YP95DuCEl3hQAAQJ0EBAAAajMcrldTnUkHAP+EO0IAAIhAQAAAoFYrJxYcAPyFdDdIuiMEAADqJiAAAFCrixfOOQD4C+4GAQAgCgEBAIBa9ftL1ezMtEOAPxucXjUKAABCEBAAAKjdxplTDgGqau9OkJ3dbaMAACAEAQEAgNqd39p0COBOEAAAghEQAACoXa83Vy0vzDsIiudOEAAAIhEQAAAIYe3kkoOgaGl9UboTBAAAohAQAAAIYTQaVhPjYw6DYm2fXXf4AACEIiAAABBCt9uplhd7DoNiuQsEAIBoBAQAAMIYnF51GBTp4bmH9u4CAQCASAQEAADC2Nnd3tsDD6V5cn3NmQMAEI6AAABAKCsnFhwIxUl3gAAAQDQCAgAAoVy8cM6BUJTlhfm9O0AAACAaAQEAgFD6/aVqdmbaoVCM4dmBwwYAICQBAQCAcDbOnHIoFGFifGzv7g8AAIhIQAAAIJzzW5sOhSIsL/YcNAAAYQkIAACE0+vN7e2Fh7bbFssAAAhMQAAAIKS1k0sOhlab6kxWw+G6QwYAICwBAQCAkEaj4d5+eGirlRMLzhYAgNAEBAAAQup2O/bD02oXL5xzwAAAhCYgAAAQ1uD0qsOhlWZnpqt+35ouAABiExAAAAhrZ3fbGiNaaePMKQcLAEB4AgIAAKENVh91QLTO+a1NhwoAQHgCAgAAodkTT9ssL8xXvd6ccwUAIDwBAQCA0NKe+KnOpEOiNdZOuvsAAIBmEBAAAAhv++y6Q6I1RqOhwwQAoBEEBAAAwrMvnrYYPPZI1e12nCcAAI0gIAAAEF7aF//w3EMOisYbnF51iAAANIaAAABAIzy5vuagaLSJ8bFqZ3fbIQIA0BgCAgAAjWBvPE23vNhzhgAANIqAAABAI6S98Wl/PDTViy886+wAAGgUAQEAgMawP56mmupMVv3+kvMDAKBRBAQAABoj7Y9Pe+ShaZ54fMWZAQDQOAICAACNMlh91IHRODvPPe3QAABoHAEBAIBGuXjhnAOjUWZnpqteb86hAQDQOAICAACNkvbIp33y0BQbZ045KwAAGklAAACgcbbPrjs0GuPll0YOCwCARhIQAABonPNbmw6NRlhemK+63Y7DAgCgkQQEAAAaJ+2Tf3juIQdHeGsnlxwSAACNJSAAANBIT66vOThCmxgfq0ajoUMCAKCxBAQAABrJi1miW17sWV8EAECjCQgAADRSejGb9stDVIPTq84GAIBGExAAAGis4dmBwyOkqc5ktbO77XAAAGg0AQEAgMZKL2jTnnmIZuXEgjMBAKDxBAQAABot7ZmHaC5eOOdMAABoPAEBAIBGe/GFZx0goaT1Rf3+kkMBAKDxBAQAABotvahNL2whiu2z684CAIBWEBAAAGi8Jx5fcYiEcX5r02EAANAKAgIAAI2389zTDpEQZmemq15vzmEAANAKAgIAAI2XXtimF7dQt2ee2nAGAAC0hoAAAEAreHFLBKPR0DkAANAaAgIAAK3gxS11W16Yr7rdjnMAAKA1BAQAAFohvbhNL3ChLmsnl8weAIBWERAAAGiN4dmBw6QWE+Nj1aVLzxs+AACtIiAAANAaO7vbey9y4bgtL/bMHACA1hEQAABoFS9yqcP21qa5AwDQOgICAACt8uILzzpQjtVUZ7IaDtcNHQCA1hEQAABolX5/ae+FLhyXlRMLZg0AQCsJCAAAtM4Tj684VI7NxQvnDBsAgFYSEAAAaJ2d5552qByL2Znpva9eAACgjQQEAABap9eb23uxC0dt48wpMwYAoLUEBAAAWumZpzYcLEfu/NamIQMA0FoCAgAArTQaDR0sR+rhuYf2vnYBAIC2EhAAAGilbrdTLS/MO1yOzJPra4YLAECrCQgAALTW2kmX23J0fOUCAEDbCQgAALTWpUvPVxPjYw6YQzd47JG9r1wAAKDNBAQAAFptebHngDl0g9OrhgoAQOsJCAAAtNr21qYD5lClr1p2drcNFQCA1hMQAABoteFwvZrqTDpkDo2vWgAAKIWAAABA662cWHDIHJoXX3jWMAEAKIKAAABA6736yq5D5lCkr1n6/SXDBACgCAICAACt1+vNVbMz0w6aB+ZrFgAASiIgAABQhI0zpxw0D8zXLAAAlERAAACgCC+/NHLQPJD0FUv6mgUAAEohIAAAUIRut1MtL8w7bO6br1gAACiNgAAAQDHWTrr8lvt3fmvT9AAAKIqAAABAMS5der6aGB9z4BxY+nrF+iIAAEojIAAAUJTlxZ4D58B8vQIAQIkEBAAAirJtDQ0HlL5aGY2GxgYAQHEEBACAY3Tr1m+Nu2bD4Xo11ZksegYcTPpqJV3CTb389xMA4PgJCAAAx+itt98z7gBWTiyUPgIOYHB61bgC8N9PAIDjJyAAAByjv73xm+r27TtGXrNXX9kt+vezf2l90c7utonV7PXXrlR///ffFD0DAIA6CAgAAMfs8uWrRl6zXm+ump2ZLnoG7M9g9VGTCuDaR5+VPgIAgFoICAAAx+zjT78w8gA2zpwqfQTsw8UL54ypZumrrRtf3Sp6BgAAdREQAACO2Y2bX7sMNIDzW5ulj4CfkS7b7veXjKlm6autb779rugZAADURUAAAKiBy0Drl9YYLS/Mlz4GfsITj68YTwC+2gIAqI+AAABQg/c//MTYA1g76a/L+XE7zz1tOjXbW1908+uiZwAAUCcBAQCgBr/7/R+sMQpgNBpWE+NjpY+Be0iXbKevVKiXS+cBAOolIAAA1MQao/p1u51qebFX+hi4h2ee2jCWAKwvAgCol4AAAFATa4xiGJxeLX0E3EP6OoV6WV8EAFA/AQEAoCbWGMWws7tdTXUmSx8DfyFdrp2+TqFe1hcBANRPQAAAqJE1RjGsnFgofQT8BZdrx2B9EQBA/QQEAIAaWWMUw8UL50ofAX+WLtW+dOl546hZ+jrL+iIAgPoJCAAANbLGKIZ+f6manZkufQyk9UUu1Q7B11kAADEICAAANfOiLIaNM6dKHwEu1Q7D11kAADEICAAANbvy7geOIIDzW5ulj6B46TLtdKk29UpfZaWvswAAqJ+AAABQsz/e+VN1/brLQuvW681VywvzZQ+hcC7TjsFXWQAAcQgIAAABvPHmO44hgLWTS6WPoGgu047B+iIAgDgEBACAAD7/8qZjCGA0GlYT42Olj6FI6RLtdJk29bK+CAAgFgEBACAAa4xi6HY71fJir/QxFMkl2jFYXwQAEIuAAAAQhDVGMQxOr5Y+giK5RDsG64sAAGIREAAAgrDGKIad3e1qqjNZ+hiK8vDcQ3uXaFMv64sAAOIREAAAgrDGKI6VEwulj6AoT66vlT6CEH7xy9dKHwEAQDgCAgBAINYYxXDxwrnSR1CUdHk29fMVFgBAPAICAEAgXqDF0O8vWWNUiOWF+b3Ls6lX+voqfYUFAEAsAgIAQCDpBdrVqx84kgC2z66XPoIiDM8OSh9BCL6+AgCISUAAAAjmytvvOZIAzm9tlj6C1psYH9u7NJv6+foKACAmAQEAIJgbX91yJAH0enPVw3MPlT6GVlte7JU+ghCsLwIAiEtAAAAI5ptvv6tef+2KYwngyfW10kfQatu+MgnB+iIAgLgEBACAgK599JljCWA0GpY+gtZKl2QPh+65iMD6IgCAuAQEAICArDGKodvtVIPHHil9DK20cmKh9BGEkC6Nt74IACAuAQEAICBrjOIYnF4tfQSt9Ooru6WPIASXxgMAxCYgAAAEZY1RDDu729XE+FjpY2iV2ZnpvUuyqZ+vrQAAYhMQAACC8mItjsHqo6WPoFU2zpwqfQQhpK+s0tdWAADEJSAAAARljVEcFy+cK30ErXJ+a7P0EYTgKysAgPgEBACAwLxgi6HfX6qmOpOlj6EVlhfmrS8KwldWAADxCQgAAIGlF2y3b99xRAFsn10vfQStsHZyqfQRhGB9EQBAMwgIAACBpRdsly9fdUQBWHvTDqPRsPQRhODrKgCAZhAQAACC+/jTLxxRAGntzcNzD5U+hkYbPPZI1e12Sh9DCNYXAQA0g4AAABDcjZtfW2MUxJPra6WPoNEGp1dLH0EI1hcBADSHgAAA0ADWGMVg/U1zTYyPVTu726WPIYSr714rfQQAAI0hIAAANIA1RjGk9TdpDQ7NM1h91KkFkL6mSl9VAQDQDAICAEADWGMUhzU4zXTxwrnSRxCCr6kAAJpFQAAAaAgv3mJIa3DSOhyaY6ozWfX7S04sAF9TAQA0i4AAANAQXrzFYR1Oszzx+ErpIwjB+iIAgOYREAAAGsIaozisw2mWneeeLn0EIfiKCgCgeQQEAIAG8QIuhrQOJ63FIb7Zmemq15tzUgH4igoAoHkEBACABvnVr993XEFYi9MMG2dOlT6CEKwvAgBoJgEBAKBBfvf7P1S3bv3WkQVgLU4zvPzSqPQRhODrKQCAZhIQAAAa5q2333NkAaS1OGk9DnEtL8xX3W7HCQXg6ykAgGYSEAAAGub9Dz9xZEE889RG6SMIbe3kUukjCCF9NZW+ngIAoHkEBACAhrHGKI7RaFj6CMKaGB9zPkH4agoAoLkEBACABvJCLoa0HietySGe5cWe9UVB+GoKAKC5BAQAgAbyQi6O4dlB6SMIaXB6tfQRhGB9EQBAswkIAAANZI1RHDu723vrcohjqjO5dy7Uz9dSAADNJiAAADSUF3NxpHU5xLFyYsFpBOFrKQCAZhMQAAAayou5OF584dnSRxDKxQvnSh9BCNYXAQA0n4AAANBQ1hjF0e8v7a3NoX7pHNJ5UD9fSQEANJ+AAADQYL/45WuOL4gnHl8pfQQhbJ9dL30EYVx594PSRwAA0HgCAgBAg33+5U3HF8TOc0+XPoIQzm9tlj6CEK5f/6L6450/lT4GAIDGExAAAI7R3/2/w90Hnl7QpRd11K/Xm6tmZ6adRI3S/NM5UL833nzn0J/hf/+f/+tkAQCOmYAAAHCMvvn2u0P/PzuKF3Xcn2ee2jC5Gpl/HEfxddQ3//APzR0IAEBDCQgAAA1njVEco9Gw9BHUyvxjsL4IAKA9BAQAgIazxiiObrdTLS/Mlz6GWqS5p/lTP19FAQC0h4AAANACXtjFMTw7KH0EtTD3OHwVBQDQHgICAEALeGEXx87udjUxPlb6GI5VmneaO/WzvggAoF0EBACAFrDGKJblxV7pIzhW5h2Hr6EAANpFQAAAaAkv7uLY3tosfQTHyrzjuPbZb0ofAQBAqwgIAAAt4cVdHMPhejXVmSx9DMcizTnNm/q9/tqV6ptvv3MSAAAtIiAAALREenGXXuARw8qJBSdxDMw5jmsffVb6CAAAWkdAAABoES/w4nj1ld3SR3AsLl44V8CvbIYbX90qfQQAAK0jIAAAtIgXeHH0enPV7Mx06WM4Umm+/f5Si39hc1hfBADQTgICAECLWGMUy8aZU6WP4EiZbxy+fgIAaCcBAQCgZbzIi+Pll0alj+BInd/abPGvaxZfPwEAtJOAAADQMl7kxdHtdqrlhfnSx3AkHp57aG9NFPWzvggAoL0EBACAlrHGKJa1k3b0H4Un19fa96MayldPAADtJSAAALSQF3pxXLr0fDUxPlb6GA7daDRs2S9qptu37/jqCQCgxQQEAIAW8kIvluXFXukjOFSDxx7ZWw9F/S5fvmp9EQBAiwkIAAAtZI1RLNsu+z1Ug9OrLfo1zfbxp1+UPgIAgFYTEAAAWurqu9ccbRDD4Xo11ZksfQyHIq2D2tndbsEvab699UU3vy59DAAArSYgAAC0VHqxl17wEcPKiQUncQisg4ojrS8CAKDdBAQAgBbzgi+OV1/ZLX0Eh+LFF55twa9oB+uLAADaT0AAAGgxL/ji6PXmqtmZ6dLH8EDSGqh+f6nBv6A9rC8CACiDgAAA0GLWGMWyceZU6SN4INZAxeHrJgCAMggIAAAt50VfHC+/NCp9BA/EGqg4fN0EAFAGAQEAoOW86Iuj2+1UywvzpY/hvqT1T2kNFPW7deu31hcBABRCQAAAaDlrjGJZO2mH//2w/imOt95+r/QRAAAUQ0AAACiANUZxjEbDamJ8rPQxHJj1T3G8/+EnpY8AAKAYAgIAQAGsMYpjb43RYq/0MRxIWvuU5kb90vqi3/3+D04CAKAQAgIAQAHSGqP04o8YBqdXncQBWPsUh/VFAABlERAAAArhxV8cO7vb1VRnsvQx7Eta95TWPhGD9UUAAGUREAAACuHFXywrJxZKH8G+pHVP1hfFYH0RAEB5BAQAgEKkF3/WGMVx8cK50kewL9Y9xeErJgCA8ggIAAAF8QIwjn5/qZqdmS59DD8prS9K656IwVdMAADlERAAAAriBWAsG2dOlT6CnzRYfTTw05Xl+vUvrC8CACiQgAAAUBBrjGI5v7VZ+gh+kjVPcbzx5juljwAAoEgCAgBAYawxiqPXm6uWF+ZLH8M9TXUm99Y8EcPnX950EgAABRIQAAAKY41RLGsnvSS/l+2z6/EeqlBpfdEf7/yp9DEAABRJQAAAKIw1RrGMRsO9y4L5Ieud4rC+CACgXAICAECBrDGKo9vtVMuLvdLH8AOzM9N7652IwfoiAIByCQgAAAW68u4Hjj2QwenV0kfwA888tRHoacpmfREAQNkEBACAAqUXgunFIDHs7G7vXRrM/5fWOhGD9UUAAGUTEAAACuXFYCwrJxZKH8Ge5YX5vbVOxGB9EQBA2QQEAIBCeTEYy8UL50ofwZ61k0sBnoLk6tUPrC8CACicgAAAUChrjGLp95f2Lg8u2cT4WHXp0vOl/6MQxhWXrQMAFE9AAAAomDVGsWycOVX0719e7AV4Cu668dUtswAAKJyAAABQMGuMYjm/tVn07x+cXg3wFCSvv3al+ubb78wCAKBwAgIAQMGsMYql15vbu0S4RFOdyWpnd7v0fwTCuPbRZ6WPAACgeJWAAACANUaxlHqJ8MqJhQBPwV3WFwEAUAkIAABYYxTLaDQs8ndfvHAuwFNQWV8EAMBfEBAAAAqX1hhdvfpB6WMIo9vtVIPHHinqN8/OTFf9fplfXkRkfREAAHcJCAAAVFfefs8QAintMuGNM6cCPAV3WV8EAMBdAgIAAF4YBpMuE+eTsM0AACAASURBVJ4YHyvm957f2gzwFCR/8zf/yfoiAAC+JyAAALD3wjDtPSeOweqjRZzGw3MPVb3eXIAnIfn40y/MAQCA7wkIAADssfc8llIuFX5yfS3AU5Dcvn2nunHza7MAAOB7AgIAAHusMYolXSo81Zls/e8cjYYBnoLk8uWr5gAAwA8ICAAA7LHGKJ7ts+ut/n3LC/NVt9sJ8CRU1hcBAHAPAgIAAN+zxiiWtl8uPDw7CPAUVNYXAQDwIwQEAAC+Z41RLOly4XTJcBtNjI9VO7vbpR9xGNYXAQBwLwICAADfs8YonrZeMry82AvwFNxlfREAAPciIAAA8APWGMXS1kuGX3zh2QBPQWV9EQAAP0FAAADgB9Iao/RCkRjSJcODxx5p1WlMdSarfn8pwJNQWV8EAMBPEBAAAPiBtMbIC8VYBqdXW/V7Vk4sBHgK7vrVr983CwAA7klAAAAgYx96LOmy4XTpcFu8+spu6Ucaxq1bv61+9/s/lD4GAAB+hIAAAEAm7UO3xiiWweqjrfgdszPTVa83F+BJSN56+z1zAADgRwkIAADckzVGsVy8cK4Vv2PjzKkAT8Fd73/4iVkAAPCjBAQAAO7JGqNY0qXD6fLhpju/tVn6UYZhfREAAD9HQAAA4J6sMYpn++x6o59/eWHe+qJArC8CAODnCAgAAPwoa4xiafpf76+dXArwFNxlfREAAD9HQAAA4EdZYxRL+uv9dAlxU41Gw9KPMAzriwAA2A8BAQCAH2WNUTzPPLXRyOcePPZI1e12AjwJyev/+b+ZAwAAP0tAAADgJ1ljFEtT/4p/cHo1wFNw13//28/NAgCAnyUgAADwk3716/cNKJD0V/zpMuImmRgfq3Z2t0s/ujCuX/+i+uOdP5U+BgAA9kFAAADgJ6U96WlfOnEMzw4adRqD1UcDPAV3vfHmO2YBAMC+CAgAAPyst95+z5ACSX/Nn/6qvykuXjhX+pGF8vmXN0sfAQAA+yQgAADws97/8BNDCmZ5sdeI55zqTFb9/lKAJ6GyvggAgAMSEAAA+FnWGMXz4gvPNuI5n3h8JcBTcJf1RQAAHISAAADAvlhjFEv6q/701/3R7Tz3dOlHFYr1RQAAHISAAADAvlhjFE/0v+6fnZmuer25AE9CZX0RAAD3QUAAAGBfrDGKJ/pf92+cORXgKbjL+iIAAA5KQAAAYN+sMYol/XV/+iv/qF5+aVT6EYVy7bPflD4CAAAOSEAAAGDfrDGK55mnNkI+1/LCfNXtdgI8Ccnrr12pvvn2O7MAAOBABAQAAPbNGqN4RqNhyOdaO7kU4Cm469pHn5kFAAAHJiAAAHAgv/jlawYWSPor//TX/pFMjI9Vly49X/rRhHLjq1uljwAAgPsgIAAAcCCff3nTwIIZnh2EeqDlxV6Ap+Au64sAALhfAgIAAAfyxzt/qq5f/8LQAtnZ3d77q/8oBqdXSz+SUKwvAgDgfgkIAAAc2BtvvmNowUT5q/+pzuRe0CAO64sAALhfAgIAAAdmjVE8L77wbIhnWjmxEOApuMv6IgAAHoSAAADAgVljFE+/v7T31/91u3jhXOlHEYr1RQAAPAgBAQCA+2KNUTx1//V/ChgpZBDD7dt3qmv/8385DQAA7puAAADAfbHGKJ5XX9mt9Zm2z67HHEyhLl++WvoIAAB4QAICAAD3xRqjeHq9uWp2Zrq25zq/tRl3OAX6+FP/fgIA8GAEBAAA7ps1RvFsnDlVyzOlcJECBjGk9UU3bn7tNAAAeCACAgAA9+3aZ78xvGBefmlUywM989RG4KmUx/oiAAAOg4AAAMB9++bb76rXX7tigIF0u51qeWH+2B9oNBoGnkp5rC8CAOAwCAgAADyQax99ZoDBrJ1cOtYHSsEihQtisL4IAIDDIiAAAPBAbnx1ywCDuXTp+WpifOzYHmp4dtCQyZTB+iIAAA6LgAAAwAOxxiim5cXesTxXChU7u9vNG1CLWV8EAMBhERAAAHhg1hjFs721eSzPdFyhgv25deu31hcBAHBoBAQAAB6YNUbxDIfr1VRn8sif67hCBfvz1tvvmRQAAIdGQAAA4IFZYxTTyomFI32uFChSqCCO9z/8xGkAAHBoBAQAAA6FNUbxvPrK7pE+01EHCg4mrS/63e//YGoAABwaAQEAgENhjVE8vd5cNTszfWTPdfHCueYOp4WsLwIA4LAJCAAAHAprjGLaOHPqSJ4rhYl+f6n5A2oR64sAADhsAgIAAIfm6rvXDDOYl18aHckDHVWY4P5YXwQAwFEQEAAAODQ3bn5d3b59x0AD6XY71fLC/KE/0PmtzQZPpX2sLwIA4CgICAAAHKrLl68aaDBrJw931VAKEul+BeKwvggAgKMgIAAAcKg+/vQLAw3m0qXnq4nxsUN7qMMOEjyY69e/sL4IAIAjISAAAHCorDGKaXmxd2jPNRoN2zWchnvjzXdKHwEAAEdEQAAA4NBZYxTP9iHdWTB47JG9exWI4/MvbzoNAACOhIAAAMChs8YonuFwvZrqTD7wc/0je/f3m+WZ5gf86TRdkEgZWiuUbTUSVKvIId2shuXXmlCyIEYZCDuZyKOFHc1oJoo0Bz3cVQ96MtuTHlQ96cEeIEVJtFFip+sSEoODwkLsAg4/HKdhhfOKEyOlrSjIkoNKF3az3epx4gTygrGN3/e97vv+fP6B3O91mRw83+f53jue3pzhdNJV1xddn75R+hgAAGgRAQIAAEtOjVFMm55a/1Dnqu9R2H9gX74DSpD6IgAAWkmAAABAS6gxiueF5599qDMt5T0KLA31RQAAtJIAAQCAllBjFE9Pz4Zq7ZrViz7Xz37643yHkyD1RQAAtJoAAQCAlqhrjBqNScMNZuf2rYs6UH1/Qh1AEIf6IgAAWk2AAABAyxw5esJwg3lu765FHej3f29TxlNJk/oiAABaTYAAAEDLnDx11nCD6e5eV21c//iCD7X/D/8g88mkZWhoWH0RAAAtJ0AAAKBlrly9psYooG1bFlZFVN+bUAcPxDHo6x4AANpAgAAAQEupMYqnt3dPtWL5snmfa7H3JtA6Y5capgsAQMsJEAAAaCk1RvF0da2qNj7ZPe9z/fIXveUMJwH9fYPVzVu3Sx8DAABtIEAAAKCl1BjFtOPpzfM6V31fQh04EMfI6fO2AQBAWwgQAABoOTVG8ew/sK96bNXKB55rofcl0HrqiwAAaBcBAgAALafGKKZNT62f81z1PQn1fQnEob4IAIB2EiAAANByaoxieuH5Z+c8V31PgvqiWNQXAQDQTgIEAADaQo1RPD09G6q1a1bf91zzvSeB9lFfBABAOwkQAABoi8HjwwYd0M7tW+95qLq+qL4ngTgOHnxTfREAAG0lQAAAoC2uT9+oRkfHDTuY5/buuueBdmz+fsFTienMOf9+AABoLwECAABtc+jwMcMOprt7XbVx/eNNh3rQ/Qi019TUdDU2cdnUAQBoKwECAABtc+HihGEHtG3LhrsO9diqlTP3IxDHwMCQbQAA0HYCBAAA2kaNUUy9vXtm7jyYtW/3M6WPJBz1RQAAdIIAAQCAtlJjFE9X16pq45PdX5/rfvci0BnqiwAA6BQBAgAAbaXGKKYdT2+eOdfaNatn7kUgDvVFAAB0igABAIC2UmMU0/4D+2ZqjH70w52ljyIc9UUAAHSKAAEAgLZTYxTTjs3fn7kPgTjUFwEA0EmPmD4AAO2mxiim//Qf/13pIwjn1dcGSh8BAAAd5AsEAADarq4xGhoaNnh4gJOnzhoRAAAdI0AAAKAjBo+eMHiYQ6MxWV25es2IAADoGAECAAAdMXapYfAwhyNCNgAAOkyAAABAR9y8dbvq7xs0fLgP9UUAAHSaAAEAgI4ZOX3e8OEe1BcBABCBAAEAgI5RYwT3pr4IAIAIBAgAAHSMGiO4N/VFAABEIEAAAKCj1BjB3dQXAQAQhQABAICOUmMEd+t/610TAQAgBAECAAAdpcYI7vbBhxdMBACAEAQIAAB0nBoj+NLo6Hh1ffqGaQAAEIIAAQCAjqtrjKampi2C4h06fKz0EQAAEIgAAQCAjqtrjAYGhiyC4l24OFH6CAAACESAAABACGfOjVsERVNfBABANAIEAABCGJu4rMaIoqkvAgAgGgECAABhqDGiZOqLAACIRoAAAEAYaowolfoiAAAiEiAAABCGGiNK9fobb9s9AADhCBAAAAhFjRElGrvUsHcAAMIRIAAAEIoaI0rT3zdY3bx1294BAAhHgAAAQChqjCjNyOnzdg4AQEgCBAAAwlFjREnUFwEAEJUAAQCAcN5576SlUAT1RQAARCZAAAAgnCtXr1WNxqTFkD31RQAARCZAAAAgpCNHT1gM2VNfBABAZAIEAABCOnnqrMWQNfVFAABEJ0AAACAkNUbkTn0RAADRCRAAAAhLjRG5mpqarkY++sR+AQAITYAAAEBYaozI1cDAkN0CABCeAAEAgLDUGJGrM+fG7RYAgPAECAAAbVJXlrBwaozITf3/grGJy/a6QH/91y6cBgBoNwECAECbnDv33416EdQYkRv1RYtTf5EEAEB7CRAAAAhNjRG5UV8EAEAqBAgAAIT38it9lkQW1BcBAJASAQIAAOFduDhhSWRBfREAACkRIAAAEN716RvV6KjaF9L3/vAZWwQAIBkCBAAAknDo8DGLImn1XR6fTn5miQAAJEOAAABAEtQYkbojR0/YIQAASREgAACQBDVGpO7kqbN2CABAUgQIAAAkQ40Rqarri65cvWZ/AAAkRYAAAEAy1BiRKvVFAACkSIAAAEAy1BiRKvVFAACkSIAAAEBS1BiRGvVFAACkSoAAAEBSRs5/bGEkRX0RAACpEiAAAJCUm7duV/19g5ZGMtQXAQCQKgECAADJGTl93tJIQn1nh/oiAABSJUAAACA5Y5calkYS3NkBAEDKBAgAACRHjRGpuHBxwq4AAEiWAAEAgCSpMSK6ur7o+vQNewIAIFkCBAAAkqTGiOjUFwEAkDoBAgAASVJjRHTqiwAASJ0AAQCAZKkxIir1RQAA5ECAAABAstQYEZX6IgAAciBAAAAgWWqMiEp9EQAAORAgAACQtKHjIxZIKHWopb4IAIAcCBAAAEja2MTlampq2hIJw90cAADkQoAAAEDyBgaGLJEw3M0BAEAuBAgAACTvzLlxSySEur6ovpsDAAByIEAAACB5aoyIQn0RAAA5ESAAAJAFNUZEoL4IAICcCBAAAMiCGiM6TX0RAAC5ESAAAJAFNUZ0mvoiAAByI0AAACAbaozoJPVFAADkRoAAAEA21BjRKQcPvqm+CACA7AgQAADIRl1j1GhMWihtJ7wCACBHj9gqAAA5OXL0RNXd/ZKd0jb13Rt1eEXr/LN/WFWrv1NVN8/9pSknYs3/+d/VukeqavKL0icBAGkTIAAAkJWTp85Wf/LHAgTax90brfevH/mi+vnnn1dXf/Xr3H9qNnZXVdX16PLq19WK0kcBAElTYQQAQFauXL2mxoi2Ul8EAECuBAgAAGSnrjGCdlBfBABAzgQIAABkp64xgnZQXwQAQM4ECAAAZEeNEe2ivggAgJwJEAAAyJIaI1pNfREAALkTIAAAkCU1RrTaq68NmDEAAFkTIAAAkCU1RrSakAoAgNwJEAAAyJYaI1qlDqfqkAoAAHImQAAAIFuDx4ctl5YQTgEAUAIBAgAA2bo+faMaHR23YJac+iIAAEogQAAAIGuHDh+zYJaU+iIAAEohQAAAIGsXLk5YMEtKfREAAKUQIAAAkDU1Riw19UUAAJRCgAAAQPbUGLFU1BcBAFASAQIAANlTY8RS6X/rXbMEAKAYAgQAALKnxoil8sGHF8wSAIBiCBAAACiCGiMeVh1C1WEUAACUQoAAAEAR1BjxsIRQAACURoAAAEAR6jfHh4aGLZtFE0IBAFAaAQIAAMUYPHrCslkU9UUAAJRIgAAAQDHGLjUsm0VRXwQAQIkECAAAFOPmrdtVf9+ghbNg6osAACiRAAEAgKKMnD5v4SyI+iIAAEolQAAAoChqjFio199428wAACiSAAEAgKKoMWKhhE4AAJRKgAAAQHHUGDFfddhUh04AAFAiAQIAAMXxRjnzJWwCAKBkAgQAAIqjxoj5EjYBAFAyAQIAAEXyZjkPor4IAIDSCRAAAChS/Wb51NS05XNfQiYAAEonQAAAoEj1m+UDA0OWz32pLwIAoHQCBAAAinXm3Ljlc0/qiwAAQIAAAEDBxiYuqzHinoaOjxgMAADFEyAAAFA0NUZ8Wx0q1eESAACUToAAAEDR1BjxbUIlAAD4kgABAICiqTHi24RKAADwJQECAADF88Y5s9QXAQDANwQIAAAUzxvnzBImAQDANwQIAAAUT40Rs4RJAADwDQECAAB48xz1RQAA0ESAAAAAVVW9895JYyicEAkAAO4mQAAAgKqqrly9VjUak0ZRsPeHz5Q+AgAAuIsAAQAAvnLk6AmjKFQdHn06+VnpYwAAgLsIEAAA4CsnT501ikIJjwAAoJkAAQAAvqLGqFzCIwAAaCZAAACAO3gTvTx1aFSHRwAAwN0ECAAAcAdvopdHaAQAAPcmQAAAgDuoMSqP0AgAAO5NgAAAAN/ijfRyqC8CAID7EyAAAMC3eCO9HMIiAAC4PwECAAB8ixqjcgweHy59BAAAcF8CBAAAuIeXX+kzlsyNjo5X16dvlD4GAAC4LwECAADcw4WLE8aSuUOHj5U+AgAAmJMAAQAA7qF+M71+Q518CYkAAGBuAgQAALgPb6jnS30RAAA82CNmBAAA9+YN9XzlFg799j+qqu7vfBHgJK3xr/7udo4/K3v//Iu/q36yLN+/y8b/e6T6q78NcBAAaCEBAgAA3MdsjVFPzwYjykxu4VAdHvz8888DnAS+sebW31Y/v5Xv3+Wff/e71V95rAJA5lQYAQDAHNQY5Ud9EQAAzI8AAQAA5qDGKD9CIQAAmB8BAgAAzGG2xoh8CIUAAGB+BAgAAPAA3ljPR3/foPoiAACYJwECAAA8wMj5j40oEyOnz5c+AgAAmDcBAgAAPMDNW7dn3lwnfWOXGrYIAADzJEAAAIB58OZ6+uoQqA6DAACA+REgAADAPHhzPX1CIAAAWBgBAgAAzIMao/QJgQAAYGH+wRNb9v1pVVW/NjcAAIA0/WTZF9XPP//c9qCN/vy7363+4vYjRg5Azn7fFwgAAAAAAEATAQIAAAAAANBEgAAAAAAAADQRIAAAAAAAAE0ECAAAAAAAQBMBAgAAAAAA0ESAAAAAAAAANBEgAAAAAAAATQQIAAAAAABAEwECAAAAAADQRIAAAAAAAAA0ESAAAAAAAABNBAgAAAAAAEATAQIAAAAAANBEgAAAAAAAADQRIAAAAAAAAE0ECAAAAAAAQBMBAgAAAAAA0ESAAAAAAAAANBEgAAAAAAAATQQIAAAAAABAEwECAAAAAADQRIAAAAAAAAA0ESAAAAAAAABNBAgAAAAAAEATAQIAAAAAANBEgAAAAAAAADQRIAAAAAAAAE0ECAAAAAAAQBMBAgAAAAAA0ESAAAAAAAAANBEgAAAAAAAATQQIAAAAAABAEwECAAAAAADQRIAAAAAAAAA0ESAAAAAAAABNBAgAAAAAAEATAQIAAAAAANBEgAAAAAAAADQRIAAAAAAAAE0ECAAAAAAAQBMBAgAAAAAA0ESAAAAAAAAANBEgAAAAAAAATQQIAAAAAABAEwECAAAAAADQRIAAAAAAAAA0ESAAAAAAAABNBAgAAAAAAEATAQIAAAAAANBEgAAAAAAAADQRIAAAAAAAAE0ECAAAAAAAQBMBAgAAAAAA0ESAAAAAAAAANBEgAAAAAAAATQQIAAAAAABAEwECAAAAAADQRIAAAAAAAAA0ESAAAAAAAABNBAgAAAAAAEATAQIAAAAAANBEgAAAAAAAADQRIAAAAAAAAE0ECAAAAAAAQBMBAgAAAAAA0ESAAAAAAAAANBEgAAAAAAAATQQIAAAAAABAEwECAAAAAADQRIAAAAAAAAA0ecRIACB9E2fftcVE/Om//8/Vf3nvROljSNqLP/mD6k/++KXSx5CsPc+/VF25eq30MQAAwLz4AgEAABbgub27jCthO7dvLX0EAAAwbwIEAACYp7VrVlfd3euMK2ECIAAAmD8BAgAAzJO319NXB0B1EAQAADyYAAEAAObJ2+t5EAQBAMD8CBAAAGAe1Bfl45e/6C19BAAAMC8CBAAAmAdvreejq2tVtXH946WPAQAAHkiAAAAA8+Ct9bxs27Kh9BEAAMADCRAAAOAB6rfV67fWyUdv7x7bBACABxAgAADAA3hbPT9qjAAA4MEECAAA8ADeVs+TYAgAAOYmQAAAgDmoL8qXYAgAAOYmQAAAgDl4Sz1faowAAGBuAgQAAJiDt9TzJiACAID7EyAAAMB9qC/Kn4AIAADuT4AAAAD34e30/KkxAgCA+xMgAADAPaxYvqz61a/+yGgKsGf3jtJHAAAA9yRAAACAe9j4ZLexFGL/gX0zgREAAHA3AQIAANzDjqc3G0tBBEYAANBMgAAAAN9Sv41ev5VOOQRGAADQTIAAAADf4m308qgxAgCAZgIEAAD4Fm+jl0lwBAAAdxMgAADAHdQXlUtwBAAAdxMgAADAHbyFXi41RgAAcDcBAgAA3MFb6GUTIAEAwDcECAAA8JXHVq1UX1Q4ARIAAHxDgAAAAF/Z9NR6oyhcHSDVQRIAAFBVj5gBAAB86YXnnzUJZoKkof92NqlBXP/771Tjjy4PcJLW+M0v/q76zVt/m+NPy9r//Y1HqsZv5PvYof53BwC5EyAAAMBX9UU9PRuMgpkgKbUAYfhvvlMNVysCnKQ1frLsi+rntz7P8adl7X/8kxXVrz/32AEAUiYuBwAA9UXcoQ6S1BgBAIAAAQAAZqgv4k4CJQAAECAAAID6IpoIlAAAQIAAAADeNqeJGiMAABAgAACAt825J8ESAAClEyAAAFC0tWtWqy/ingRLAACUToAAAEDRdm7fWvoIuA81RgAAlE6AAABA0Z7bu6v0ETAHNUYAAJRMgAAAQLHq+qLu7nX+ALivl148YDgAABRLgAAAQLHUF/EgdcBUB00AAFAiAQIAAMVSX8R8CJoAACiVAAEAgCKpL2K+BE0AAJRKgAAAQJG8Vc58qTECAKBUAgQAAIrkrXIWQuAEAECJBAgAABRn4/rH1RexIAInAABKJEAAAKA427ZssHQWRI0RAAAlEiAAAFCc3t49ls6CqTECAKA0AgQAAIpS1xd1da2ydBZMjREAAKURIAAAUBT1RSxWXWP0xLrvmR8AAMUQIAAAUBT1RTyMHzyzzfwAACiGAAEAgGKoL+JhCaAAACiJAAEAgGKoL+Jh1QFUHUQBAEAJBAgAABTD2+MsBUEUAAClECAAAFCEHb/7O+qLWBKCKAAASiFAAACgCDue3mzRLAk1RgAAlEKAAABA9lYsX1btP7DPolkyaowAACiBAAEAgOxtfLLbkllSaowAACiBAAEAgOypL2KpqTECAKAEAgQAALKmvohWUWMEAEDuBAgAAGRNfRGtUtcY1QEVAADkSoAAAEDW1BfRKjM1RgIqAAAyJkAAACBb6otoNQEVAAA5EyAAAJCtHZu/b7m0VB1QqTECACBXAgQAALL1wvPPWi4tp8YIAIBcCRAAAMjSY6tWVj09GyyXllNjBABArgQIAABkadNT6y2WtlBjBABArgQIAABkSX0R7aTGCACAHAkQAADIjvoi2k2NEQAAORIgAACQHfVFtJsaIwAAciRAAAAgO+qL6AQ1RgAA5EaAAABAVtQX0Sk/++mPzR4AgKwIEAAAyMrv/94mC6Uj6uCqDrAAACAXAgQAALKy/w//wELpGPdvAACQEwECAADZWLtmddXdvc5C6Rj3bwAAkBMBAgAA2di5fatl0lFqjAAAyIkAAQCAbDy3d5dl0nFqjAAAyIUAAQCALKgvIgo1RgAA5EKAAABAFtQXEYUaIwAAciFAAAAgC+qLiESNEQAAORAgAACQPPVFRKPGCACAHAgQAABI3o9+uNMSCUWNEQAAORAgAACQvN7ePZZIOPt2P2MpAAAkTYAAAEDSNq5/vOrqWmWJhONeDgAAUidAAAAgadu2bLBAQqrv5ajv5wAAgFQJEAAASJr6IiLbuX2r/QAAkKxHrA4AgFSpLyK6usbolb94154e0vW//041/ujy6tEVy6rf/q2upH9LSf7X//zrqvr8b0ofAwAkTYAAAECy1BcR3WyN0ZWr1+zqIQz/zXeq4WpF9cQ//V71X//sz5L9HaUZOvBvqqr6rPQxAEDSVBgBAJAs9UWkQI0RAACpEiAAAJAk9UWkoq4xAgCAFAkQAABIkvoiUjFbYwQAAKkRIAAAkJwVy5dVv/rVH1kcyVBjBABAigQIAAAkZ+OT3ZZGUn75i14LAwAgOQIEAACSs+PpzZZGUur7Oup7OwAAICUCBAAAklLXF+0/sM/SSI57OwAASI0AAQCApKgvIlW9vXvsDgCApAgQAABIivoiUqXGCACA1AgQAABIhvoiUqfGCACAlAgQAABIhvoiUqfGCACAlAgQAABIxr69uyyLpKkxAgAgJQIEAACS8NiqldWePc9YFslTYwQAQCoECAAAJGHTU+stiiyoMQIAIBUCBAAAkvDC889aFFlQYwQAQCoECAAAhFfXF/X0qH0hH3t277BNAADCEyAAABCe+iJys//AvmrF8mX2CgBAaAIEAIA26n78Xxr3IqgvIkcbn+y21wVa971/kdR5AQBSJ0AAAGijld/9x8a9QOqLyNWOpzfb7QI9umJFUucFAEidAAEAgNDUF5ErNUYAAEQnQAAAIDT1ReRMjREAAJEJEAAACGvtmtXqi8iaGiMAACITIAAAENbO7Vsth6ypMQIAIDIBAgAAYT23d5flkD01RgAARCVA5SoB5wAAIABJREFUAAAgpLq+qLt7neWQPTVGAABEJUAAACAk9UWUoq4xemzVSvsGACAcAQIAACGpL6Ikm55ab98AAIQjQAAAIBz1RZTmheeftXMAAMIRIAAAEI76IkrT07NBjREAAOEIEAAACEd9ESVSYwQAQDQCBAAAQtm4/nH1RRRJjREAANEIEAAACGXblg0WQpHUGAEAEI0AAQCAUHp791gIxVJjBABAJAIEAADCqOuLurpWWQjFUmMEAEAkAgQAAMJQX0Tp1BgBABCJAAEAgDDUF4EaIwAA4hAgAAAQgvoi+NJLLx4wCQAAQhAgAAAQgvoi+FJ397pq7ZrVpgEAQMcJEAAACEF9EXxj5/atpgEAQMcJEAAA6Lgdv/s76ovgDs/t3WUcAAB0nAABAICO2/H0ZkuAO6gxAgAgAgECAAAdtWL5smr/gX2WAN+ixggAgE4TIAAA0FEbn+y2ALgHNUYAAHSaAAEAgI5SXwT3psYIAIBOEyAAANAx6otgbmqMAADoJAECAAAdo74I5qbGCACAThIgAADQMeqLYG51jdET675nSgAAdIQAAQCAjlBfBPPzg2e2mRQAAB0hQAAAoCN2bP6+wQfzJ//2P1RTU9OljyGc3t49pY8AAIAOESAAANARLzz/rMEHc+HiRDUwMFT6GMLp6lpVbVz/eOljAACgAwQIAAC03WOrVlY9PRsMPpD+vsHq+vSN6p33TpY+ipC2bfHvBQCA9hMgAADQdpueWm/owYycPj9zoCtXr1WNxmTp4whHjREAAJ0gQAAAoO3UF8Uzdqnx9Zn633q39HGEo8YIAIBOECAAANBW6oviOXjwzermrdtfn+uDDy+UPpKQ1BgBANBuAgQAANpKfVE8Z86N33Wm+i6E0dHxNA5fEDVGAAC0mwABAIC2Ul8Uy9TUdDU2cbnpTK+/8XbZgwlIjREAAO0mQAAAoG3UF8Xz6msD9zzTnXciEIcaIwAA2kmAAABA2+zb/YxhB3Py1Nl7Hqi+E6G/b7DgycRU1xitWL6s9DEAANAmAgQAANrmub27DDuQRmOyunL12n0PNHR8pMCpxDZTY/Rkd+ljAACgTQQIAAC0xdo1q6vu7nWGHUj/W+/OeZj6boT6jgRi2fH0ZhsBAKAtBAgAALTFzu1bDTqYDz688MADDQwMFTaV+PYf2KfGCACAthAgAADQFuqLYhkdHa+uT9944Jneee9kWYNJhBojAADaQYAAAEDLqS+K59DhY/M6U31HQn1XArGoMQIAoB0ECAAAtJz6onhGzn887zM96K4E2k+NEQAA7SBAAACg5dQXxdLfN1jdvHV73meaz10JtJ8aIwAAWk2AAABAS6kvimfk9PkFnam+K6G+M4FY1BgBANBqAgQAAFrqRz/cacCBTE1NV2OXGgs+0OtvvJ3xVNKkxggAgFYTIAAA0FK9vXsMOJCBgaEF1RfNWkzoQOupMQIAoJUECAAAtMzG9Y9XXV2rDDiQM+cWV0VUhw713QnE8rOf/thGAABoGQECAAAts23LBsMNpNGYrMYmLi/6QAu9O4HW6+nZUD22aqVJAwDQEgIEAABaRn1RLEeOnnio84x89MnMHQrEsump9TYCAEBLCBAAAGgJ9UXxnDx19qHPVN+hQCwvPP+sjQAA0BICBAAAWkJ9USx1fdGVq9ce+kzvD5/JazAZUGMEAECrCBAAAGgJ9UWxvPxK35Kc59PJz2bCCGJRYwQAQCsIEAAAWHLqi+K5cHFiyc70sHcpsPTUGAEA0AoCBAAAltye3TsMNZDR0fHq+vSNJTvQ4PHhDKaSFzVGAAC0ggABAIAltWL5smr/gX2GGsjrb7y9pIepw4g6lCAWNUYAACw1AQIAAEtq45PdBhrM2KXGkh/o0OFjiU8lP2qMAABYagIEAACW1I6nNxtoIP19g9XNW7eX/EAj5z9OeCp5UmMEAMBSEyAAALBk1BfFM3R8pCVnqkOJOpwgln27n7ERAACWjAABAIAlo74olqmp6Wps4nLLzjRy+nyag8nYc3t3lT4CAACWkAABAIAlo74oloGBoZaeZ+SjT2ZCCuLo7l5XrV2z2kYAAFgSAgQAAJaE+qJ43h8+0/IztTqkYOF2bt9qagAALAkBAgAAS0J9USyNxmT16eRnLT9TO0IKFkaNEQAAS0WAAADAktjnoWUoR46eaMtx6pCiDiuIQ40RAABLRYAAAMBDe2zVymrPnmcMMpCTp8627TDtCiuYPzVGAAAsBQECAAAPbdNT6w0xkNHR8erK1WttO9Dg8eEEplIWNUYAACwFAQIAAA/theefNcRADh0+1tbDXJ++MRNaEIcaIwAAloIAAQCAh1LXF/X0bDDEQC5cnGj7YdodWvBgaowAAHhYAgQAAB6K+qJYhoaGZ74IaLdOhBbM7Ze/6DUhAAAeigABAICHor4olsEOXWhchxb9fYNxB1Ogrq5V1cb1j5c+BgAAHoIAAQCARVNfFM/YpUbHzjRy+nzcwRRq2xb/PgEAWDwBAgAAi6a+KJaDB9+sbt663bEz1eHF1NR0zOEUqrd3T+kjAADgIQgQAABYtJdePGB4gZw5N97Rw9ThxcDAULCplE2NEQAAD0OAAADAoqxds7rq7l5neEHUb/6PTVzu+GE6HWLQTI0RAACLJUAAAGBRdm7fanCBRHnzvw4xGo3JACdhlhojAAAWS4AAAMCiPLd3l8EF8s57J8Mc5sjREwFOwSw1RgAALJYAAQCABVNfFEv9xv+Vq9fCnOnkqbMBTsGd1BgBALAYAgQAABZMfVEs0d74r8OM0VF3IUSixggAgMUQIAAAsGDqi2IZPD4c7kyHDh8LcApmqTECAGAxBAgAACyI+qJY6jf9r0/fCHeuCxcnApyCO+3ZvcM8AABYEAECAAALor4olqhv+tehRn/fYICTMGv/gX3ViuXLzAMAgHkTIAAAsCDqi2IZOf9x3LOdPh/gFNxp45Pd5gEAwLwJEAAAmLe6Q119URz1G/43b90Oe76xS41qamo6wEmYtePpzWYBAMC8CRAAAJi3bVs2GFYg0d/wr8ONgYGhACdhlhojAAAWQoAAAMC89fbuMawg6jf76zf8oztzbrz0VYWjxggAgPkSIAAAMC91fVFX1yrDCqJ+sz9yfdGssYnLVaMxGeMwzFBjBADAfAkQAACYF/VFsaT0Zv+RoycCnIJZaowAAJgvAQIAAPOiviiOmfqiicvJnPfkqbMBTsGd1BgBADAfAgQAAB5IfVEsr742kNR5r1y9Vo2OugshEjVGAADMhwABAIAHUl8US4pv9B86fCzAKZhV1xg9tmqleQAAMCcBAgAAc6q70tUXxVFfSFy/0Z+aCxcnSl9dOJueWl/6CAAAeAABAgAAc6q70tUXxfHyK31Jnvv69I1qaGg4wEmY9cLzz5oFAABzEiAAADAnXemxpPwm/+DREwFOwayeng1qjAAAmJMAAQCA+6rri+qudGKoLyKu3+RP1dilhr+kYNQYAQAwFwECAAD3VdcXEcfrb7yd9DZu3rpdHTz4ZoCTMEuNEQAAcxEgAABwX+qLYsnhDf4z58YDnIJZaowAAJiLAAEAgHtSXxRLf9/gzBv8qRubuFxNTU2Xvs5Q1BgBAHA/AgQAAO5JfVEsI6fPZ/NbXn1tIMApmKXGCACA+xEgAABwT+qL4qjf2B/56JNsfs/JU2cDnIJZaowAALgfAQIAAE3UF8UyMDCU1e+5cvVa1WhMBjgJs9QYAQBwLwIEAACa7Nj8fUMJJMeLh19+pS/AKZj10osHzAIAgCYCBAAAmuhEj6N+U7++eDg3Fy5OlL7aULq711Vr16wufQwAAHyLAAEAgLvUXeh1JzoxHDl6IstNXJ++UQ0NDQc4CbN2bt9qFgAA3EWAAADAXXShx5LzhcODmYYjqXpu767SRwAAwLcIEAAAuIv6ojhGR8dnLhzO1dilRukrDkWNEQAA3yZAAADga+qLYjl0+FjWv+/mrdvVwYNvBjgJs9QYAQBwJwECAABfU18USwkXDZ85Nx7gFMxSYwQAwJ0ECAAAfE19URz1BcP1RcO5G5u4XE1NTZe+7jDUGAEAcCcBAgAAM9QXxVLSBcOvvjYQ4BTMUmMEAMAsAQIAADP27X7GIAIp6YLhk6fOBjgFs9QYAQAwS4AAAMAMDw3j6O8bnLlguBRXrl6rGo3J0tceRl1j9MS675U+BgCA4lUCBAAAanXnef3QkBiGjo8Ut4n+t94NcApm/eCZbWYBAIAAAQAAneeR1BcK1xcLl+aDDy+UvvpQenv3lD4CAIDiVQIEAAAq9UWhDAwMFfm7r0/fqEZHxwOchFpX16pq4/rHzQIAoHACBACAwqkviuWd904W+9tff+PtAKdg1rYtG8wCAKBwAgQAgMKpL4qjvki4vlC4VGOXGqX/CYSixggAAAECAEDh1BfFceToiaJ//81bt6v+vsEAJ6FSYwQAULxKgAAAUDb1RbEMHh8ufQTV0PGRAKdglhojAICyCRAAAAr2ox/utP4g6guE64uESzc2cbmampoufQxhqDECACibAAEAoGAeDsZx6PCx0kfwtYGBoSAnQY0RAEDZBAgAAIWqHwrWDweJ4cLFCZv4yjvvnQxxDr6kxggAoFwCBACAQnkoGEd9cbD6om9cuXqtajQmoxynePWXSiuWLyt9DAAARRIgAAAUSn1RHCOnz5c+gib9b70b7ETlmqkxerK79DEAABRJgAAAUCD1RbGMXWqUPoImH3x4IdiJyrbj6c2ljwAAoEgCBACAAqkviuPgwTerm7dulz6GJnWl0+joeLBTlWv/gX1qjAAACiRAAAAokPqiOM6c85D8fl5/4+2YByuUGiMAgPIIEAAACqO+KI6pqelqbOJy6WO4L9VOsagxAgAojwABAKAwe3bvsPIgXn1toPQRzKmudurvGwx8wrKoMQIAKI8AAQCgIPXDv/ohIDGcPHXWJh5g6PhI6POVRo0RAEBZBAgAAAXx8C+ORmOyunL1WuljeKC64qmueiIGNUYAAGURIAAAFMTDvzj633q39BHM28DAUCInzZ8aIwCAsggQAAAKob4olg8+vFD6CObt/eEziZy0DL5kAgAohwABAKAQHvrFMTo6Xl2fvlH6GObt08nPZiqfiOFnP/2xTQAAFEKAAABQCPVFcRw6fKz0ESzYkaMnEjtxvnp6NlSPrVpZ+hgAAIogQAAAKID6olhGzn9c+ggWbPD4cGInztump9aXPgIAgCIIEAAACqC+KI7+vsHq5q3bpY9hwerKp7r6iRheeP5ZmwAAKIAAAQCgADrL4xg5fb70ESya6qc41BgBAJRBgAAAkLn6IV/9sI/Om5qarkY++sQmFkn1UyxqjAAA8idAAADInId8cQwMDJU+godSVz/VFVDEoMYIACB/AgQAgMx5yBfHmXM6/B+WCqg41BgBAORPgAAAkDH1RXE0GpPV2MTl0sfw0OoKqLoKihh84QQAkDcBAgBAxjzci+PI0ROlj2DJqIKKwxdOAAB5EyAAAGTMw704Tp46W/oIlsz7w2cy+SXpU2MEAJA3AQIAQKbUF8VR1xdduXqt9DEsmU8nP5uZKTHs2/2MTQAAZEqAAACQKfVFcbz8Sl/pI1hyKqHieG7vrtJHAACQLQECAECmXnrxgNUGceHiROkjWHKDx4cz+0Xp6u5eV61ds7r0MQAAZEmAAACQofphXv1Qj84bHR2vrk/fsIklVs+0ni0x7Ny+1SYAADIkQAAAyJCHeXG8/sbbpY+gZQ4dPpbpL0uPGiMAgDwJEAAAMuRhXhxjlxqlj6BlRs5/nOkvS48aIwCAPAkQAAAyo74ojv6+wermrdulj6Fl6tnWMyYGXz4BAORHgAAAkBkP8eIYOj5S+ghabuT0+cx/YTp8+QQAkB8BAgBAZjzEi2Fqaroam7hc+hhabuSjT2ZmTeepMQIAyI8AAQAgI+qL4hgYGCp9BG1j1nH4AgoAIC8CBACAjHh4F8f7w2dKH0HbnDk3Xsgvje+Xv+gtfQQAAFkRIAAAZMTDuxgajcnq08nPSh9D29RVUfXM6byurlXVxvWP2wQAQCYECAAAmagf2tUP7+i8I0dP2EKbmXkc27ZsKH0EAADZECAAAGTCQ7s4Tp46W/oI2s7M4+jt3VP6CAAAsiFAAADIhId2MYyOjldXrl4rfQxtV8+8nj2dp8YIACAfAgQAgAyoL4rj0OFjpY+gY8w+Dl9EAQDkQYAAAJABD+viuHBxovQRdIzZx+GLKACAPAgQAAAy4GFdDP19g9X16Rulj6Fj6tnXO6Dz1BgBAORBgAAA0EarVq1c8v+Y+qI4Rk6fL30EHWcHcbTiy6hHH12R7kAAABIkQAAAaKOenqV/oKa+KI6xS43SR9Bx9Q6mpqYLn0IMrfgyav0Tv5XmMAAAEiVAAABI2Irly9QXBXHw4JvVzVu3Sx9Dx9U7GBgYKnwKMagxAgBInwABACBhG5/sVl8UxJlz46WPIAy7iGPP7h2ljwAAIGkCBACAhO14erP1BVBX5oxNXC59DGHUu2g0JksfQwj7D+yb+VIKAIA0CRAAABJVP5SrH87ReSpz4jly9ETpIwij/lIKAIA0CRAAABLloVwc77x3svQRhHPy1NnSRxCGL6UAANIlQAAASJSHcjHUVTlXrl4rfQzh1DsZHXUXQgRqjAAA0iVAAABIkPqiOPrferf0EYR16PCx0kcQhi+mAADSJEAAAEiQh3FxfPDhhdJHENaFixOljyAMX0wBAKRJgAAAkCAP42KoK3KuT98ofQxh1bvp7xssfQwhqDECAEiTAAEAIDGPrVqpvigIFTnxjZw+X/oIwvDlFABAegQIAACJ2fTUeisLYuT8x6WPILyxS43SRxCGL6cAANIjQAAASMwLzz9rZQHU1Tg3b90ufQzh1Ts6ePDN0scQQv3lVP0FFQAA6RAgAAAkpH741tOzwcoCUI2TjjPnxksfQRi+oAIASIsAAQAgIR6+xTA1Na0aJyFjE5dndkbn+YIKACAtAgQAgIR4+BbDwMCQ+qLEvPraQOkjCKH+gkqNEQBAOgQIAACJUF8Uh0qc9Jw8dbb0EYThSyoAgHQIEAAAEuGhWwwz9UUTl0sfQ3KuXL1WNRqTpY8hBF9SAQCkQ4AAAJAID91iUIWTrpdf6St9BCGoMQIASIcAAQAgAeqL4lCFk64LFydKH0EYvqgCAEiDAAEAIAH7dj9jTQHUFTh1FQ5puj59oxoaGra9AHxRBQCQBgECAEACntu7y5oCUIGTvsGjJ0ofQQhqjAAA0iBAAAAIbu2a1VV39zprCkAFTvrGLjVKH0EYaowAAOITIAAABLdz+1YrCmB0dHymAoe03bx1uzp48E1bDOClFw+UPgIAgPAECAAAwakviuH1N94ufQTZOHNuvPQRhFB/WVV/YQUAQFwCBACAwNQXxaH6Jh9jE5erqanp0scQgi+sAABiEyAAAATm4VoM/X2DM9U35OPV1wZsMwBfWAEAxCZAAAAIzMO1GEZOny99BNk5eeps6SMIQY0RAEBsAgQAgKCeWPc99UUB1FU3Ix99UvoYsnPl6rWq0ZgsfQwh+NIKACAuAQIAQFA/eGab1QQwMDBU+giy9fIrfaWPIARfWgEAxCVAAAAIqrd3j9UE8P7wmdJHkK0LFydKH0EIaowAAOISIAAABLRx/eNVV9cqq+mwuuLm08nPip5Bzq5P36hGR8dLH0MIaowAAGISIAAABLRtywZrCeDI/2/vfl7rSu87jp9FoIVC6aalu7ZZDSlk1ZYQGlJSCs2kadquGkq7KP2nDMPMgPFIhot/ybo2NpJ1sSXbkqzBBskXbSTwRthcuAgE0q4cMYt2PpmJPbF1nnOe1+s/0PeLtDhvPc+zvFL7CAbv8pXrtY+gCK4xAgAok4AAAFAg1xeVYfXhk9pHMHjbu9PaR1AE1xgBAJRJQAAAKIzri8rQXm1zePS69jEM3snpWbO4sFT7GIrwq5//rPYRAAAUR0AAACiM64vKcO3G3dpHUI3x/UntIyiCk1cAAOUREAAACuMjWhm2XuzVPoJqbO/tN7PZvPYxdK49edWewAIAoBwCAgBAQVxfVIbxeK15Mz+ufQxVGY3GtY+gCE5gAQCURUAAACjIx//wU+sowNLySu0jqM7NO6u1j6AITmABAJRFQAAAKMQf/P7vNf/+619aRwG2d6e1j6A67YPZ0+lB7WPonGuMAADKIiAAABTir/7yI6sowOLCUnNyelb7GKq0ePVW7SMogmuMAADKISAAABTip3/7N1ZRgPH9Se0jqNaDx1u1j6AIrjECACiHgAAAUADXF5VhNps323v7tY+hWu3D2RsbO7WPoXOuMQIAKIeAAABQANcXlWE0Gtc+gupdvnK99hEUwTVGAABlEBAAAArg+qIy3LyzWvsIqucB7TK01xi1J7MAAOiWgAAA0DHXF5VhOj1oDo9e1z6G6rUPaLcPadOt82uMnMwCAOicgAAA0DEfycpwe3ml9hHwFQ9pl8HJLACA7gkIAAAd+8//+FcrKMDS/bXaR8BX2oe02we16VZ7Mss1RgAA3RIQAAA69Md/9IfNj3/ssdCubWzsNG/mx3UPgf/Hg9plcEILAKBbAgIAQIf++oc/MP4CXLtxt/YR8DUe1C6Da4wAALolIAAAdOjf/uUfjb8AWy/2ah8BX9M+qN0+rE23XGMEANAtAQEAoCOuLyrD4sKS64v4jRav3jKYArjGCACgOwICAEBHXF9UhsmjzdpHwDd48HjLaArgGiMAgO4ICAAAHXF9Ufdms3mzvTutfQx8g/ZkSvvANt1yjREAQHcEBACADri+qAyj0bg5OT2rfQx8Cw9sl8E1RgAA3RAQAAA64PqiMqw/9d/lfLvJ5pcmVIBf/uLvax8BAEAnBAQAgA78z3//2tg7dn590d5+1TPgt2tPqLQPbdOtjz/+u/OTWwAAXCwBAQDggv35n/5J89FHf2HsHfvs81HVPz9vz0PbZXByCwDg4gkIAAAX7Gc/+ZGRF2D14ZPaR8Bbmjx7fn5ihW55eB4A4OIJCAAAF+yf3OXduen0oDk8el35FHgX7YPbdKt9eP773/8zWwAAuEACAgDABXN9UfcWr96qfQS8o3tr60ZWAH8/AQAuloAAAEB1HjzesnTeycuDV+cnVwAAoCYCAgAAVdnY2GnezI8tnXd2e3nF0AAAqIqAAABAVS5fuW7hfCdL99cMDgCAqggIAABUZXt3auF8J+3JlfYECwAA1EJAAACgGosLS83J6ZmF851du3HX8AAAqIaAAABANSaPNi2b38lk80sDBACgGgICAABVmM3mzeTZc8vmd9KeYGlPsgAAQA0EBAAAqjAajS2a98JJFgAAaiEgAABQhfWnHr/l/WhPsrQnWgAAYOgEBAAABm86PWi29/YtmvfGiRYAAGogIAAAMHi3l1csmffq3tq6gQIAMHgCAgAAg7f68Ikl8169PHh1frIFAACGTEAAAGDQ2o+8h0evLZn3zskWAACGTkAAAGDQPvl0wYL5IJxsAQBg6AQEAAAGbevFngXzQbQnWzY2dgwXAIDBEhAAABis8XiteTM/tmA+mGs37houAACDJSAAADBYS+6o5wNzwgUAgCETEAAAGKzt3anl8kG1J1wWF5YMGQCAQRIQAAAYpPaj7snpmeXywU0ebRoyAACDJCAAADBI4/sTi+VCtCddZrO5YQMAMDgCAgAAg9N+zN3e27dYLkR70mU0Ghs2AACDIyAAADA4PuZy0daf7pg5AACDIyAAADA499bWLZUL1Z54mU4PDB0AgEEREAAAGJT2I+7Lg1eWyoW7vbxi6AAADIqAAADAoPiIS1dWHz4xewAABkVAAABgUJbur1konTg8et1sbHgLAQCA4RAQAAAYjPbj7Zv5sYXSmWs37ho+AACDISAAADAYPt7Sta0Xe3YAAMBgCAgAAAyGj7d0rT0Bs7iwZA8AAAyCgAAAwCC0H21dX0QJJo827QEAgEEQEAAAGAQfbSnF9u60mc3m9gEAQO8JCAAADEL70RZKcHJ61oxGY7sAAKD3BAQAAHrv0qUvzj/aQinWn+7YBQAAvScgAADQez7WUprtvX3XGAEA0HsCAgAAvdZ+pG0/1kJpPvt8ZCcAAPSagAAAQK+5a55SrT58YjcAAPSagAAAQK/dvLNqgRTp8Oh1M50eWA4AAL0lIAAA0Fvtx9n2Iy2U6pNPF+wGAIDeEhAAAOitxau3LI+ibb3YsyAAAHpLQAAAoLcePN6yPIr2Zn7cjMdrlgQAQC8JCAAA9NLGxs75x1ko3dLyih0BANBLAgIAAL107cZdi6MXtnenFgUAQC8JCAAA9NJk80uLoxdOTs+aS5e+sCwAAHpHQAAAoHcWF5bOP8pCX6w/3bErAAB6R0AAAKB3Jo82LY1e2d7bb2azuaUBANArAgIAAL3SfoR1pzx99NnnI3sDAKBXBAQAAHplNBq7voheWn34xOIAAOgVAQEAgF5xlzx9dXj0uplOD+wPAIDeEBAAAOiN9uNre5c89NUnny7YHQAAvSEgAADQG7eXVyyLXtt6sWeBAAD0hoAAAEBvuEOevnszP27G4zV7BACgFwQEAAB6ob2+qL1DHvpuyUkaAAB6QkAAAKAX3B3PUGzvTu0SAIBeEBAAAOgFd8czFCenZ82lS1/YJwAAxRMQAAAo3sbGzvnd8TAU60937BIAgOIJCAAAFO/yleuWxKBs7+03s9ncUgEAKJqAAABA8dwZzxCNRmN7BQCgaAICAABFW1xYOr8zHobm5p1VOwUAoGgCAgAARZs82rQgBunw6HUznR5YLgAAxRIQAAAoVntH/OTZcwtisBav3rJcAACKJSAAAFAsd8QzdA8eb9kxAADFEhAAACjWvbV1y2HQ3syPm42NHUsGAKBIAgIAAEVq74Z/efDKchi8y1euWzIAAEWongH/AAALr0lEQVQSEAAAKNLt5RWLoQrbu1OLBgCgSAICAABFWn34xGKowsnpWbO4sGTZAAAUR0AAAKA47Z3wh0evLYZqjO9PLBsAgOIICAAAFOfajbuWQlW29/ab2Wxu6QAAFEVAAACgOFsv9iyF6oxGY0sHAKAoAgIAAEUZj9eaN/NjS6E6N++sWjoAAEUREAAAKMrS8oqFUKX23Y/p9MDyAQAohoAAAEBRtnenFkK1Fq/esnwAAIohIAAAUIxLl75oTk7PLIRqPXi8ZfkAABRDQAAAoBjrT3csg6q1739sbPg9AACgDAICAABFmM3mzfbevmVQvctXrtc+AgAACiEgAABQhNFobBHgHRAAAAoiIAAAUISbd1YtAprm/B2QxYUlowAAoHMCAgAAnZtOD5rDo9cWAV+ZPNo0CgAAOicgAADQudvLK5YA/8fk2fPzd0EAAKBLAgIAAJ1bur9mCfA13gUBAKBrAgIAAJ3a2Nhp3syPLQG+5t7aupEAANApAQEAgE5du3HXAuA3eHnw6vx9EAAA6IqAAABApyabX1oAfAPvgwAA0CUBAQCAziwuLDUnp2cWAN/A+yAAAHRJQAAAoDOTR5uGD9+ifR+kfScEAAC6ICAAANCJ2WzebO9ODR9+C++EAADQFQEBAIBOjEZj1xfBW/BOCAAAXREQAADoxPpT17LA22hDW/teCAAAXDQBAQCAC3d+fdHevsHDW/JeCAAAXRAQAAC4cJ99PjJ0eAeTZ8/PwxsAAFyk75k2APTfD370z7YIMHA/+cV/WTEAABfKCQQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAIKAAAAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAABAEBAAAAAAAIAgIAAAAAAAAEFAAAAAAAAAgoAAAAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAEAQEAAAAAAAgCAgAAAAAAAAQUAAAAAAAACCgAAAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAQBAQAAAAAACAICAAAAAAAABBQAAAAAAAAML3mqY5bJpmYjQAAAAAAMC5ppn/L0AQOWHk/bXeAAAAAElFTkSuQmCC" alt="MedWest Realty" style="height:38px;width:auto;object-fit:contain">
+    </div>
+  </div>
+
+  <!-- KPI BAR -->
+  <div id="kpi-bar">
+    <div id="kpi-context" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#666;margin-bottom:2px">
+      <span>📍 <strong id="kpi-location-label">All Locations</strong></span>
+      <span id="kpi-reset-btn" onclick="resetKPIs()" style="display:none;cursor:pointer;color:#d6ab5c;font-weight:600">✕ Reset to All</span>
+    </div>
+    <div class="kpi-card"><div class="kpi-lbl">Total Locations</div><div class="kpi-val" id="kpi-locations">16</div></div>
+    <div class="kpi-card"><div class="kpi-lbl">Total Square Feet</div><div class="kpi-val" id="kpi-sqft">94,894</div></div>
+    <div class="kpi-card"><div class="kpi-lbl">Contract Total Monthly Gross</div><div class="kpi-val" id="kpi-monthly">$413,340.41</div></div>
+    <div class="kpi-card"><div class="kpi-lbl">Contract Monthly Cost by SF</div><div class="kpi-val" id="kpi-contractsf">$4.36</div></div>
+  </div>
+
+  <div id="content">
+
+    <!-- 1. EXECUTIVE SUMMARY -->
+    <div id="sec-exec" class="section active">
+      <div class="section-title">Executive Summary</div>
+      <div id="exec-pulse" style="margin-bottom:14px"></div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Total Monthly Rent by Location</div>
+          <div style="position:relative;height:260px"><canvas id="chart-monthly"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Total Monthly Cost by Location</div>
+          <div style="position:relative;height:260px"><canvas id="chart-annual"></canvas></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Location View</div>
+          <div class="map-wrap" id="map-wrap-exec">
+            <div style="height:290px;border-radius:6px;overflow:hidden" id="map-exec"></div>
+            <div class="map-ctrls">
+              <button class="map-btn" id="tile-btn-exec" onclick="toggleMapTile('exec')">🛰 Satellite</button>
+              <button class="map-btn" onclick="zoomOutMap('exec')">⊖ Zoom Out</button>
+              <button class="map-btn" onclick="toggleMapExpand('exec')">⛶ Expand</button>
+            </div>
+            <div class="map-legend">
+              <div class="map-legend-title">Months to Expiration</div>
+              <div class="map-legend-row"><span class="map-legend-dot" style="background:#111"></span>Expired</div>
+              <div class="map-legend-row"><span class="map-legend-dot" style="background:#c62828"></span>0–6 Mo</div>
+              <div class="map-legend-row"><span class="map-legend-dot" style="background:#e65100"></span>6–18 Mo</div>
+              <div class="map-legend-row"><span class="map-legend-dot" style="background:#2e7d32"></span>18+ Mo</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">Lease Expiration Timeline<button id="gantt-opt-toggle" onclick="toggleGanttOptions()" style="font-size:10px;padding:3px 10px;border:1px solid #c0c8d8;border-radius:4px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600;letter-spacing:.02em">Hide Option Windows</button></div>
+          <div style="position:relative;height:280px"><canvas id="chart-gantt"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. EXPIRATION OVERVIEW -->
+    <div id="sec-expir" class="section">
+      <div class="section-title">Expiration Overview</div>
+      <div id="expir-alerts" style="margin-bottom:14px"></div>
+      <div id="expir-action-center" style="margin-bottom:14px"></div>
+      <div class="full card">
+        <div class="card-title">Location Expiration by Year</div>
+        <div class="tbl-wrap">
+          <table class="dtbl" id="tbl-expir">
+            <thead>
+              <tr>
+                <th>#</th><th>Location Name ⇅</th><th>Options</th>
+                <th>Option 1 Notification Begins</th><th>Month Until Option 1 Opens</th>
+                <th>Option 1 Notice End</th><th>Option 2 Notification Begins</th>
+                <th>Month Until Option 2 Opens</th><th>Option 2 Notice End</th>
+                <th>Months to Expiration ⇅</th><th>Expiration ⇅</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-expir"></tbody>
+          </table>
+        </div>
+        <div class="legend" style="margin-top:10px">
+          <div class="leg"><div class="leg-box" style="background:#111"></div>Expired</div>
+          <div class="leg"><div class="leg-box" style="background:#c62828"></div>0–6 Months</div>
+          <div class="leg"><div class="leg-box" style="background:#e65100"></div>6–18 Months</div>
+          <div class="leg"><div class="leg-box" style="background:#2e7d32"></div>18+ Months</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. OPERATING EXPENSES -->
+    <div id="sec-opex" class="section">
+      <div class="section-title">Operating Expenses</div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Operating Cost (Base Rent + CAMs)</div>
+          <div class="tbl-wrap" style="overflow-y:auto">
+            <table class="dtbl" id="tbl-opex">
+              <thead>
+                <tr>
+                  <th>#</th><th>Location Name</th>
+                  <th>Operating Expenses Monthly</th>
+                  <th>Square Feet</th><th>Contract Monthly Cost by Sq Ft</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-opex"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">All-In Cost $/SF/Mo (Base Rent + OpEx)</div>
+          <div style="position:relative;flex:1;min-height:200px"><canvas id="chart-opex-stacked"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. RATE COMPARISON -->
+    <div id="sec-rate1" class="section">
+      <div class="section-title">Rate Comparison — Contract vs. Market</div>
+      <div class="filter-bar">
+        <label>Filter by Location:</label>
+        <select id="rate1-filter" onchange="filterRate1()">
+          <option value="all">All Locations</option>
+        </select>
+      </div>
+      <div class="full card">
+        <div class="card-title">Contract Monthly Cost vs. Market Gross Monthly by Sq Ft</div>
+        <div class="tbl-wrap" style="overflow-y:auto;max-height:220px">
+          <table class="dtbl">
+            <thead>
+              <tr>
+                <th style="text-align:left">#</th><th style="text-align:left">Location Name</th>
+                <th style="max-width:90px">Contract Monthly Cost by SF</th><th style="max-width:90px">Market Gross Monthly by SF</th>
+                <th style="max-width:80px">Contract vs Market</th><th style="max-width:80px">% Contract vs Market</th>
+                <th style="max-width:90px">Remaining Rent for Year</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-rate1"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="full card">
+        <div class="card-title">Contract vs. Market Rent by Month</div>
+        <div style="position:relative;height:300px"><canvas id="chart-rate2"></canvas></div>
+        <div class="legend" style="margin-top:8px">
+          <div class="leg"><div class="leg-box" style="background:#0d2040"></div>Market Gross Monthly Rent</div>
+          <div class="leg"><div class="leg-box" style="background:#d6ab5c"></div>Contract Total Monthly Gross</div>
+        </div>
+      </div>
+      <div class="full card">
+        <div class="card-title">Monthly Rent Schedule by Location</div>
+        <div class="tbl-wrap">
+          <table class="dtbl">
+            <thead>
+              <tr>
+                <th>Location Name</th><th>Contract Monthly Base Rent</th><th>Expiration Year</th>
+                <th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2031</th><th>2032</th><th>2033</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-rentschedule"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. PROPERTY ADDRESS KEY -->
+    <div id="sec-addrkey" class="section">
+      <div class="section-title">Property Address Key</div>
+
+      <!-- Stats + search bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap" id="addr-stats"></div>
+        <input id="addr-search" placeholder="🔍  Search properties, cities, states…"
+          oninput="filterAddrCards()"
+          style="padding:7px 14px;border-radius:20px;border:1px solid #d0d4da;font-size:12px;min-width:240px;outline:none;background:#fff;color:#333">
+      </div>
+
+      <!-- Card grid -->
+      <div id="addr-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px"></div>
+    </div>
+
+    <!-- 7. KEY ANALYTICS -->
+    <div id="sec-analytics" class="section">
+      <div class="section-title">Portfolio Analytics</div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Projected Total Portfolio Monthly Cost <span style="font-size:9px;font-weight:700;color:#888;letter-spacing:.04em;text-transform:uppercase">* 3% Escalation Assumed</span></div>
+          <div style="position:relative;height:220px"><canvas id="chart-projline"></canvas></div>
+          <div style="font-size:10px;color:#aaa;margin-top:6px;font-style:italic">* Assuming 3% escalation increase per year</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Remaining Term vs. Monthly Cost — bubble size = sqft</div>
+          <div style="position:relative;height:200px"><canvas id="chart-bubble"></canvas></div>
+          <div class="legend" style="margin-top:6px">
+            <div class="leg"><div class="leg-box" style="background:#111"></div>Expired</div>
+            <div class="leg"><div class="leg-box" style="background:#c62828"></div>0–6 mo</div>
+            <div class="leg"><div class="leg-box" style="background:#e65100"></div>6–18 mo</div>
+            <div class="leg"><div class="leg-box" style="background:#2e7d32"></div>18+ mo</div>
+          </div>
+        </div>
+      </div>
+      <div class="full card">
+        <div class="card-title">Contract vs. Market Rate
+          <span style="float:right;font-size:10px;color:#666">Sort: A→Z</span>
+        </div>
+        <div style="position:relative;height:280px"><canvas id="chart-scatter"></canvas></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-title">Monthly Cost Concentration — Top Locations</div>
+          <div style="position:relative;height:260px"><canvas id="chart-donut"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Contract vs. Market Rate — Over / Under</div>
+          <div style="position:relative;height:200px"><canvas id="chart-overunder"></canvas></div>
+          <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.5">Count of locations paying above vs. below current market rate. Over-market leases represent renewal negotiation opportunities. <span style="color:#0d2040;font-weight:600">Click a slice for the property list.</span></div>
+          <div id="overunder-list" style="margin-top:10px;font-size:11px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. CONTACT US -->
+    <div id="sec-contact" class="section">
+
+      <!-- Hero Banner -->
+      <div class="contact-hero">
+        <div class="contact-hero-text">
+          <h2>Let's Connect</h2>
+          <p>Your dedicated healthcare real estate team — always in your corner.</p>
+        </div>
+        <div class="contact-hero-logo">
+          <svg viewBox="0 0 220 70" xmlns="http://www.w3.org/2000/svg" style="width:190px">
+            <path d="M30 50 Q30 18 52 18 Q74 18 66 40 Q58 62 80 62 Q102 62 102 40" stroke="#d6ab5c" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle cx="102" cy="44" r="5" fill="#d6ab5c"/>
+            <path d="M52 62 Q52 50 66 40" stroke="#d6ab5c" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <text x="114" y="32" font-family="Segoe UI,Arial,sans-serif" font-size="18" font-weight="800" fill="#d6ab5c">PulsePath</text>
+            <text x="114" y="50" font-family="Segoe UI,Arial,sans-serif" font-size="11" font-weight="500" fill="rgba(255,255,255,0.55)" letter-spacing="3">HEALTH</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Two team panels -->
+      <div class="contact-teams">
+
+        <!-- PulsePath Health Team -->
+        <div class="contact-team-panel">
+          <div class="contact-team-header client">
+            <div class="team-icon client">🏥</div>
+            <div class="team-label">PulsePath Health</div>
+          </div>
+          <div class="contact-person">
+            <div class="contact-avatar client">JD</div>
+            <div class="contact-info">
+              <div class="cname">Jane Doe</div>
+              <div class="cdetail"><a href="mailto:Jane@PulsePathHealth.com">Jane@PulsePathHealth.com</a><br>(805) 555-5555</div>
+            </div>
+          </div>
+          <div class="contact-person">
+            <div class="contact-avatar client">JD</div>
+            <div class="contact-info">
+              <div class="cname">John Doe</div>
+              <div class="cdetail"><a href="mailto:John@PulsePathHealth.com">John@PulsePathHealth.com</a><br>(805) 555-5555</div>
+            </div>
+          </div>
+          <div class="contact-person">
+            <div class="contact-avatar client">SJ</div>
+            <div class="contact-info">
+              <div class="cname">Sally Joe</div>
+              <div class="cdetail"><a href="mailto:Sally@PulsePathHealth.com">Sally@PulsePathHealth.com</a><br>(805) 555-5555</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MedWest Realty Team -->
+        <div class="contact-team-panel">
+          <div class="contact-team-header medwest">
+            <div class="team-icon medwest">🏢</div>
+            <div class="team-label">MedWest Realty</div>
+          </div>
+          <div class="contact-person">
+            <div class="contact-avatar medwest">B1</div>
+            <div class="contact-info">
+              <div class="cname">Broker #1</div>
+              <div class="crole">Broker</div>
+              <div class="cdetail"><a href="mailto:Broker#1@MedWestRealty.com">Broker#1@MedWestRealty.com</a><br>(867) 867-5309</div>
+            </div>
+          </div>
+          <div class="contact-person">
+            <div class="contact-avatar medwest">B2</div>
+            <div class="contact-info">
+              <div class="cname">Broker #2</div>
+              <div class="crole">Broker</div>
+              <div class="cdetail"><a href="mailto:Broker#2@MedWestRealty.com">Broker#2@MedWestRealty.com</a><br>(867) 867-5309</div>
+            </div>
+          </div>
+          <div class="contact-person">
+            <div class="contact-avatar medwest">MM</div>
+            <div class="contact-info">
+              <div class="cname">Madi McKenney</div>
+              <div class="crole">Air Traffic Controller</div>
+              <div class="cdetail"><a href="mailto:Madi@MedWestRealty.com">Madi@MedWestRealty.com</a><br>(985) 317-7665</div>
+            </div>
+          </div>
+          <div class="contact-person">
+            <div class="contact-avatar medwest">TS</div>
+            <div class="contact-info">
+              <div class="cname">Tori Smith</div>
+              <div class="crole">Data Guru</div>
+              <div class="cdetail"><a href="mailto:Tori@MedWestRealty.com">Tori@MedWestRealty.com</a><br>(727) 377-0120</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 9. PIPELINE DEALS -->
+    <div id="sec-pipeline" class="section">
+      <div class="section-title" style="border-color:#29374d">★ Pipeline Deals — Prospective Locations</div>
+      <div class="two-col" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-title">Pipeline Summary</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="pipeline-kpis"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Deals by Stage</div>
+          <div style="position:relative;height:140px"><canvas id="chart-pipeline"></canvas></div>
+        </div>
+      </div>
+      <div class="pipeline-add">
+        <h4>Add New Pipeline Deal</h4>
+        <div class="form-row">
+          <input id="p-name" placeholder="Location / City Name"/>
+          <input id="p-address" placeholder="Address"/>
+          <input id="p-city" placeholder="City"/>
+          <input id="p-state" placeholder="State" maxlength="2" style="max-width:70px"/>
+          <input id="p-sf" placeholder="Est. Sq Ft" type="number"/>
+          <input id="p-rent" placeholder="Rent $/SF/Mo" type="number" step="0.01"/>
+          <select id="p-stage">
+            <option>Prospecting</option><option>Touring</option><option>LOI</option>
+            <option selected>Lease Negotiation</option><option>Lease Execution</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <select id="p-dealtype">
+            <option value="">Deal Type...</option>
+            <option>Extension</option><option>Relocation</option><option>Expansion</option>
+            <option>New Location</option><option>Blend &amp; Extend</option><option>Build-to-Suit</option><option>Purchase</option>
+          </select>
+          <input id="p-prob" placeholder="Prob. %" type="number" min="0" max="100" style="max-width:100px"/>
+          <input id="p-closedate" placeholder="Est. Close (YYYY-MM)" style="max-width:160px"/>
+          <input id="p-termyears" placeholder="Term (yrs)" type="number" step="0.5" style="max-width:110px"/>
+          <input id="p-competing" placeholder="Competing Properties"/>
+          <input id="p-notes" placeholder="Notes / Next Step"/>
+        </div>
+        <div class="pipeline-actions">
+          <button class="btn-add" onclick="addPipelineDeal()">+ Add Deal</button>
+          <button class="btn-sec" onclick="openAddFromLease()">+ Add from Current Lease</button>
+          <button class="btn-sec" style="background:#d6ab5c" onclick="openAddExpiring()">+ Add Expiring Lease</button>
+          <button class="btn-sec" style="background:#1a6b8a" onclick="openLeaseNote()">✎ Log Lease Note</button>
+        </div>
+      </div>
+      <div class="full card">
+        <div class="card-title">Prospective Locations</div>
+        <div class="tbl-wrap">
+          <table class="dtbl">
+            <thead>
+              <tr>
+                <th></th><th>#</th><th>Type</th><th>Stage</th><th>Location / City</th><th>Address</th><th>City</th><th>State</th>
+                <th>Est. SF</th><th>Rent $/SF/Mo</th><th>Est. Monthly</th>
+                <th>Prob</th><th>Est. Close</th><th>Commission Est.</th>
+                <th>Notes / Next Step</th><th>Comment</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-pipeline"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-fromlease">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-fromlease')">✕</button>
+    <h3>Add from Current Lease</h3>
+    <div class="modal-form">
+      <div class="row"><label>Location</label><select id="fl-loc"><option value="">Select...</option></select></div>
+      <div class="row"><label>Stage</label>
+        <select id="fl-stage"><option>Prospecting</option><option>Touring</option><option>LOI</option><option selected>Lease Negotiation</option><option>Lease Execution</option></select>
+      </div>
+      <div class="row"><label>Notes / Next Step</label><textarea id="fl-notes"></textarea></div>
+      <button class="modal-btn" onclick="addFromLease()">+ Add to Pipeline</button>
+      <button class="modal-btn" style="background:#888;margin-left:8px" onclick="closeModal('modal-fromlease')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-expiring">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-expiring')">✕</button>
+    <h3>Add Expiring Lease to Pipeline</h3>
+    <div class="modal-form">
+      <div class="row"><label>Show leases expiring within</label>
+        <select id="exp-window"><option>12 months</option><option selected>24 months</option><option>36 months</option></select>
+      </div>
+      <div id="exp-list" style="margin:10px 0;max-height:180px;overflow-y:auto"></div>
+      <div class="row"><label>Stage</label>
+        <select id="exp-stage"><option>Prospecting</option><option>Touring</option><option>LOI</option><option selected>Lease Negotiation</option><option>Lease Execution</option></select>
+      </div>
+      <div class="row"><label>Notes / Next Step</label><textarea id="exp-notes"></textarea></div>
+      <button class="modal-btn" onclick="addExpiringToPipeline()">+ Add Selected to Pipeline</button>
+      <button class="modal-btn" style="background:#888;margin-left:8px" onclick="closeModal('modal-expiring')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-alertdetail">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-alertdetail')">✕</button>
+    <h3 id="alertdetail-title"></h3>
+    <div id="alertdetail-body" style="max-height:320px;overflow-y:auto;font-size:12px;line-height:1.6;margin-top:8px"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-leasenote">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-leasenote')">✕</button>
+    <h3>✎ Log Lease Note / Update</h3>
+    <div class="modal-form">
+      <div class="row"><label>Location</label><select id="ln-loc"><option value="">Select...</option></select></div>
+      <div class="row"><label>Update Type</label>
+        <select id="ln-type">
+          <option>Renewal Discussion</option><option>Touring Alternatives</option>
+          <option>Lease Amendment</option><option>Rent Negotiation</option><option>General Update</option>
+        </select>
+      </div>
+      <div class="row"><label>Note</label><textarea id="ln-note"></textarea></div>
+      <button class="modal-btn" onclick="saveLeaseNote()">Save Note</button>
+      <button class="modal-btn" style="background:#888;margin-left:8px" onclick="closeModal('modal-leasenote')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="map-fullscreen-overlay" id="map-fullscreen-overlay"></div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const LOCATIONS = [
+  { name:"Property 1",  address:"301 W Huntington",          suite:"408",   city:"Arcadia",       state:"CA", zip:"91007", lat:34.1397, lng:-118.0353, termMo:63,   sqft:5446,  monthly:22383.06,  annual:268596.72,  expiry:"2027-05-31", opexAnnual:75808.32,  opexMonthly:6317.36,  contractSF:2.95, marketSF:3.00, remaining:72540.72,   options:"1, 5 year",  rentSchedule:{2026:268596.72,2027:276654.62,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-05-31", opt1MonthsUntil:2,    opt1NoticeEnd:"2026-08-29", opt2NotifBegins:"2031-05-31", opt2MonthsUntil:59, opt2NoticeEnd:"2031-08-29" },
+  { name:"Property 2",  address:"285 El Camino Real",         suite:"114",   city:"Encinitas",     state:"CA", zip:"92024", lat:33.0369, lng:-117.2920, termMo:null, sqft:5005,  monthly:22272.25,  annual:267267.00,  expiry:"2028-08-30", opexAnnual:57057.00,  opexMonthly:4754.75,  contractSF:3.50, marketSF:5.00, remaining:-33033.00,  options:"1, 5 year",  rentSchedule:{2026:267267,2027:275285.01,2028:283543.56,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2027-08-31", opt1MonthsUntil:17,   opt1NoticeEnd:"2027-11-29", opt2NotifBegins:"2032-08-30", opt2MonthsUntil:74, opt2NoticeEnd:"2032-11-28" },
+  { name:"Property 3",  address:"499 El Camino Real",         suite:"106",   city:"Encinitas",     state:"CA", zip:"92024", lat:33.0400, lng:-117.2950, termMo:null, sqft:3788,  monthly:19583.96,  annual:235007.52,  expiry:"2027-03-31", opexAnnual:53183.52,  opexMonthly:4431.96,  contractSF:4.00, marketSF:5.00, remaining:7727.52,    options:"1, 5 year",  rentSchedule:{2026:235007.52,2027:242057.75,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-03-31", opt1MonthsUntil:0,    opt1NoticeEnd:"2026-06-29", opt2NotifBegins:"2031-03-31", opt2MonthsUntil:57, opt2NoticeEnd:"2031-06-29" },
+  { name:"Property 4",  address:"222 W Eulalia St",           suite:"310",   city:"Glendale",      state:"CA", zip:"91204", lat:34.1425, lng:-118.2551, termMo:null, sqft:5218,  monthly:23324.46,  annual:279893.52,  expiry:"2026-12-31", opexAnnual:13775.52,  opexMonthly:1147.96,  contractSF:4.25, marketSF:5.50, remaining:-64494.48,  options:null,         rentSchedule:{2026:279893.52,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
+  { name:"Property 5",  address:"1500 Chevy Chase",           suite:"200B",  city:"Glendale",      state:"CA", zip:"91206", lat:34.1480, lng:-118.2480, termMo:null, sqft:2928,  monthly:15459.84,  annual:185518.08,  expiry:"2032-01-31", opexAnnual:16865.28,  opexMonthly:1405.44,  contractSF:4.80, marketSF:4.75, remaining:18622.08,   options:null,         rentSchedule:{2026:185518.08,2027:191083.62,2028:196816.13,2029:202720.62,2030:208802.23,2031:215066.30,2032:221518.29,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
+  { name:"Property 6",  address:"114 Pacifica",               suite:"450",   city:"Irvine",        state:"CA", zip:"92618", lat:33.6846, lng:-117.8265, termMo:null, sqft:9835,  monthly:59010.00,  annual:708120.00,  expiry:"2029-03-31", opexAnnual:194733.00, opexMonthly:16227.75, contractSF:4.35, marketSF:5.50, remaining:59010.00,   options:"1, 5 year",  rentSchedule:{2026:708120,2027:729363.60,2028:751244.51,2029:773781.84,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-03-31", opt1MonthsUntil:24,   opt1NoticeEnd:"2028-06-29", opt2NotifBegins:"2033-03-31", opt2MonthsUntil:81, opt2NoticeEnd:"2033-06-29" },
+  { name:"Property 7",  address:"3500 Barranca",              suite:"150",   city:"Irvine",        state:"CA", zip:"92606", lat:33.6900, lng:-117.8300, termMo:null, sqft:2230,  monthly:11373.00,  annual:136476.00,  expiry:"2027-01-31", opexAnnual:32647.20,  opexMonthly:2720.60,  contractSF:3.88, marketSF:5.50, remaining:-10704.00,  options:"1, 5 year",  rentSchedule:{2026:136476,2027:140570.28,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-01-31", opt1MonthsUntil:null, opt1NoticeEnd:"2026-05-01", opt2NotifBegins:"2031-01-31", opt2MonthsUntil:55, opt2NoticeEnd:"2031-05-01" },
+  { name:"Property 8",  address:"16100 Sand Canyon Ave",      suite:"130",   city:"Irvine",        state:"CA", zip:"92618", lat:33.6780, lng:-117.8120, termMo:null, sqft:7495,  monthly:42946.35,  annual:515356.20,  expiry:"2029-03-31", opexAnnual:20686.20,  opexMonthly:1723.85,  contractSF:5.50, marketSF:4.00, remaining:155596.20,  options:"1, 5 year",  rentSchedule:{2026:515356.20,2027:530816.89,2028:546741.39,2029:563143.63,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-03-31", opt1MonthsUntil:24,   opt1NoticeEnd:"2028-06-29", opt2NotifBegins:"2033-03-31", opt2MonthsUntil:81, opt2NoticeEnd:"2033-06-29" },
+  { name:"Property 9",  address:"8950 Villa La Jolla",        suite:"C207",  city:"La Jolla",      state:"CA", zip:"92037", lat:32.8328, lng:-117.2713, termMo:null, sqft:6031,  monthly:25088.96,  annual:301067.52,  expiry:"2028-01-31", opexAnnual:26053.92,  opexMonthly:2171.16,  contractSF:3.80, marketSF:4.25, remaining:-6513.48,   options:"1, 5 year",  rentSchedule:{2026:301067.52,2027:310099.55,2028:319402.53,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2027-01-31", opt1MonthsUntil:10,   opt1NoticeEnd:"2027-05-01", opt2NotifBegins:"2032-01-31", opt2MonthsUntil:67, opt2NoticeEnd:"2032-04-30" },
+  { name:"Property10",  address:"24331 El Toro Rd",           suite:"150",   city:"Laguna Woods",  state:"CA", zip:"92637", lat:33.6097, lng:-117.7258, termMo:null, sqft:9096,  monthly:32927.52,  annual:395130.24,  expiry:"2030-02-28", opexAnnual:73131.84,  opexMonthly:6094.32,  contractSF:2.95, marketSF:3.85, remaining:-25104.96,  options:"2, 5 year",  rentSchedule:{2026:395130.24,2027:406984.15,2028:419193.67,2029:431769.48,2030:444722.57,2031:null,2032:null,2033:null}, opt1NotifBegins:"2029-02-28", opt1MonthsUntil:35,   opt1NoticeEnd:"2029-05-29", opt2NotifBegins:"2034-02-28", opt2MonthsUntil:91, opt2NoticeEnd:"2034-05-29" },
+  { name:"Property11",  address:"5750 Downey",                suite:"203",   city:"Lakewood",      state:"CA", zip:"90712", lat:33.8536, lng:-118.1339, termMo:null, sqft:1634,  monthly:5408.54,   annual:64902.48,   expiry:"2029-03-31", opexAnnual:3137.28,   opexMonthly:261.44,   contractSF:3.15, marketSF:3.70, remaining:-7647.12,   options:null,         rentSchedule:{2026:64902.48,2027:66849.55,2028:68855.04,2029:70920.69,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
+  { name:"Property12",  address:"47649 Caleo Bay",            suite:"210",   city:"La Quinta",     state:"CA", zip:"92253", lat:33.6636, lng:-116.3100, termMo:null, sqft:3726,  monthly:10991.70,  annual:131900.40,  expiry:"2026-09-30", opexAnnual:0,         opexMonthly:0,        contractSF:2.95, marketSF:3.65, remaining:-31298.40,  options:"1, 5 year",  rentSchedule:{2026:131900.40,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2025-09-30", opt1MonthsUntil:null, opt1NoticeEnd:"2025-12-29", opt2NotifBegins:"2030-09-30", opt2MonthsUntil:51, opt2NoticeEnd:"2030-12-29" },
+  { name:"Property13",  address:"351 & 361 Hospital Road",    suite:"522",   city:"Newport Beach", state:"CA", zip:"92663", lat:33.6189, lng:-117.9289, termMo:null, sqft:1825,  monthly:10274.75,  annual:123297.00,  expiry:"2025-05-31", opexAnnual:41172.00,  opexMonthly:3431.00,  contractSF:3.75, marketSF:6.10, remaining:-10293.00,  options:null,         rentSchedule:{2026:null,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
+  { name:"Property14",  address:"72780 Country Club Dr",      suite:"305B",  city:"Rancho Mirage", state:"CA", zip:"92270", lat:33.7394, lng:-116.4500, termMo:null, sqft:2433,  monthly:10218.60,  annual:122623.20,  expiry:"2027-06-30", opexAnnual:16057.80,  opexMonthly:1338.15,  contractSF:3.65, marketSF:4.08, remaining:3503.52,    options:"1, 10 year", rentSchedule:{2026:122623.20,2027:126301.90,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-06-30", opt1MonthsUntil:2,    opt1NoticeEnd:"2026-09-28", opt2NotifBegins:"2036-06-29", opt2MonthsUntil:120,opt2NoticeEnd:"2036-09-27" },
+  { name:"Property15",  address:"100 N Green Valley Pkwy",    suite:"125",   city:"Henderson",     state:"NV", zip:"89074", lat:36.0395, lng:-114.9817, termMo:null, sqft:19319, monthly:80753.42,  annual:969041.04,  expiry:"2030-03-31", opexAnnual:99686.04,  opexMonthly:8307.17,  contractSF:3.75, marketSF:3.95, remaining:53320.44,   options:"2, 5 year",  rentSchedule:{2026:969041.04,2027:998112.27,2028:1028055.64,2029:1058897.31,2030:1090664.23,2031:null,2032:null,2033:null}, opt1NotifBegins:"2029-03-31", opt1MonthsUntil:36,   opt1NoticeEnd:"2029-06-29", opt2NotifBegins:"2034-03-31", opt2MonthsUntil:93, opt2NoticeEnd:"2034-06-29" },
+  { name:"Property16",  address:"2270 Ridgeview Dr",          suite:"127",   city:"Yuma",          state:"AZ", zip:"85364", lat:32.6927, lng:-114.6277, termMo:null, sqft:8885,  monthly:21324.00,  annual:255888.00,  expiry:"2029-02-28", opexAnnual:5331.00,   opexMonthly:444.25,   contractSF:2.35, marketSF:2.78, remaining:-40515.60,  options:"1, 5 year",  rentSchedule:{2026:255888,2027:263564.64,2028:271471.58,2029:279615.73,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-02-28", opt1MonthsUntil:20,   opt1NoticeEnd:"2028-02-29", opt2NotifBegins:"2033-02-28", opt2MonthsUntil:79, opt2NoticeEnd:"2033-05-29" }
+];
+
+const RENT_YEARS = [2026,2027,2028,2029,2030,2031,2032,2033];
+const YEAR_COLORS = ['#d6ab5c','#f99a52','#fbb97a','#fcd4a8','#a5d6a7','#66bb6a','#388e3c','#1b5e20'];
+const DOT_COLORS = ['#d6ab5c','#0d2040','#f99a52','#1a3560','#fbb97a','#243e72','#fcd4a8','#2e5294','#c59d55','#3a6ab5','#c45a10','#4d80cc','#0a1830','#f6924a','#122848','#fca872'];
+
+const KPI_DEFAULTS = {
+  locations: String(LOCATIONS.length),
+  sqft: '94,894',
+  monthly: '$413,340.41',
+  contractsf: '$4.36'
+};
+
+let _selectedKpiLocation = null;
+
+// ---- Default seed data (used when localStorage is empty) ----
+const DEFAULT_PIPELINE = [
+  {id:1000001,name:'Coastal Medical Group',addr:'4455 Morena Blvd',city:'San Diego',state:'CA',sf:3200,rent:3.37,stage:'Lease Negotiation',dealType:'Extension',holdover:true,origExpiry:'2025-06-30',prob:72,closeDate:'2026-09',termYears:3,competing:'None — tenant prefers current location',notes:'Holdover since Jun 2025. Counter sent 6/28 on TI request ($18/SF). Follow-up call 7/15.'},
+  {id:1000002,name:'Advanced Orthopedics',addr:'8901 Miramar Rd (current)',city:'San Diego',state:'CA',sf:5800,rent:4.25,stage:'Touring',dealType:'Relocation',holdover:false,origExpiry:null,prob:45,closeDate:'2026-10',termYears:5,competing:'8880 Rio San Diego Dr; 3252 Holiday Ct',notes:'Current lease ends Dec 2026. Must occupy by Oct. Prefers North Clairemont corridor; needs 4/1000 parking.'},
+  {id:1000003,name:'Pacific Coast Dermatology',addr:'2850 Pio Pico Dr',city:'Carlsbad',state:'CA',sf:2600,rent:3.20,stage:'LOI',dealType:'Blend & Extend',holdover:false,origExpiry:null,prob:55,closeDate:'2026-08',termYears:3,competing:'None — in-place restructure',notes:'Blended rate at $3.20/SF/Mo accepted in principle. $15/SF TI. LOI drafted; execution Aug 2026.'},
+  {id:1000004,name:'Bay Area Pediatrics',addr:'2211 Fifth Ave',city:'San Diego',state:'CA',sf:2100,rent:3.85,stage:'Lease Negotiation',dealType:'Extension',holdover:true,origExpiry:'2025-03-31',prob:80,closeDate:'2026-07',termYears:3,competing:'None',notes:'Holdover since Mar 2025. Verbal agreement: 3-yr renewal at $3.85/SF/Mo NNN. Lease amendment in draft.'},
+  {id:1000005,name:'Summit Health Partners',addr:'Escondido/Vista Corridor',city:'Escondido',state:'CA',sf:8000,rent:3.50,stage:'Prospecting',dealType:'New Location',holdover:false,origExpiry:null,prob:25,closeDate:'2026-12',termYears:5,competing:'Escondido Medical Arts; 1011 Nordahl Rd',notes:'Early-stage. Board approval required Q3 2026 before LOI. Initial site tours completed Jun 5.'},
+  {id:1000006,name:'Desert Valley Imaging',addr:'72780 Country Club Dr',city:'Rancho Mirage',state:'CA',sf:3500,rent:3.65,stage:'LOI',dealType:'Expansion',holdover:false,origExpiry:null,prob:65,closeDate:'2026-09',termYears:5,competing:'Adjacent suite — same building',notes:'Expanding into adjacent Ste 310B. LOI submitted 6/18. Requesting 12-mo abatement + $40/SF TI.'},
+  {id:1000007,name:'Nexus Behavioral Health',addr:'1800 Thibodo Rd',city:'Vista',state:'CA',sf:4400,rent:3.10,stage:'Lease Execution',dealType:'New Location',holdover:false,origExpiry:null,prob:95,closeDate:'2026-07',termYears:5,competing:'None — deal locked',notes:'LOI executed. 5-yr term at $3.10/SF/Mo NNN, $45/SF TI confirmed. Lease docs sent to tenant 6/20.'}
+];
+const DEFAULT_NOTES = [
+  {id:2000001,date:'6/28/2026',loc:'Coastal Medical Group',type:'Rent Negotiation',note:'Tenant requested TI allowance of $25/SF. Counter at $18/SF sent 6/28. Follow-up call scheduled for 7/15 to confirm or negotiate further.'},
+  {id:2000002,date:'6/25/2026',loc:'Advanced Orthopedics',type:'Touring Alternatives',note:'Toured 3252 Holiday Ct and 8880 Rio San Diego Dr. Client preferred Holiday Ct layout but wants parking ratio of 4/1000 min. Landlord at Holiday Ct willing to negotiate. Decision expected by 7/10.'},
+  {id:2000003,date:'6/20/2026',loc:'Nexus Behavioral Health',type:'General Update',note:'Lease execution package sent to tenant counsel for review. Signed docs expected back by 7/1. Final TI walk-through scheduled for 7/8 with contractor.'},
+  {id:2000004,date:'6/18/2026',loc:'Desert Valley Imaging',type:'Lease Amendment',note:'LOI submitted to landlord for expansion into adjacent Ste 310B (3,500 SF). Requesting 12-month rent abatement on new space and $40/SF TI. Landlord counter expected within 10 business days.'},
+  {id:2000005,date:'6/15/2026',loc:'Pacific Coast Dermatology',type:'Lease Amendment',note:'Blend & extend proposal accepted in principle by tenant. Blended rate locked at $3.20/SF/Mo NNN with $15/SF TI for minor refresh. Formal LOI being drafted this week.'},
+  {id:2000006,date:'6/10/2026',loc:'Bay Area Pediatrics',type:'Rent Negotiation',note:'Tenant has been in holdover since March 2025 expiration. Both parties verbally agreed: 3-year extension at $3.85/SF/Mo NNN. Lease amendment drafting begins 6/12. Tenant attorney engaged.'},
+  {id:2000007,date:'6/5/2026',loc:'Summit Health Partners',type:'General Update',note:'Initial site tour of Escondido Medical Arts campus and 1011 Nordahl Rd. Client is early-stage — board approval required Q3 2026 before proceeding. Will re-engage after internal vote.'},
+  {id:2000008,date:'5/28/2026',loc:'Coastal Medical Group',type:'Renewal Discussion',note:'Kick-off call with practice manager. Lease expired Jun 2025; tenant in holdover at original rate. Open to 3-yr renewal at updated market rate (~$40/SF NNN). Two competing landlord proposals noted — must move quickly to retain.'},
+  {id:2000009,date:'5/20/2026',loc:'Advanced Orthopedics',type:'Touring Alternatives',note:'Initial needs assessment complete. Growing from 4,100 SF → ~5,800 SF to add surgical suite. Budget $4.00–4.50/SF/Mo NNN. Hard deadline: Oct 2026 occupancy before current lease expires Dec 2026.'},
+  {id:2000010,date:'5/15/2026',loc:'Nexus Behavioral Health',type:'General Update',note:'LOI executed. 5-year term at $3.10/SF/Mo NNN accepted by both parties. $45/SF TI allowance confirmed in writing. Deal advancing to lease negotiation with landlord counsel this week.'}
+];
+
+let _pipelineData = (()=>{ const d=JSON.parse(localStorage.getItem('pp_pipeline')||'null'); return(d&&d.length)?d:DEFAULT_PIPELINE.map(x=>({...x})); })();
+let _expandedDeals = new Set();
+let _leaseNotes   = (()=>{ const n=JSON.parse(localStorage.getItem('pp_notes')||'null');    return(n&&n.length)?n:DEFAULT_NOTES.map(x=>({...x}));    })();
+let _ganttShowOptions = true;
+let _chartInstances = {};
+let _mapInstances = {};
+let _mapTileLayers = {};
+let _mapTileMode = {};
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmt$(v){ return v!=null ? '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; }
+function fmtSF(v){ return v!=null ? v.toLocaleString('en-US') : '—'; }
+function fmtMo(v){ return v!=null ? v+' mo' : '—'; }
+
+function monthsUntil(dateStr){
+  if(!dateStr) return null;
+  const now = new Date(), exp = new Date(dateStr);
+  return Math.round((exp - now) / (1000*60*60*24*30.44));
+}
+
+function expiryBadge(dateStr){
+  if(!dateStr) return '<span class="badge badge-dash">—</span>';
+  const m = monthsUntil(dateStr);
+  if(m < 0)  return '<span class="badge badge-expired">Expired</span>';
+  if(m < 6)  return '<span class="badge badge-red">0–6 Mo</span>';
+  if(m < 18) return '<span class="badge badge-orange">6–18 Mo</span>';
+  return '<span class="badge badge-green">18+ Mo</span>';
+}
+
+function stageClass(s){
+  return {Prospecting:'stage-prospect',Touring:'stage-touring',LOI:'stage-loi','Lease Negotiation':'stage-negotiating','Lease Execution':'stage-lease'}[s]||'stage-closed';
+}
+
+function destroyChart(id){
+  if(_chartInstances[id]){ _chartInstances[id].destroy(); delete _chartInstances[id]; }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const TAB_NAMES = {exec:'Executive Summary',expir:'Expiration Overview',opex:'Operating Expenses',rate1:'Rate Comparison',addrkey:'Property Address Key',analytics:'Portfolio Analytics',contact:'Contact Us',pipeline:'Pipeline Deals'};
+
+function showSection(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('#sidebar nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  const links = document.querySelectorAll('#sidebar nav a');
+  links.forEach(a=>{ if(a.getAttribute('onclick')&&a.getAttribute('onclick').includes("'"+id+"'")) a.classList.add('active'); });
+  // init maps/charts on first view
+  if(id==='exec')      { initExecCharts(); initMap('exec'); }
+  if(id==='expir')     { buildExpirTable(); initMap('expir'); }
+  if(id==='opex')      { buildOpexTable(); initOpexChart(); }
+  if(id==='rate1')     { buildRate1Table(); buildRate2Chart(); buildRentScheduleTable(); }
+  if(id==='addrkey')   { buildAddrTable(); }
+  if(id==='analytics') { initAnalyticsCharts(); }
+  if(id==='pipeline')  { buildPipelineUI(); }
+}
+
+// ============================================================
+// KPI
+// ============================================================
+function selectLocation(name){
+  if(_selectedKpiLocation===name){ resetKPIs(); return; }
+  const loc = LOCATIONS.find(l=>l.name===name);
+  if(!loc) return;
+  _selectedKpiLocation = name;
+  document.getElementById('kpi-location-label').textContent = name;
+  document.getElementById('kpi-reset-btn').style.display = 'inline';
+  document.getElementById('kpi-locations').textContent = '1';
+  document.getElementById('kpi-sqft').textContent = loc.sqft ? loc.sqft.toLocaleString() : '—';
+  document.getElementById('kpi-monthly').textContent = loc.monthly ? fmt$(loc.monthly) : '—';
+  document.getElementById('kpi-contractsf').textContent = loc.contractSF ? fmt$(loc.contractSF) : '—';
+  document.getElementById('kpi-bar').style.background = '#f7f9fc';
+}
+
+function resetKPIs(){
+  _selectedKpiLocation = null;
+  document.getElementById('kpi-location-label').textContent = 'All Locations';
+  document.getElementById('kpi-reset-btn').style.display = 'none';
+  document.getElementById('kpi-locations').textContent = KPI_DEFAULTS.locations;
+  document.getElementById('kpi-sqft').textContent = KPI_DEFAULTS.sqft;
+  document.getElementById('kpi-monthly').textContent = KPI_DEFAULTS.monthly;
+  document.getElementById('kpi-contractsf').textContent = KPI_DEFAULTS.contractsf;
+  document.getElementById('kpi-bar').style.background = '#fff';
+}
+
+// ============================================================
+// MAPS
+// ============================================================
+const TILE_SAT = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const TILE_STD = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+function initMap(which){
+  if(_mapInstances[which]) return;
+  const validLocs = LOCATIONS.filter(l=>l.lat&&l.lng);
+  const center = [34.0, -116.5], zoom = 6;
+
+  if(which==='exec'){
+    const m = L.map('map-exec',{zoomControl:true}).setView(center,zoom);
+    const tl_exec = L.tileLayer(TILE_STD,{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);
+    _mapTileLayers[which] = tl_exec; _mapTileMode[which] = 'std';
+    validLocs.forEach(loc=>{
+      const col = monthsUntil(loc.expiry)<0?'#111':monthsUntil(loc.expiry)<6?'#c62828':monthsUntil(loc.expiry)<18?'#e65100':'#2e7d32';
+      L.circleMarker([loc.lat,loc.lng],{radius:8,fillColor:col,color:'#fff',weight:1.5,fillOpacity:1})
+        .addTo(m).bindPopup(`<b>${loc.name}</b><br>${loc.city}, ${loc.state}<br>Exp: ${loc.expiry||'—'}`);
+    });
+    _mapInstances[which] = m;
+  }
+  if(which==='expir'){
+    const m = L.map('map-expir',{zoomControl:true}).setView(center,zoom);
+    const tl_expir = L.tileLayer(TILE_STD,{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);
+    _mapTileLayers[which] = tl_expir; _mapTileMode[which] = 'std';
+    validLocs.forEach(loc=>{
+      const mo = monthsUntil(loc.expiry);
+      const col = mo<0?'#111':mo<6?'#c62828':mo<18?'#e65100':'#2e7d32';
+      L.circleMarker([loc.lat,loc.lng],{radius:9,fillColor:col,color:'#fff',weight:1.5,fillOpacity:1})
+        .addTo(m).bindPopup(`<b>${loc.name}</b><br>${loc.city}, ${loc.state}<br>Exp: ${loc.expiry||'—'}<br>${mo!==null?mo+' months':''}`);
+    });
+    _mapInstances[which] = m;
+    setTimeout(()=>{ m.invalidateSize(); }, 80);
+  }
+  if(which==='sat'){
+    const m = L.map('map-sat',{zoomControl:true}).setView(center,zoom);
+    L.tileLayer(TILE_SAT,{attribution:'© Esri',maxZoom:19}).addTo(m);
+    const maxA = Math.max(...validLocs.filter(l=>l.annual).map(l=>l.annual));
+    validLocs.forEach((loc,i)=>{
+      const r = loc.annual ? 8+Math.sqrt(loc.annual/maxA)*30 : 6;
+      const col = DOT_COLORS[i%DOT_COLORS.length];
+      L.circleMarker([loc.lat,loc.lng],{radius:r,fillColor:col,color:'#fff',weight:1.5,fillOpacity:0.7})
+        .addTo(m).bindPopup(`<b>${loc.name}</b><br>${loc.address}${loc.suite?', #'+loc.suite:''}<br>${loc.city}, ${loc.state}<br>Annual: ${fmt$(loc.annual)}<br>SF: ${fmtSF(loc.sqft)}`);
+    });
+    _mapInstances[which] = m;
+  }
+}
+
+function resetExpirMap(){ if(_mapInstances.expir){ _mapInstances.expir.setView([34.0,-116.5],6); } }
+function resetSatMap(){   if(_mapInstances.sat){   _mapInstances.sat.setView([34.0,-116.5],6); } }
+
+function toggleMapTile(which){
+  const m = _mapInstances[which];
+  if(!m||!_mapTileLayers[which]) return;
+  const btn = document.getElementById('tile-btn-'+which);
+  if(_mapTileMode[which]==='sat'){
+    _mapTileLayers[which].setUrl(TILE_STD);
+    _mapTileMode[which]='std';
+    if(btn){ btn.textContent='🛰 Satellite'; btn.classList.remove('sat-active'); }
+  } else {
+    _mapTileLayers[which].setUrl(TILE_SAT);
+    _mapTileMode[which]='sat';
+    if(btn){ btn.textContent='🗺 Street'; btn.classList.add('sat-active'); }
+  }
+}
+
+function zoomOutMap(which){
+  if(_mapInstances[which]) _mapInstances[which].setView([34.0,-116.5],6);
+}
+function zoomInMap(which){
+  if(_mapInstances[which]) _mapInstances[which].zoomIn();
+}
+
+const _mapExpandOriginal = {};
+function toggleMapExpand(which){
+  const overlay = document.getElementById('map-fullscreen-overlay');
+  const wrap = document.getElementById('map-wrap-'+which);
+  if(!overlay||!wrap) return;
+  if(overlay.classList.contains('open') && overlay.dataset.which===which){
+    const orig = _mapExpandOriginal[which];
+    if(orig) orig.parent.insertBefore(wrap, orig.next);
+    overlay.classList.remove('open');
+    overlay.innerHTML = '';
+    delete overlay.dataset.which;
+  } else {
+    _mapExpandOriginal[which] = {parent:wrap.parentNode, next:wrap.nextSibling};
+    overlay.innerHTML = '';
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'map-fullscreen-close';
+    closeBtn.textContent = '✕ Close';
+    closeBtn.onclick = ()=>toggleMapExpand(which);
+    overlay.appendChild(closeBtn);
+    overlay.appendChild(wrap);
+    overlay.dataset.which = which;
+    overlay.classList.add('open');
+  }
+  setTimeout(()=>{ if(_mapInstances[which]) _mapInstances[which].invalidateSize(); }, 150);
+}
+
+// ============================================================
+// EXEC CHARTS
+// ============================================================
+function initExecCharts(){
+  if(_chartInstances['monthly']) return;
+
+  // -- Portfolio Pulse insight cards --
+  buildAlertCards('exec-pulse', LOCATIONS, 'exec', null);
+
+  const locs = LOCATIONS.filter(l=>l.monthly);
+  const labels = locs.map(l=>l.name);
+  const colors = '#d6ab5c';
+
+  _chartInstances['monthly'] = new Chart(document.getElementById('chart-monthly'),{
+    type:'bar',
+    data:{ labels, datasets:[{label:'Monthly Gross',data:locs.map(l=>l.monthly),backgroundColor:colors,borderRadius:4}] },
+    options:{ responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt$(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()}},x:{ticks:{maxRotation:45,font:{size:9}}}},
+      onClick:(_,el)=>{ if(el[0]) selectLocation(locs[el[0].index].name); }
+    }
+  });
+
+  _chartInstances['annual'] = new Chart(document.getElementById('chart-annual'),{
+    type:'bar',
+    data:{ labels, datasets:[{label:'Total Monthly Cost',data:locs.map(l=>(l.monthly||0)+(l.opexMonthly||0)),backgroundColor:colors,borderRadius:4}] },
+    options:{ responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt$(c.raw)}}},
+      scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()}},x:{ticks:{maxRotation:45,font:{size:9}}}},
+      onClick:(_,el)=>{ if(el[0]) selectLocation(locs[el[0].index].name); }
+    }
+  });
+
+  // Gantt / timeline chart
+  buildGanttChart();
+}
+
+function buildGanttChart(){
+  destroyChart('gantt');
+  const startYear = 2025, endYear = 2035;
+  const startMs = new Date(startYear+'-01-01').getTime();
+  const endMs   = new Date(endYear+'-12-31').getTime();
+  const total   = endMs - startMs;
+  const pct = ms => Math.max(0, Math.min(100, ((ms-startMs)/total)*100));
+
+  const locs = LOCATIONS.filter(l=>l.expiry);
+  const urgencyColor = locs.map(loc=>{
+    const mo = monthsUntil(loc.expiry);
+    return mo===null?'#888':mo<0?'#222':mo<6?'#c62828':mo<18?'#e65100':'#2e7d32';
+  });
+
+  const fixedStartMs = new Date('2025-01-01').getTime();
+  const datasets = [{
+    label:'Time to Expiration',
+    data: locs.map(loc=>{
+      const expMs  = new Date(loc.expiry).getTime();
+      return [pct(fixedStartMs), pct(expMs)];
+    }),
+    backgroundColor: urgencyColor,
+    borderRadius:3,
+    barPercentage: _ganttShowOptions ? 0.75 : 0.85,
+    categoryPercentage: 0.9,
+    order:2
+  }];
+
+  if(_ganttShowOptions){
+    datasets.push({
+      label:'Option 1 Window',
+      data: locs.map(loc=>{
+        if(!loc.opt1NotifBegins||!loc.opt1NoticeEnd) return null;
+        return [pct(new Date(loc.opt1NotifBegins).getTime()), pct(new Date(loc.opt1NoticeEnd).getTime())];
+      }),
+      backgroundColor:'#0d47a1',
+      borderRadius:2,
+      barPercentage:0.30,
+      categoryPercentage:0.9,
+      skipNull:true,
+      order:1
+    },{
+      label:'Option 2 Window',
+      data: locs.map(loc=>{
+        if(!loc.opt2NotifBegins||!loc.opt2NoticeEnd) return null;
+        return [pct(new Date(loc.opt2NotifBegins).getTime()), pct(new Date(loc.opt2NoticeEnd).getTime())];
+      }),
+      backgroundColor:'#0d47a1',
+      borderRadius:2,
+      barPercentage:0.30,
+      categoryPercentage:0.9,
+      skipNull:true,
+      order:0
+    });
+  }
+
+  const ctx = document.getElementById('chart-gantt');
+  _chartInstances['gantt'] = new Chart(ctx,{
+    type:'bar',
+    data:{ labels:locs.map(l=>l.name), datasets },
+    options:{
+      grouped:false,
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:_ganttShowOptions, labels:{boxWidth:11,font:{size:9}} },
+        tooltip:{ callbacks:{ label:c=>{ const loc=locs[c.dataIndex]; return loc.name+' | Exp: '+loc.expiry+(loc.options?' | Opt: '+loc.options:''); } } }
+      },
+      scales:{
+        x:{min:0,max:100,ticks:{callback:v=>{const y=startYear+(v/100)*(endYear-startYear);return Math.round(y)+'';},stepSize:100/(endYear-startYear)},grid:{color:'#eee'}},
+        y:{ticks:{font:{size:9}}}
+      }
+    }
+  });
+}
+
+function toggleGanttOptions(){
+  _ganttShowOptions = !_ganttShowOptions;
+  const btn = document.getElementById('gantt-opt-toggle');
+  if(btn) btn.textContent = _ganttShowOptions ? 'Hide Option Windows' : 'Show Option Windows';
+  buildGanttChart();
+}
+
+// ============================================================
+// EXPIRATION TABLE
+// ============================================================
+// ============================================================
+// EXPIRATION INTERACTIVE STATE
+// ============================================================
+let _expirItems = [], _expirCategories = {}, _selectedExpirLoc = null;
+
+function _categorizeExpir(){
+  const now = new Date();
+  const actNow=[], noOpt=[], actSoon=[], monitor=[];
+  [...LOCATIONS].filter(l=>l.expiry).sort((a,b)=>(monthsUntil(a.expiry)||999)-(monthsUntil(b.expiry)||999)).forEach(loc=>{
+    const mo = monthsUntil(loc.expiry);
+    const opt1Open = loc.opt1NotifBegins && loc.opt1NoticeEnd && new Date(loc.opt1NotifBegins)<=now && new Date(loc.opt1NoticeEnd)>=now;
+    const opt1SoonMs = loc.opt1NotifBegins && new Date(loc.opt1NotifBegins)>now ? (new Date(loc.opt1NotifBegins)-now) : null;
+    const opt1SoonMo = opt1SoonMs ? opt1SoonMs/2592000000 : null;
+    if(opt1Open)                              actNow.push({loc,cat:'actNow', deadline:loc.opt1NoticeEnd, days:Math.round((new Date(loc.opt1NoticeEnd)-now)/86400000)});
+    else if(!loc.options&&mo!==null&&mo<14)   noOpt.push({loc,cat:'noOpt',  deadline:loc.expiry, mo});
+    else if(opt1SoonMo!==null&&opt1SoonMo<8)  actSoon.push({loc,cat:'actSoon',deadline:loc.opt1NotifBegins, days:Math.round(opt1SoonMs/86400000)});
+    else if(opt1SoonMo!==null&&opt1SoonMo<24) monitor.push({loc,cat:'monitor',deadline:loc.opt1NotifBegins, mo:Math.round(opt1SoonMo)});
+  });
+  _expirItems = [...actNow,...noOpt,...actSoon,...monitor];
+  _expirCategories = {actNow,noOpt,actSoon,monitor,safe:LOCATIONS.length-_expirItems.length};
+}
+
+function buildExpirAlertCards(filterName){
+  const locs = filterName ? LOCATIONS.filter(l=>l.name===filterName) : LOCATIONS;
+  buildAlertCards('expir-alerts', locs, 'expir', filterName);
+}
+
+let _alertCardLists = {};
+
+function buildAlertCards(elId, locs, keyPrefix, filterName){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const now = new Date();
+  const expired = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)<0);
+  const lt6     = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=0&&monthsUntil(l.expiry)<6);
+  const lt18    = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=6&&monthsUntil(l.expiry)<18);
+  const ge18    = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=18);
+  const optOpen = locs.filter(l=>l.opt1NotifBegins&&l.opt1NoticeEnd&&new Date(l.opt1NotifBegins)<=now&&new Date(l.opt1NoticeEnd)>=now);
+  const filterSub = filterName ? `<div style="font-size:10px;opacity:.6;margin-top:2px">Selected: ${filterName}</div>` : '';
+
+  const fmtList = (arr, formatter, key, title) => {
+    _alertCardLists[key] = { title, items: arr.map(formatter) };
+    if(!arr.length) return 'None';
+    const shown = arr.slice(0,3).map(formatter).join(', ');
+    return arr.length>3 ? `${shown} <span style="text-decoration:underline;cursor:pointer;font-weight:700" onclick="showAlertCardDetail('${key}')">+${arr.length-3} more</span>` : shown;
+  };
+
+  const cards=[
+    {n:expired.length,lbl:'Expired Lease'+(expired.length!==1?'s':''),
+      sub2:fmtList(expired,l=>l.name+' · '+Math.abs(monthsUntil(l.expiry))+' mo overdue',keyPrefix+'-expired','Expired Leases'),
+      bg:'#1a1a1a',bl:'#555'},
+    {n:lt6.length,lbl:'Expiring 0–6 Months',
+      sub2:fmtList(lt6,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-lt6','Expiring 0–6 Months'),
+      bg:'#c62828',bl:'#8b0000'},
+    {n:lt18.length,lbl:'Expiring 6–18 Months',
+      sub2:fmtList(lt18,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-lt18','Expiring 6–18 Months'),
+      bg:'#e65100',bl:'#bf360c'},
+    {n:ge18.length,lbl:'Expiring 18+ Months',
+      sub2:fmtList(ge18,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-ge18','Expiring 18+ Months'),
+      bg:'#2e7d32',bl:'#1b5e20'},
+    {n:optOpen.length,lbl:'Option Window'+(optOpen.length!==1?'s':'')+' Open',
+      sub2:fmtList(optOpen,l=>l.name+' · Notify by '+l.opt1NoticeEnd,keyPrefix+'-opt','Option Windows Open'),
+      bg:'#1565c0',bl:'#0d47a1'}
+  ];
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">${
+    cards.map(c=>`<div style="background:${c.bg};color:#fff;border-radius:8px;padding:14px 16px;border-left:4px solid ${c.bl}">
+      <div style="font-size:26px;font-weight:700;line-height:1;margin-bottom:4px">${c.n}</div>
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${c.lbl}</div>
+      <div style="font-size:10px;opacity:.72;line-height:1.4">${c.sub2}</div>
+      ${filterSub}
+    </div>`).join('')
+  }</div>`;
+}
+
+function showAlertCardDetail(key){
+  const data = _alertCardLists[key];
+  if(!data) return;
+  document.getElementById('alertdetail-title').textContent = data.title;
+  document.getElementById('alertdetail-body').innerHTML = data.items.length
+    ? data.items.map(t=>`<div style="padding:5px 0;border-bottom:1px solid #eee">${t}</div>`).join('')
+    : '<div style="color:#888;padding:5px 0">None</div>';
+  document.getElementById('modal-alertdetail').classList.add('open');
+}
+
+function buildExpirDonut(filterName){
+  destroyChart('expir-donut');
+  const {actNow,noOpt,actSoon,monitor,safe} = _expirCategories;
+  const legendEl = document.getElementById('expir-donut-legend');
+  let labels,data,colors;
+  if(filterName){
+    const item = _expirItems.find(i=>i.loc.name===filterName);
+    const cat = item?item.cat:'safe';
+    const map = {actNow:['Act Now','#c62828'],noOpt:['No Option','#e65100'],actSoon:['Prepare','#f9a825'],monitor:['Monitor','#888'],safe:['Safe','#2e7d32']};
+    const [lbl,color] = map[cat]||map.safe;
+    labels=[lbl,'Other']; data=[1,LOCATIONS.length-1]; colors=[color,'#e4e6ea'];
+  } else {
+    labels=['Act Now','No Option','Prepare','Monitor','Safe'];
+    data=[actNow.length,noOpt.length,actSoon.length,monitor.length,safe];
+    colors=['#c62828','#e65100','#f9a825','#888','#2e7d32'];
+  }
+  if(legendEl) legendEl.innerHTML=labels.map((l,i)=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0"></div><div style="font-size:10px;color:#555;flex:1">${l}</div><div style="font-size:12px;font-weight:600;color:#0d2040">${data[i]}</div></div>`).join('');
+  const ctx = document.getElementById('chart-expir-donut');
+  if(!ctx) return;
+  _chartInstances['expir-donut']=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw}}},cutout:'58%'}});
+}
+
+function buildExpirTimelineRows(filterName){
+  const el = document.getElementById('expir-timeline-rows');
+  if(!el) return;
+  const now = new Date();
+  const startMs = now.getTime();
+  const endMs   = new Date(now.getFullYear(), now.getMonth()+18, now.getDate()).getTime();
+  const total   = endMs - startMs;
+  const pct = d=>{ const ms=new Date(d).getTime(); return Math.max(1,Math.min(100,((ms-startMs)/total)*100)); };
+  const bucketCfg = mo => mo<0 ? {color:'#111',   tc:'#fff', tag:'Expired'}
+    : mo<6  ? {color:'#c62828', tc:'#fff', tag:'0–6 Mo'}
+    : mo<18 ? {color:'#e65100', tc:'#fff', tag:'6–18 Mo'}
+    :         {color:'#2e7d32', tc:'#fff', tag:'18+ Mo'};
+  const months=[];
+  for(let i=0;i<7;i++){const d=new Date(now);d.setMonth(d.getMonth()+i*3);months.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));}
+  let html=`<div style="display:flex;align-items:center;gap:5px;padding-left:148px;margin-bottom:4px">
+    <span style="display:inline-block;width:12px;height:8px;background:#0d47a1;border-radius:2px;flex-shrink:0"></span>
+    <span style="font-size:9px;color:#888">Option Window</span>
+  </div>
+  <div style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
+  const items = [...LOCATIONS].filter(l=>l.expiry).sort((a,b)=>monthsUntil(a.expiry)-monthsUntil(b.expiry));
+  items.forEach(loc=>{
+    const mo = monthsUntil(loc.expiry);
+    const cfg = bucketCfg(mo);
+    const deadPct = pct(loc.expiry);
+    const sel = loc.name===filterName;
+    const rightTxt = mo+'mo';
+    const dateStr = loc.expiry.slice(5,10).replace('-','/');
+    const optWindows = [];
+    if(loc.opt1NotifBegins && loc.opt1NoticeEnd){
+      const beginMs = new Date(loc.opt1NotifBegins).getTime(), noticeEndMs = new Date(loc.opt1NoticeEnd).getTime();
+      if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt1NotifBegins), r:pct(loc.opt1NoticeEnd)});
+    }
+    if(loc.opt2NotifBegins && loc.opt2NoticeEnd){
+      const beginMs = new Date(loc.opt2NotifBegins).getTime(), noticeEndMs = new Date(loc.opt2NoticeEnd).getTime();
+      if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt2NotifBegins), r:pct(loc.opt2NoticeEnd)});
+    }
+    const optBars = optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:#0d47a1;border-radius:2px;opacity:0.92"></div>`).join('');
+    html+=`<div onclick="selectExpirProperty('${loc.name}')" style="display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;margin-bottom:5px;cursor:pointer;background:${sel?'rgba(13,32,64,.07)':'transparent'};border:1px solid ${sel?'#0d2040':'transparent'};transition:background .15s">
+      <div style="font-size:10px;font-weight:${sel?700:500};color:#0d2040;width:78px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
+      <span style="font-size:8px;font-weight:700;background:${cfg.color};color:${cfg.tc};padding:1px 5px;border-radius:3px;flex-shrink:0;width:50px;text-align:center">${cfg.tag}</span>
+      <div style="flex:1;height:14px;background:#eef0f3;border-radius:3px;position:relative;overflow:hidden">
+        <div style="position:absolute;left:0;top:0;height:100%;width:${deadPct}%;background:${cfg.color};border-radius:3px;opacity:${sel?1:.7}"></div>
+        ${optBars}
+      </div>
+      <div style="font-size:9px;color:${cfg.color};font-weight:600;width:34px;text-align:right;flex-shrink:0">${dateStr}</div>
+      <div style="font-size:9px;color:#aaa;width:26px;text-align:right;flex-shrink:0">${rightTxt}</div>
+    </div>`;
+  });
+  html+=`<div style="font-size:9px;color:#bbb;margin-top:3px;padding-left:8px">Click any property to filter all panels${filterName?' — <span style="color:#1565c0;cursor:pointer" onclick="clearExpirSelection()">clear selection</span>':''}</div>`;
+  el.innerHTML=html;
+}
+
+function selectExpirProperty(name){
+  _selectedExpirLoc = name;
+  const loc = LOCATIONS.find(l=>l.name===name);
+  const clearBtn = document.getElementById('expir-clear-btn');
+  if(clearBtn) clearBtn.style.display='inline-block';
+  buildExpirAlertCards(name);
+  buildExpirStackedBar(name);
+  buildExpirTimelineRows(name);
+  if(loc&&loc.lat&&loc.lng&&_mapInstances['expir']) _mapInstances['expir'].flyTo([loc.lat,loc.lng],14,{duration:0.8});
+}
+
+function clearExpirSelection(){
+  _selectedExpirLoc = null;
+  const clearBtn = document.getElementById('expir-clear-btn');
+  if(clearBtn) clearBtn.style.display='none';
+  buildExpirAlertCards(null);
+  buildExpirStackedBar(null);
+  buildExpirTimelineRows(null);
+  if(_mapInstances['expir']) _mapInstances['expir'].flyTo([34.0,-116.5],6,{duration:0.8});
+}
+
+function buildExpirStackedBar(filterName){
+  const el = document.getElementById('expir-stacked-bar-section');
+  if(!el) return;
+  const {actNow,noOpt,actSoon,monitor,safe} = _expirCategories;
+  const total = actNow.length+noOpt.length+actSoon.length+monitor.length+(safe||0);
+  let selectedCat = null;
+  if(filterName){
+    if(actNow.find(i=>i.loc.name===filterName)) selectedCat='actNow';
+    else if(noOpt.find(i=>i.loc.name===filterName)) selectedCat='noOpt';
+    else if(actSoon.find(i=>i.loc.name===filterName)) selectedCat='actSoon';
+    else if(monitor.find(i=>i.loc.name===filterName)) selectedCat='monitor';
+    else selectedCat='safe';
+  }
+  const cats=[
+    {key:'actNow', label:'Act Now',   count:actNow.length,  color:'#c62828', tc:'#fff'},
+    {key:'noOpt',  label:'No Option', count:noOpt.length,   color:'#e65100', tc:'#fff'},
+    {key:'actSoon',label:'Prepare',   count:actSoon.length, color:'#f9a825', tc:'#333'},
+    {key:'monitor',label:'Monitor',   count:monitor.length, color:'#888',    tc:'#fff'},
+    {key:'safe',   label:'Safe',      count:safe||0,        color:'#2e7d32', tc:'#fff'},
+  ];
+  const barSegs = cats.map(c=>{
+    if(!c.count) return '';
+    const pct=(c.count/total*100).toFixed(1);
+    const dim=filterName&&selectedCat!==c.key;
+    return `<div style="width:${pct}%;background:${c.color};height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${c.tc};opacity:${dim?'0.18':'1'};transition:opacity .2s" title="${c.label}: ${c.count}">${c.count}</div>`;
+  }).join('');
+  const statCols = cats.map(c=>{
+    const dim=filterName&&selectedCat!==c.key;
+    return `<div style="text-align:center;border-top:3px solid ${c.color};padding-top:5px;opacity:${dim?'0.2':'1'};transition:opacity .2s">
+      <div style="font-size:17px;font-weight:700;color:${c.color}">${c.count}</div>
+      <div style="font-size:9px;color:#888;margin-top:1px">${c.label}</div>
+    </div>`;
+  }).join('');
+  const titleSuffix = filterName ? ` <span style="font-size:10px;color:#1565c0;font-weight:400;text-transform:none;letter-spacing:0">— ${filterName}</span>` : '';
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+      <div class="card-title" style="margin-bottom:0">Action Priority Breakdown${titleSuffix}</div>
+      <button id="expir-clear-btn" onclick="clearExpirSelection()" style="display:${filterName?'inline-block':'none'};font-size:10px;padding:2px 8px;border:1px solid #c0c8d8;border-radius:3px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600">✕ Clear</button>
+    </div>
+    <div style="height:34px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:11px">${barSegs}</div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">${statCols}</div>`;
+}
+
+function buildExpirActionCenter(){
+  const el = document.getElementById('expir-action-center');
+  if(!el||el.children.length) return;
+  _categorizeExpir();
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="card" style="padding:10px;display:flex;flex-direction:column;height:100%">
+      <div class="card-title">Location Map</div>
+      <div class="map-wrap" id="map-wrap-expir" style="flex:1;min-height:300px;position:relative">
+        <div style="height:100%;border-radius:6px;overflow:hidden" id="map-expir"></div>
+        <div class="map-ctrls">
+          <button class="map-btn" id="tile-btn-expir" onclick="toggleMapTile('expir')">🛰 Satellite</button>
+          <button class="map-btn" onclick="zoomInMap('expir')">＋ Zoom In</button>
+          <button class="map-btn" onclick="zoomOutMap('expir')">－ Zoom Out</button>
+          <button class="map-btn" onclick="toggleMapExpand('expir')">⛶ Expand</button>
+        </div>
+        <div class="map-legend">
+          <div class="map-legend-title">Months to Expiration</div>
+          <div class="map-legend-row"><span class="map-legend-dot" style="background:#111"></span>Expired</div>
+          <div class="map-legend-row"><span class="map-legend-dot" style="background:#c62828"></span>0–6 Mo</div>
+          <div class="map-legend-row"><span class="map-legend-dot" style="background:#e65100"></span>6–18 Mo</div>
+          <div class="map-legend-row"><span class="map-legend-dot" style="background:#2e7d32"></span>18+ Mo</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;height:100%">
+      <div class="card-title">Key Deadlines — Next 18 Months</div>
+      <div id="expir-timeline-rows" style="flex:1;min-height:0;overflow-y:auto;padding-right:4px"></div>
+    </div>
+  </div>`;
+  buildExpirTimelineRows(null);
+}
+
+function buildExpirTable(){
+  buildExpirActionCenter();
+  const tb = document.getElementById('tbody-expir');
+  if(tb.children.length) return;
+  buildExpirAlertCards(null);
+
+  // -- Table (unchanged columns; adds urgency left-border per row) --
+  const sorted = [...LOCATIONS].sort((a,b)=>{
+    const ma = a.expiry?monthsUntil(a.expiry):9999;
+    const mb = b.expiry?monthsUntil(b.expiry):9999;
+    return ma-mb;
+  });
+  sorted.forEach((loc,i)=>{
+    const mo = monthsUntil(loc.expiry);
+    const borderColor = mo===null?'transparent':mo<0?'#111':mo<6?'#c62828':mo<18?'#e65100':'transparent';
+    const tr = document.createElement('tr');
+    tr.style.borderLeft = `3px solid ${borderColor}`;
+    tr.innerHTML = `<td>${i+1}</td><td style="cursor:pointer;color:#0d2040;font-weight:600;white-space:nowrap" onclick="selectExpirProperty('${loc.name}')">${loc.name}</td>
+      <td>${loc.options ? `<span class="badge" style="background:#1565c0">${loc.options}</span>` : '<span class="badge badge-dash">—</span>'}</td>
+      <td>${loc.opt1NotifBegins||'—'}</td><td>${loc.opt1MonthsUntil??'—'}</td><td>${loc.opt1NoticeEnd||'—'}</td>
+      <td>${loc.opt2NotifBegins||'—'}</td><td>${loc.opt2MonthsUntil??'—'}</td><td>${loc.opt2NoticeEnd||'—'}</td>
+      <td>${mo!==null?mo:'—'}</td>
+      <td>${expiryBadge(loc.expiry)} ${loc.expiry||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ============================================================
+// SATELLITE TABLE
+// ============================================================
+function buildSatTable(){
+  const tb = document.getElementById('tbody-sat');
+  if(tb.children.length) return;
+  LOCATIONS.forEach((loc,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td style="cursor:pointer;color:#0d2040;font-weight:600" onclick="selectLocation('${loc.name}')">${loc.name}</td>
+      <td>${loc.address}${loc.suite?', #'+loc.suite:''}</td><td>${loc.city}</td><td>${loc.state}</td>
+      <td>${fmtMo(loc.termMo)}</td><td class="ctr">${fmtSF(loc.sqft)}</td>
+      <td class="ctr">${fmt$(loc.monthly)}</td><td class="ctr">${fmt$(loc.annual)}</td>
+      <td class="ctr">${expiryBadge(loc.expiry)} ${loc.expiry||'—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// ============================================================
+// OPEX TABLE & CHART
+// ============================================================
+function buildOpexTable(){
+  const tb = document.getElementById('tbody-opex');
+  if(tb.children.length) return;
+  LOCATIONS.forEach((loc,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${i+1}</td><td style="text-align:left;cursor:pointer;color:#0d2040;font-weight:600" onclick="selectLocation('${loc.name}')">${loc.name}</td>
+      <td>${loc.opexMonthly ? fmt$(loc.opexMonthly) : '—'}</td>
+      <td>${fmtSF(loc.sqft)}</td>
+      <td>${loc.contractSF ? fmt$(loc.contractSF) : '—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function initOpexChart(){
+  if(_chartInstances['opex-stacked']) return;
+  const locs = LOCATIONS.filter(l=>l.contractSF&&l.sqft);
+  const labels = locs.map(l=>l.name);
+  const baseRent = locs.map(l=>parseFloat(l.contractSF.toFixed(2)));
+  const opex = locs.map(l=>l.opexMonthly&&l.sqft ? parseFloat((l.opexMonthly/l.sqft).toFixed(2)) : 0);
+  _chartInstances['opex-stacked'] = new Chart(document.getElementById('chart-opex-stacked'),{
+    type:'bar',
+    data:{ labels, datasets:[
+      {label:'Base Rent $/SF/Mo',data:baseRent,backgroundColor:'#0d2040',borderRadius:3},
+      {label:'OpEx $/SF/Mo',data:opex,backgroundColor:'#d6ab5c',borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      indexAxis:'y',
+      scales:{x:{stacked:true,ticks:{callback:v=>`$${v}/SF`}},y:{stacked:true,ticks:{font:{size:9}}}},
+      plugins:{legend:{position:'top'},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': $'+c.raw.toFixed(2)+'/SF'}}}
+    }
+  });
+}
+
+// ============================================================
+// RATE COMPARISON
+// ============================================================
+function buildRate1Table(){
+  const tb = document.getElementById('tbody-rate1');
+  tb.innerHTML = '';
+  const sel = document.getElementById('rate1-filter');
+  if(sel.children.length<=1){
+    LOCATIONS.forEach(loc=>{ const o=document.createElement('option'); o.value=loc.name; o.textContent=loc.name; sel.appendChild(o); });
+  }
+  const filter = sel.value;
+  let idx=0;
+  LOCATIONS.forEach(loc=>{
+    if(filter!=='all'&&loc.name!==filter) return;
+    if(!loc.contractSF&&!loc.marketSF) return;
+    idx++;
+    const diff = loc.contractSF&&loc.marketSF ? (((loc.contractSF-loc.marketSF)/loc.marketSF)*100).toFixed(1) : null;
+    const cvm  = diff ? (parseFloat(diff)<0?'<span class="lower">Lower</span>':'<span class="higher">Higher</span>') : '—';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="text-align:left">${idx}</td><td style="cursor:pointer;color:#0d2040;font-weight:600;text-align:left" onclick="selectLocation('${loc.name}')">${loc.name}</td>
+      <td class="ctr">${loc.contractSF?fmt$(loc.contractSF):'—'}</td>
+      <td class="ctr">${loc.marketSF?fmt$(loc.marketSF):'—'}</td>
+      <td class="ctr">${cvm}</td>
+      <td class="ctr">${diff!==null?diff+'%':'—'}</td>
+      <td class="ctr">${loc.remaining!==null?fmt$(loc.remaining):'—'}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function filterRate1(){ buildRate1Table(); }
+
+function buildRate2Chart(){
+  if(_chartInstances['rate2']) return;
+  const locs = LOCATIONS.filter(l=>l.contractSF&&l.marketSF);
+  const labels = locs.map(l=>l.name);
+  _chartInstances['rate2'] = new Chart(document.getElementById('chart-rate2'),{
+    type:'bar',
+    data:{ labels, datasets:[
+      {label:'Market Gross Monthly',data:locs.map(l=>l.marketSF),backgroundColor:'#0d2040',borderRadius:3},
+      {label:'Contract Monthly',data:locs.map(l=>l.contractSF),backgroundColor:'#d6ab5c',borderRadius:3}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{ticks:{maxRotation:45,font:{size:9}},grid:{color:'#f0f2f5'}},
+        y:{ticks:{callback:v=>`$${v}/SF`},grid:{color:'#f0f2f5'}}
+      },
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{
+          mode:'index', intersect:false,
+          backgroundColor:'#fff',
+          borderColor:'#e0e3e8', borderWidth:1,
+          titleColor:'#0d2040', titleFont:{size:13,weight:'600'},
+          bodyColor:'#444', bodyFont:{size:12},
+          padding:12, cornerRadius:6, footerFont:{size:12,weight:'700'},
+          footerColor: ctx => {
+            const dp = ctx.tooltip?.dataPoints;
+            if(!dp||!dp.length) return '#333';
+            const loc = locs[dp[0].dataIndex];
+            if(!loc?.contractSF||!loc?.marketSF) return '#333';
+            return (loc.contractSF-loc.marketSF)>=0?'#2e7d32':'#c62828';
+          },
+          callbacks:{
+            title: items => items.length ? locs[items[0].dataIndex].name : '',
+            label: item => {
+              const loc = locs[item.dataIndex];
+              if(item.datasetIndex===0) return 'Market:    $'+loc.marketSF.toFixed(2)+'/SF/Mo';
+              if(item.datasetIndex===1) return 'Contract:  $'+loc.contractSF.toFixed(2)+'/SF/Mo';
+              return '';
+            },
+            footer: items => {
+              if(!items.length) return '';
+              const loc = locs[items[0].dataIndex];
+              if(!loc.contractSF||!loc.marketSF) return '';
+              const pct = ((loc.contractSF-loc.marketSF)/loc.marketSF*100);
+              const sign = pct>=0?'+':'';
+              const arrow = pct>=0?'▲':'▼';
+              return sign+pct.toFixed(1)+'% '+arrow+' '+(pct>=0?'Above Market':'Below Market');
+            },
+            labelTextColor: item => item.datasetIndex===0?'#0d2040':'#d6ab5c'
+          }
+        }
+      }
+    }
+  });
+}
+
+function buildHeatmap(){
+  const wrap = document.getElementById('heatmap-10yr');
+  if(!wrap||wrap.children.length) return;
+  const allVals = LOCATIONS.flatMap(l=>RENT_YEARS.map(y=>l.rentSchedule?l.rentSchedule[y]:null).filter(v=>v));
+  const maxV = Math.max(...allVals), minV = Math.min(...allVals);
+  LOCATIONS.forEach(loc=>{
+    const row = document.createElement('div');
+    row.className = 'heatmap-row';
+    const lbl = document.createElement('div');
+    lbl.className = 'heatmap-lbl';
+    lbl.title = loc.name;
+    lbl.textContent = loc.name;
+    row.appendChild(lbl);
+    RENT_YEARS.forEach(y=>{
+      const cell = document.createElement('div');
+      cell.className = 'heatmap-cell';
+      const val = loc.rentSchedule ? loc.rentSchedule[y] : null;
+      if(val){
+        const ratio = maxV===minV ? 0.5 : (val-minV)/(maxV-minV);
+        cell.style.background = `rgba(13,32,64,${(0.25+ratio*0.75).toFixed(2)})`;
+        cell.textContent = val.toFixed(0);
+      } else {
+        cell.style.background = '#eef0f3';
+        cell.textContent = '—';
+      }
+      row.appendChild(cell);
+    });
+    wrap.appendChild(row);
+  });
+}
+
+function buildRentScheduleTable(){
+  const tb = document.getElementById('tbody-rentschedule');
+  if(!tb||tb.children.length) return;
+  LOCATIONS.forEach((loc,i)=>{
+    const tr = document.createElement('tr');
+    const expYr = loc.expiry ? loc.expiry.split('-')[0] : '—';
+    const cells = RENT_YEARS.map(y=>{
+      const v = loc.rentSchedule ? loc.rentSchedule[y] : null;
+      return `<td class="ctr">${v ? fmt$(v/12) : '—'}</td>`;
+    }).join('');
+    tr.innerHTML = `
+      <td style="text-align:left;font-weight:600;cursor:pointer" onclick="selectLocation('${loc.name}')">${loc.name}</td>
+      <td class="ctr">${loc.monthly ? fmt$(loc.monthly) : '—'}</td>
+      <td class="ctr">${expYr}</td>
+      ${cells}`;
+    tb.appendChild(tr);
+  });
+}
+
+// ============================================================
+// PROPERTY ADDRESS KEY
+// ============================================================
+function buildAddrTable(){
+  const grid = document.getElementById('addr-grid');
+  if(!grid||grid.children.length) return;
+  const stats = document.getElementById('addr-stats');
+  const states = [...new Set(LOCATIONS.map(l=>l.state))];
+  const cities = [...new Set(LOCATIONS.map(l=>l.city))];
+  const chip = (val,label,bg)=>`<span style="background:${bg};color:#fff;border-radius:8px;padding:6px 14px;display:inline-flex;flex-direction:column;align-items:center;min-width:64px"><span style="font-size:18px;font-weight:800;line-height:1">${val}</span><span style="font-size:9px;letter-spacing:0.6px;opacity:0.8;margin-top:2px">${label}</span></span>`;
+  if(stats){
+    stats.innerHTML = chip(LOCATIONS.length,'PROPERTIES','#0d2040')+chip(cities.length,'CITIES','#0d2040')+chip(states.length,'STATES','#0d2040');
+  }
+  const now = new Date();
+  LOCATIONS.forEach((loc,i)=>{
+    const exp = loc.expiry ? new Date(loc.expiry) : null;
+    const mo = exp ? Math.round((exp-now)/(1000*60*60*24*30.4)) : null;
+    let badge;
+    if(!exp||mo<0) badge=`<span style="background:#111;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">Expired</span>`;
+    else if(mo<6) badge=`<span style="background:#c62828;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">0–6 Mo</span>`;
+    else if(mo<18) badge=`<span style="background:#e65100;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">6–18 Mo</span>`;
+    else badge=`<span style="background:#2e7d32;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">18+ Mo</span>`;
+    const card = document.createElement('div');
+    card.className = 'addr-card';
+    card.dataset.search = `${loc.name} ${loc.address} ${loc.suite||''} ${loc.city} ${loc.state} ${loc.zip||''}`.toLowerCase();
+    card.onclick = ()=>selectLocation(loc.name);
+    card.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:9px">
+          <div style="background:#d6ab5c;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${i+1}</div>
+          <div style="font-weight:700;font-size:13px;color:#0d2040">${loc.name}</div>
+        </div>
+        ${badge}
+      </div>
+      <div style="font-size:12px;color:#555;margin-bottom:6px;padding-left:35px">&#x1F4CC; ${loc.address}${loc.suite?', #'+loc.suite:''}</div>
+      <div style="font-size:12px;color:#555;margin-bottom:8px;padding-left:35px">${loc.city}, ${loc.state}${loc.zip?' '+loc.zip:''}</div>
+      <div style="padding-left:35px;font-size:11px;color:#888">Exp: ${loc.expiry||'—'}</div>`;
+    grid.appendChild(card);
+  });
+}
+function filterAddrCards(){
+  const q = document.getElementById('addr-search').value.toLowerCase();
+  document.querySelectorAll('#addr-grid .addr-card').forEach(card=>{
+    card.style.display = card.dataset.search.includes(q) ? '' : 'none';
+  });
+}
+
+// ============================================================
+// ANALYTICS CHARTS
+// ============================================================
+function initAnalyticsCharts(){
+  if(_chartInstances['projline']) return;
+
+  // Projected line — 3% escalation assumed
+  const years = [2026,2027,2028,2029,2030,2031,2032,2033,2034];
+  const totals = years.map(y=>{
+    let sum=0;
+    LOCATIONS.forEach(loc=>{
+      const base = loc.annual||0;
+      const yrs = y-2026;
+      sum += base*Math.pow(1.03,yrs);
+    });
+    return Math.round(sum/12);
+  });
+  // Projected Cost — actual rent schedule per property, $0 after expiry
+  const projected = years.map(y=>{
+    let sum=0;
+    LOCATIONS.forEach(loc=>{
+      const expYr = loc.expiry ? parseInt(loc.expiry.split('-')[0]) : 9999;
+      if(y > expYr) return;
+      const sched = loc.rentSchedule ? loc.rentSchedule[y] : null;
+      sum += sched || (loc.annual||0);
+    });
+    return Math.round(sum/12);
+  });
+  _chartInstances['projline'] = new Chart(document.getElementById('chart-projline'),{
+    type:'line',
+    data:{ labels:years.map(y=>y+''), datasets:[
+      {label:'Contracted Monthly Obligations',data:projected,borderColor:'#0d2040',backgroundColor:'rgba(13,32,64,0.07)',fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:'#0d2040',borderWidth:2},
+      {label:'Assumed 3% Escalation',data:totals,borderColor:'#d6ab5c',backgroundColor:'transparent',fill:false,tension:0.3,pointRadius:4,pointBackgroundColor:'#d6ab5c',borderDash:[6,4],borderWidth:2}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,font:{size:11}}}},
+      scales:{y:{ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'K'}},x:{}}}
+  });
+
+  // Bubble: remaining months vs monthly cost, sized by sqft
+  const bLocs = LOCATIONS.filter(l=>l.monthly&&l.sqft&&l.expiry);
+  _chartInstances['bubble'] = new Chart(document.getElementById('chart-bubble'),{
+    type:'bubble',
+    data:{ datasets: bLocs.map((loc,i)=>({
+      label:loc.name,
+      data:[{x:monthsUntil(loc.expiry)||0,y:loc.monthly,sqft:loc.sqft,r:Math.max(4,Math.sqrt(loc.sqft/40))}],
+      backgroundColor: (()=>{ const mo=monthsUntil(loc.expiry); return mo<0?'rgba(17,17,17,0.85)':mo<6?'rgba(198,40,40,0.85)':mo<18?'rgba(230,81,0,0.85)':'rgba(46,125,50,0.85)'; })()
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{title:()=>'',label:c=>{ const d=c.raw; return c.dataset.label+': '+d.x+' mo remaining, $'+Math.round(d.y).toLocaleString()+'/mo, '+Math.round(d.sqft).toLocaleString()+' SF'; }}}},
+      scales:{x:{title:{display:true,text:'Months Remaining'}},y:{title:{display:true,text:'Monthly Gross'},ticks:{callback:v=>'$'+(v/1000).toFixed(0)+'k'}}}}
+  });
+
+  // Bar: contract vs market
+  const sLocs = LOCATIONS.filter(l=>l.contractSF&&l.marketSF).sort((a,b)=>a.name.localeCompare(b.name));
+  _chartInstances['scatter'] = new Chart(document.getElementById('chart-scatter'),{
+    type:'bar',
+    data:{ labels:sLocs.map(l=>l.name), datasets:[
+      {label:'Market $/SF/Mo',data:sLocs.map(l=>l.marketSF),backgroundColor:'#0d2040',borderRadius:3},
+      {label:'Contract $/SF/Mo',data:sLocs.map(l=>l.contractSF),backgroundColor:'#d6ab5c',borderRadius:3}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{
+        x:{ticks:{maxRotation:45,font:{size:9}},grid:{color:'#f0f2f5'}},
+        y:{ticks:{callback:v=>`$${v}/SF`},grid:{color:'#f0f2f5'}}
+      },
+      plugins:{
+        legend:{position:'top'},
+        tooltip:{
+          mode:'index', intersect:false,
+          backgroundColor:'#fff',
+          borderColor:'#e0e3e8', borderWidth:1,
+          titleColor:'#0d2040', titleFont:{size:13,weight:'600'},
+          bodyColor:'#444', bodyFont:{size:12},
+          padding:12, cornerRadius:6, footerFont:{size:12,weight:'700'},
+          footerColor: ctx => {
+            const dp = ctx.tooltip?.dataPoints;
+            if(!dp||!dp.length) return '#333';
+            const loc = sLocs[dp[0].dataIndex];
+            if(!loc?.contractSF||!loc?.marketSF) return '#333';
+            return (loc.contractSF-loc.marketSF)>=0?'#2e7d32':'#c62828';
+          },
+          callbacks:{
+            title: items => items.length ? sLocs[items[0].dataIndex].name : '',
+            label: item => {
+              const loc = sLocs[item.dataIndex];
+              if(item.datasetIndex===0) return 'Market:    $'+loc.marketSF.toFixed(2)+'/SF/Mo';
+              if(item.datasetIndex===1) return 'Contract:  $'+loc.contractSF.toFixed(2)+'/SF/Mo';
+              return '';
+            },
+            footer: items => {
+              if(!items.length) return '';
+              const loc = sLocs[items[0].dataIndex];
+              if(!loc.contractSF||!loc.marketSF) return '';
+              const pct = ((loc.contractSF-loc.marketSF)/loc.marketSF*100);
+              const sign = pct>=0?'+':'';
+              const arrow = pct>=0?'▲':'▼';
+              return sign+pct.toFixed(1)+'% '+arrow+' '+(pct>=0?'Above Market':'Below Market');
+            },
+            labelTextColor: item => item.datasetIndex===0?'#0d2040':'#d6ab5c'
+          }
+        }
+      }
+    }
+  });
+
+  // Donut: top locations by monthly cost
+  const sorted = [...LOCATIONS].filter(l=>l.monthly).sort((a,b)=>b.monthly-a.monthly);
+  const top5 = sorted.slice(0,5), rest = sorted.slice(5);
+  const restTotal = rest.reduce((s,l)=>s+(l.monthly||0),0);
+  const dLabels = [...top5.map(l=>l.name), rest.length?'Others':''];
+  const dData   = [...top5.map(l=>l.monthly), rest.length?restTotal:0];
+  _chartInstances['donut'] = new Chart(document.getElementById('chart-donut'),{
+    type:'doughnut',
+    data:{ labels:dLabels.filter((_,i)=>dData[i]>0), datasets:[{data:dData.filter(v=>v>0),backgroundColor:['#d6ab5c','#29374d','#e1c58d','#32445e','#efdfc7','#6c89b2'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{
+      legend:{position:'right',labels:{font:{size:10}}},
+      tooltip:{callbacks:{label:item=>{const v=item.parsed;return item.label+': $'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}}}
+    }}
+  });
+
+  // OpEx coverage donut
+  const withOpex = LOCATIONS.filter(l=>l.opexAnnual&&l.opexAnnual>0).length;
+  const noOpex   = LOCATIONS.length - withOpex;
+  _chartInstances['opexcoverage'] = new Chart(document.getElementById('chart-opexcoverage'),{
+    type:'doughnut',
+    data:{ labels:['With OpEx Data','No OpEx Data'], datasets:[{data:[withOpex,noOpex],backgroundColor:['#29374d','#ddd'],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11}}}}}
+  });
+
+  // Over vs Under Market donut
+  const overMkt  = LOCATIONS.filter(l=>l.contractSF&&l.marketSF&&l.contractSF>l.marketSF);
+  const underMkt = LOCATIONS.filter(l=>l.contractSF&&l.marketSF&&l.contractSF<=l.marketSF);
+  const noData   = LOCATIONS.filter(l=>!l.contractSF||!l.marketSF);
+  const overAmt  = overMkt.reduce((s,l)=>s+((l.contractSF-l.marketSF)*12*(l.sqft||0)),0);
+  const underAmt = underMkt.reduce((s,l)=>s+((l.marketSF-l.contractSF)*12*(l.sqft||0)),0);
+  window._overUnderData = {over:overMkt, under:underMkt, no:noData};
+  _chartInstances['overunder'] = new Chart(document.getElementById('chart-overunder'),{
+    type:'doughnut',
+    data:{ labels:['Over Market','Under Market',...(noData.length?['No Rate Data']:[])],
+           datasets:[{data:[overMkt.length,underMkt.length,...(noData.length?[noData.length]:[])],
+             backgroundColor:['#d6ab5c','#0d2040',...(noData.length?['#ccc']:[])],borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      onClick:(_,el)=>{ if(!el[0]) return; const key=el[0].index===0?'over':el[0].index===1?'under':'no'; renderOverUnderList(key); },
+      plugins:{
+      legend:{position:'right',labels:{font:{size:11}}},
+      tooltip:{callbacks:{label:item=>{
+        const count=item.parsed;
+        const lbl=item.label;
+        const extra=lbl==='Over Market'?'  (+$'+Math.round(overAmt/1000)+'k/yr above)':lbl==='Under Market'?'  (-$'+Math.round(underAmt/1000)+'k/yr below)':'';
+        return count+' location'+(count!==1?'s':'')+extra;
+      }}}
+    }}
+  });
+}
+
+function renderOverUnderList(key){
+  const el = document.getElementById('overunder-list');
+  if(!el || !window._overUnderData) return;
+  const map = {
+    over:{list:window._overUnderData.over,  label:'Over Market',  color:'#d6ab5c'},
+    under:{list:window._overUnderData.under,label:'Under Market', color:'#0d2040'},
+    no:{list:window._overUnderData.no,       label:'No Rate Data',color:'#888'}
+  };
+  const cfg = map[key];
+  if(!cfg.list.length){ el.innerHTML = `<div style="color:#888">No locations in "${cfg.label}".</div>`; return; }
+  el.innerHTML = `<div style="font-weight:700;color:${cfg.color};margin-bottom:4px">${cfg.label} (${cfg.list.length})</div>` +
+    cfg.list.map(l=>{
+      const variance = (l.contractSF!=null&&l.marketSF!=null) ? (l.contractSF-l.marketSF) : null;
+      const varTxt = variance!=null ? (variance>0?'+':'')+'$'+variance.toFixed(2)+'/SF/Mo vs. market' : '';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #f0f2f5;cursor:pointer" onclick="selectLocation('${l.name}')">
+        <span style="font-weight:600;color:#0d2040">${l.name}</span>
+        <span style="color:#666;font-size:10px">${varTxt}</span>
+      </div>`;
+    }).join('');
+}
+
+// ============================================================
+// PIPELINE
+// ============================================================
+function savePipeline(){ localStorage.setItem('pp_pipeline', JSON.stringify(_pipelineData)); }
+function saveNotes(){    localStorage.setItem('pp_notes',    JSON.stringify(_leaseNotes)); }
+
+function addPipelineDeal(){
+  const name      = document.getElementById('p-name').value.trim();
+  const addr      = document.getElementById('p-address').value.trim();
+  const city      = document.getElementById('p-city').value.trim();
+  const state     = document.getElementById('p-state').value.trim();
+  const sf        = parseFloat(document.getElementById('p-sf').value)||null;
+  const rent      = parseFloat(document.getElementById('p-rent').value)||null;
+  const stage     = document.getElementById('p-stage').value;
+  const dealType  = document.getElementById('p-dealtype').value||null;
+  const prob      = parseInt(document.getElementById('p-prob').value)||null;
+  const closeDate = document.getElementById('p-closedate').value.trim()||null;
+  const termYears = parseFloat(document.getElementById('p-termyears').value)||null;
+  const competing = document.getElementById('p-competing').value.trim()||null;
+  const notes     = document.getElementById('p-notes').value.trim();
+  const holdover  = dealType==='Extension';
+  if(!name) return alert('Enter a location name.');
+  _pipelineData.push({id:Date.now(),name,addr,city,state,sf,rent,stage,dealType,prob,closeDate,termYears,competing,notes,holdover});
+  savePipeline();
+  ['p-name','p-address','p-city','p-state','p-sf','p-rent','p-prob','p-closedate','p-termyears','p-competing','p-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('p-dealtype').value='';
+  buildPipelineUI();
+}
+
+function deletePipelineDeal(id){
+  _pipelineData = _pipelineData.filter(d=>d.id!==id);
+  savePipeline(); buildPipelineUI();
+}
+
+function addDealComment(id,inputEl){
+  const d = _pipelineData.find(x=>x.id===id);
+  if(!d) return;
+  const val = inputEl.value.trim();
+  if(!val) return;
+  d.comments = d.comments || [];
+  d.comments.push({text:val, date:new Date().toISOString().slice(0,10)});
+  inputEl.value = '';
+  savePipeline(); buildPipelineUI();
+}
+
+function dealTypeBadge(t){
+  if(!t) return '<span class="dt-badge dt-bts">—</span>';
+  const cls = t==='Extension'?'dt-expired':t==='Relocation'?'dt-reloc':t==='Expansion'?'dt-expand':t==='New Location'?'dt-newloc':t==='Blend & Extend'?'dt-blend':t==='Purchase'?'dt-purchase':'dt-bts';
+  const lbl = t==='Extension'?'⚠ '+t:t;
+  return `<span class="dt-badge ${cls}">${lbl}</span>`;
+}
+
+function isBrokerVerified(){
+  const email = (localStorage.getItem('pp_broker_email')||'').trim();
+  return /@medwestrealty\.com$/i.test(email);
+}
+function requestBrokerAccess(){
+  const email = prompt('Enter your MedWest Realty email to view commission figures:');
+  if(email===null) return;
+  localStorage.setItem('pp_broker_email', email.trim());
+  if(!isBrokerVerified()) alert('That email is not a recognized @medwestrealty.com address. Commission figures remain hidden.');
+  buildPipelineUI();
+}
+function commRate(dealType){
+  return (dealType==='New Location'||dealType==='Expansion') ? 0.04 : 0.02;
+}
+
+function buildPipelineUI(){
+  // Auto-drop deals more than 30 days past their Est. Close once executed
+  const _now = new Date();
+  const _kept = _pipelineData.filter(d=>{
+    if(d.stage!=='Lease Execution'||!d.closeDate) return true;
+    const exec = new Date(d.closeDate+'-01');
+    return (_now-exec)/86400000 <= 30;
+  });
+  if(_kept.length!==_pipelineData.length){ _pipelineData = _kept; savePipeline(); }
+
+  const chartStages = ['Prospecting','Touring','LOI','Lease Negotiation'];
+  const counts = {}; chartStages.forEach(s=>counts[s]=0);
+  _pipelineData.forEach(d=>{ if(counts[d.stage]!==undefined) counts[d.stage]++; });
+
+  // KPIs
+  const totalDeals     = _pipelineData.length;
+  const holdovers      = _pipelineData.filter(d=>d.holdover).length;
+  const weightedMonthly = _pipelineData.reduce((s,d)=>s+((d.sf&&d.rent&&d.prob)?d.sf*d.rent*(d.prob/100):0),0);
+  const newComm     = _pipelineData.reduce((s,d)=>s+((d.sf&&d.rent&&d.termYears&&commRate(d.dealType)===0.04)?d.sf*d.rent*0.04:0),0);
+  const renewalComm = _pipelineData.reduce((s,d)=>s+((d.sf&&d.rent&&d.termYears&&commRate(d.dealType)===0.02)?d.sf*d.rent*0.02:0),0);
+
+  const cardHtml = k => `<div style="background:${k.bg};color:#fff;border-radius:6px;padding:10px 14px;text-align:center">
+    <div style="font-size:10px;opacity:0.75;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${k.lbl}</div>
+    <div style="font-size:22px;font-weight:700">${k.val}</div>
+    ${k.sub?`<div style="font-size:9px;opacity:0.65;margin-top:2px">${k.sub}</div>`:''}
+  </div>`;
+  const topCards = [
+    {lbl:'Active Deals',           val:totalDeals,                                                  bg:'#0d2040', sub:''},
+    {lbl:'Weighted Monthly Value', val:weightedMonthly?'$'+Math.round(weightedMonthly/1000)+'K':'—', bg:'#d6ab5c', sub:'prob-weighted'},
+    {lbl:'Holdover Leases',        val:holdovers,                                                   bg:holdovers?'#a32d2d':'#0d2040', sub:holdovers?'⚠ action needed':''}
+  ];
+  const commCards = [
+    {lbl:'New Business Commission (4%)', val:newComm?'$'+Math.round(newComm/1000)+'K':'—',         bg:'#1a5e3a', sub:'monthly value basis'},
+    {lbl:'Renewal Commission (2%)',      val:renewalComm?'$'+Math.round(renewalComm/1000)+'K':'—', bg:'#1a5e3a', sub:'monthly value basis'}
+  ];
+
+  const el = document.getElementById('pipeline-kpis');
+  el.style.display = 'flex';
+  el.style.flexDirection = 'column';
+  el.style.gap = '8px';
+  const brokerRow = isBrokerVerified()
+    ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${commCards.map(cardHtml).join('')}</div>`
+    : `<div class="comm-reveal" style="border:1px dashed #d0d4da;border-radius:6px;padding:10px;text-align:center">
+         <button class="modal-btn comm-reveal-btn" style="background:#0d2040" onclick="requestBrokerAccess()">🔒 Verify MedWest Email to View Commissions</button>
+       </div>`;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${topCards.map(cardHtml).join('')}</div>${brokerRow}`;
+
+  // Deals by Stage chart (Lease Execution excluded — deal is done)
+  destroyChart('pipeline');
+  _chartInstances['pipeline'] = new Chart(document.getElementById('chart-pipeline'),{
+    type:'bar',
+    data:{ labels:chartStages, datasets:[{data:chartStages.map(s=>counts[s]),backgroundColor:['#1565c0','#6a1b9a','#e65100','#bf360c'],borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{stepSize:1},beginAtZero:true},x:{ticks:{font:{size:10}}}}}
+  });
+
+  // Prospective Locations Table
+  const tb = document.getElementById('tbody-pipeline');
+  tb.innerHTML = '';
+  if(!_pipelineData.length){
+    const empty = document.createElement('tr');
+    empty.innerHTML = '<td colspan="17" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
+    tb.appendChild(empty);
+  }
+  const noteTypeColors = {'Rent Negotiation':'#bf360c','Renewal Discussion':'#1565c0','Lease Amendment':'#4a148c','Touring Alternatives':'#1b5e20','General Update':'#0d2040'};
+  _pipelineData.forEach((d,i)=>{
+    const est  = d.sf&&d.rent ? fmt$(d.sf*d.rent) : '—';
+    const comm = d.sf&&d.rent&&d.termYears ? '$'+Math.round(d.sf*d.rent*commRate(d.dealType)).toLocaleString() : '—';
+    const probColor = (d.prob||0)>=70?'#2e7d32':(d.prob||0)>=45?'#e65100':'#c62828';
+    const holdClass = d.holdover ? 'row-holdover' : '';
+    const expanded = _expandedDeals.has(d.id);
+    const tr = document.createElement('tr');
+    tr.className = holdClass;
+    tr.innerHTML = `
+      <td><button onclick="toggleDealDetail(${d.id})" style="background:none;border:1px solid #d0d4da;border-radius:4px;width:20px;height:20px;cursor:pointer;font-weight:700;color:#0d2040;line-height:1">${expanded?'−':'+'}</button></td>
+      <td>${i+1}</td>
+      <td>${dealTypeBadge(d.dealType)}${d.holdover?'<br><span style="font-size:9px;color:#a32d2d;font-weight:700">HOLDOVER</span>':''}</td>
+      <td><span class="stage ${stageClass(d.stage)}">${d.stage}</span></td>
+      <td style="text-align:left;font-weight:600">${d.name}</td>
+      <td style="text-align:left">${d.addr||'—'}</td>
+      <td>${d.city||'—'}</td><td>${d.state||'—'}</td>
+      <td class="num">${d.sf?d.sf.toLocaleString():'—'}</td>
+      <td class="num">${d.rent?'$'+d.rent.toFixed(2):'—'}</td>
+      <td class="num">${est}</td>
+      <td class="ctr" style="white-space:nowrap">
+        <span style="font-weight:700;color:${probColor}">${d.prob!=null?d.prob+'%':'—'}</span>
+        ${d.prob!=null?`<span class="prob-mini"><span class="prob-mini-fill" style="width:${d.prob}%;background:${probColor}"></span></span>`:''}
+      </td>
+      <td class="ctr">${d.closeDate||'—'}</td>
+      <td class="num">${comm}</td>
+      <td style="text-align:left;max-width:220px;white-space:normal;font-size:11px">${d.notes||'—'}${d.competing&&d.competing!=='None'?`<br><span style="color:#888;font-size:10px">🏢 ${d.competing}</span>`:''}</td>
+      <td style="text-align:left;min-width:150px">
+        <input type="text" placeholder="Add comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
+        ${d.comments&&d.comments.length?`<div style="font-size:9px;color:#888;margin-top:2px">${d.comments.length} comment${d.comments.length>1?'s':''} — see + detail</div>`:''}
+      </td>
+      <td><button class="btn-del" onclick="deletePipelineDeal(${d.id})">✕</button></td>`;
+    tb.appendChild(tr);
+
+    const detailTr = document.createElement('tr');
+    detailTr.style.display = expanded ? '' : 'none';
+    const dealNotes = _leaseNotes.filter(n=>n.loc===d.name);
+    const relocBlock = d.dealType==='Relocation' ? `
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#1a4f80;margin-bottom:5px">Relocation Options</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          ${['a','b','c'].map(k=>`<div>
+            <label style="font-size:9px;color:#888;display:block;margin-bottom:2px">Option ${k.toUpperCase()}</label>
+            <input type="text" value="${((d.relocOptions&&d.relocOptions[k])||'').replace(/"/g,'&quot;')}" placeholder="Address / notes" onchange="updateRelocOption(${d.id},'${k}',this.value)" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
+          </div>`).join('')}
+        </div>
+      </div>` : '';
+    const dealComments = d.comments || [];
+    detailTr.innerHTML = `<td colspan="17" style="background:#f7f8fa;padding:12px 16px 14px 46px">
+      ${relocBlock}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040">Lease Notes / Updates — ${d.name}</div>
+        <button class="btn-sec" style="background:#1a6b8a;font-size:10px;padding:3px 9px" onclick="openLeaseNote('${d.name.replace(/'/g,"\\'")}')">✎ Add Note</button>
+      </div>
+      ${dealNotes.length ? dealNotes.slice().reverse().map(n=>{
+        const bg = noteTypeColors[n.type]||'#0d2040';
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
+          <span style="white-space:nowrap;color:#888;min-width:70px">${n.date}</span>
+          <span class="note-type" style="background:${bg};flex-shrink:0">${n.type}</span>
+          <span style="flex:1">${n.note}</span>
+          <button class="btn-del" style="flex-shrink:0" onclick="deleteNote(${n.id})">✕</button>
+        </div>`;
+      }).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No notes logged yet.</div>'}
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040;margin-top:12px;margin-bottom:6px">Comments — ${d.name}</div>
+      ${dealComments.length ? dealComments.slice().reverse().map(c=>`
+        <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
+          <span style="white-space:nowrap;color:#888;min-width:70px">${c.date}</span>
+          <span style="flex:1">${c.text}</span>
+        </div>`).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No comments yet.</div>'}
+    </td>`;
+    tb.appendChild(detailTr);
+  });
+}
+
+function toggleDealDetail(id){
+  if(_expandedDeals.has(id)) _expandedDeals.delete(id); else _expandedDeals.add(id);
+  buildPipelineUI();
+}
+
+function updateRelocOption(id,key,val){
+  const d = _pipelineData.find(x=>x.id===id);
+  if(!d) return;
+  d.relocOptions = d.relocOptions || {};
+  d.relocOptions[key] = val.trim();
+  savePipeline(); buildPipelineUI();
+}
+
+function deleteNote(id){ _leaseNotes=_leaseNotes.filter(n=>n.id!==id); saveNotes(); buildPipelineUI(); }
+
+// Modal helpers
+function openAddFromLease(){
+  const sel = document.getElementById('fl-loc');
+  sel.innerHTML = '<option value="">Select...</option>';
+  LOCATIONS.forEach(l=>{ const o=document.createElement('option'); o.value=l.name; o.textContent=l.name; sel.appendChild(o); });
+  document.getElementById('modal-fromlease').classList.add('open');
+}
+function openAddExpiring(){
+  populateExpiringList();
+  document.getElementById('modal-expiring').classList.add('open');
+}
+function openLeaseNote(prefillName){
+  const sel = document.getElementById('ln-loc');
+  sel.innerHTML = '<option value="">Select...</option>';
+  _pipelineData.forEach(d=>{ const o=document.createElement('option'); o.value=d.name; o.textContent=d.name; sel.appendChild(o); });
+  if(prefillName) sel.value = prefillName;
+  document.getElementById('modal-leasenote').classList.add('open');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+function populateExpiringList(){
+  const win = parseInt(document.getElementById('exp-window').value)||24;
+  const el = document.getElementById('exp-list');
+  const expiring = LOCATIONS.filter(l=>{ const m=monthsUntil(l.expiry); return m!==null&&m>=0&&m<=win; });
+  el.innerHTML = expiring.length ? expiring.map(l=>`
+    <label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:12px">
+      <input type="checkbox" name="exp-chk" value="${l.name}">
+      <span><b>${l.name}</b> — ${l.city}, ${l.state} | Exp: ${l.expiry} (${monthsUntil(l.expiry)} mo)</span>
+    </label>`).join('') : '<div style="font-size:12px;color:#888">No leases expiring in this window.</div>';
+}
+document.addEventListener('change',e=>{ if(e.target.id==='exp-window') populateExpiringList(); });
+
+function addFromLease(){
+  const name  = document.getElementById('fl-loc').value;
+  const stage = document.getElementById('fl-stage').value;
+  const notes = document.getElementById('fl-notes').value.trim();
+  if(!name) return alert('Select a location.');
+  const loc = LOCATIONS.find(l=>l.name===name);
+  const mo = monthsUntil(loc.expiry);
+  const isExpired = mo !== null && mo < 0;
+  _pipelineData.push({id:Date.now(),name:loc.name,addr:loc.address,city:loc.city,state:loc.state,sf:loc.sqft,rent:loc.contractSF,stage,dealType:isExpired?'Extension':'Blend & Extend',holdover:isExpired,origExpiry:loc.expiry||null,prob:null,closeDate:null,termYears:null,competing:null,notes});
+  savePipeline(); closeModal('modal-fromlease'); buildPipelineUI();
+}
+
+function addExpiringToPipeline(){
+  const stage = document.getElementById('exp-stage').value;
+  const notes = document.getElementById('exp-notes').value.trim();
+  const checks = [...document.querySelectorAll('input[name="exp-chk"]:checked')];
+  if(!checks.length) return alert('Select at least one location.');
+  checks.forEach(c=>{
+    const loc = LOCATIONS.find(l=>l.name===c.value);
+    const mo = monthsUntil(loc.expiry);
+    const isExpired = mo !== null && mo < 0;
+    if(loc) _pipelineData.push({id:Date.now()+Math.random(),name:loc.name,addr:loc.address,city:loc.city,state:loc.state,sf:loc.sqft,rent:loc.contractSF,stage,dealType:isExpired?'Extension':'Blend & Extend',holdover:isExpired,origExpiry:loc.expiry||null,prob:null,closeDate:null,termYears:null,competing:null,notes});
+  });
+  savePipeline(); closeModal('modal-expiring'); buildPipelineUI();
+}
+
+function saveLeaseNote(){
+  const loc  = document.getElementById('ln-loc').value;
+  const type = document.getElementById('ln-type').value;
+  const note = document.getElementById('ln-note').value.trim();
+  if(!loc||!note) return alert('Select a location and enter a note.');
+  const date = new Date().toLocaleDateString('en-US');
+  _leaseNotes.push({id:Date.now(),date,loc,type,note});
+  saveNotes(); closeModal('modal-leasenote');
+  document.getElementById('ln-note').value='';
+  if(document.getElementById('sec-pipeline').classList.contains('active')) buildPipelineUI();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded',()=>{
+  showSection('exec');
+});
+</script>
+</body>
+</html>
