@@ -139,6 +139,12 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 .btn-add{background:#d6ab5c;color:#fff;border:none;padding:7px 16px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer}
 .btn-add:hover{background:#c59d55}
 .btn-del{background:#c62828;color:#fff;border:none;padding:3px 9px;border-radius:3px;font-size:11px;cursor:pointer}
+.btn-edit{background:#29374d;color:#fff;border:none;padding:3px 9px;border-radius:3px;font-size:11px;cursor:pointer}
+.btn-save{background:#1a5e3a;color:#fff;border:none;padding:3px 9px;border-radius:3px;font-size:11px;cursor:pointer}
+.btn-cancel{background:#888;color:#fff;border:none;padding:3px 9px;border-radius:3px;font-size:11px;cursor:pointer}
+.row-editing td{background:#fdf9ef!important}
+.tbl-edit-input{width:100%;font-size:11px;padding:3px 6px;border:1px solid #29374d;border-radius:4px;box-sizing:border-box}
+.tbl-edit-select{width:100%;font-size:11px;padding:3px 4px;border:1px solid #29374d;border-radius:4px;box-sizing:border-box}
 
 /* PIPELINE EXTRA BUTTONS */
 .pipeline-actions{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
@@ -780,6 +786,8 @@ const DEFAULT_NOTES = [
 
 let _pipelineData = (()=>{ const d=JSON.parse(localStorage.getItem('pp_pipeline')||'null'); return(d&&d.length)?d:DEFAULT_PIPELINE.map(x=>({...x})); })();
 let _expandedDeals = new Set();
+let _editingDeals = new Set();
+const STAGE_PROB_DEFAULT = {Prospecting:20,Touring:40,LOI:60,'Lease Negotiation':90,'Lease Execution':100};
 let _leaseNotes   = (()=>{ const n=JSON.parse(localStorage.getItem('pp_notes')||'null');    return(n&&n.length)?n:DEFAULT_NOTES.map(x=>({...x}));    })();
 let _ganttShowOptions = true;
 let _chartInstances = {};
@@ -1948,31 +1956,58 @@ function buildPipelineUI(){
     const probColor = (d.prob||0)>=70?'#2e7d32':(d.prob||0)>=45?'#e65100':'#c62828';
     const holdClass = d.holdover ? 'row-holdover' : '';
     const expanded = _expandedDeals.has(d.id);
+    const editing = _editingDeals.has(d.id);
     const tr = document.createElement('tr');
-    tr.className = holdClass;
+    tr.className = (holdClass + (editing?' row-editing':'')).trim();
+
+    const typeCell = editing
+      ? `<select id="edit-dealtype-${d.id}" class="tbl-edit-select">${dealTypeOptionsHtml(d.dealType)}</select>`
+      : `${dealTypeBadge(d.dealType)}${d.holdover?'<br><span style="font-size:9px;color:#a32d2d;font-weight:700">HOLDOVER</span>':''}`;
+    const stageCell = editing
+      ? `<select id="edit-stage-${d.id}" class="tbl-edit-select" onchange="onEditStageChange(${d.id})">${stageOptionsHtml(d.stage)}</select>`
+      : `<span class="stage ${stageClass(d.stage)}">${d.stage}</span>`;
+    const nameCell  = editing ? `<input id="edit-name-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.name)}">` : d.name;
+    const addrCell  = editing ? `<input id="edit-addr-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.addr)}">` : (d.addr||'—');
+    const cityCell  = editing ? `<input id="edit-city-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.city)}">` : (d.city||'—');
+    const stateCell = editing ? `<input id="edit-state-${d.id}" class="tbl-edit-input" type="text" maxlength="2" value="${escAttr(d.state)}">` : (d.state||'—');
+    const sfCell    = editing ? `<input id="edit-sf-${d.id}" class="tbl-edit-input" type="number" value="${d.sf||''}">` : (d.sf?d.sf.toLocaleString():'—');
+    const rentCell  = editing ? `<input id="edit-rent-${d.id}" class="tbl-edit-input" type="number" step="0.01" value="${d.rent||''}">` : (d.rent?'$'+d.rent.toFixed(2):'—');
+    const probCell  = editing
+      ? `<input id="edit-prob-${d.id}" class="tbl-edit-input" type="number" min="0" max="100" value="${d.prob!=null?d.prob:''}">`
+      : `<span style="font-weight:700;color:${probColor}">${d.prob!=null?d.prob+'%':'—'}</span>${d.prob!=null?`<span class="prob-mini"><span class="prob-mini-fill" style="width:${d.prob}%;background:${probColor}"></span></span>`:''}`;
+    const closeCell = editing ? `<input id="edit-close-${d.id}" class="tbl-edit-input" type="text" placeholder="YYYY-MM" value="${escAttr(d.closeDate)}">` : (d.closeDate||'—');
+    const notesCell = editing
+      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Notes / Next Step</label>
+         <input id="edit-notes-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.notes)}" style="margin-bottom:4px">
+         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Competing Properties</label>
+         <input id="edit-competing-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.competing)}" style="margin-bottom:4px">
+         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Term (yrs)</label>
+         <input id="edit-termyears-${d.id}" class="tbl-edit-input" type="number" step="0.5" value="${d.termYears||''}">`
+      : `${d.notes||'—'}${d.competing&&d.competing!=='None'?`<br><span style="color:#888;font-size:10px">🏢 ${d.competing}</span>`:''}`;
+    const actionCell = editing
+      ? `<div style="display:flex;gap:4px"><button class="btn-save" onclick="saveEditDeal(${d.id})">✓ Save</button><button class="btn-cancel" onclick="cancelEditDeal(${d.id})">Cancel</button></div>`
+      : `<div style="display:flex;gap:4px"><button class="btn-edit" onclick="startEditDeal(${d.id})">✎ Edit</button><button class="btn-del" onclick="deletePipelineDeal(${d.id})">✕</button></div>`;
+
     tr.innerHTML = `
       <td><button onclick="toggleDealDetail(${d.id})" style="background:none;border:1px solid #d0d4da;border-radius:4px;width:20px;height:20px;cursor:pointer;font-weight:700;color:#0d2040;line-height:1">${expanded?'−':'+'}</button></td>
       <td>${i+1}</td>
-      <td>${dealTypeBadge(d.dealType)}${d.holdover?'<br><span style="font-size:9px;color:#a32d2d;font-weight:700">HOLDOVER</span>':''}</td>
-      <td><span class="stage ${stageClass(d.stage)}">${d.stage}</span></td>
-      <td style="text-align:left;font-weight:600">${d.name}</td>
-      <td style="text-align:left">${d.addr||'—'}</td>
-      <td>${d.city||'—'}</td><td>${d.state||'—'}</td>
-      <td class="num">${d.sf?d.sf.toLocaleString():'—'}</td>
-      <td class="num">${d.rent?'$'+d.rent.toFixed(2):'—'}</td>
+      <td>${typeCell}</td>
+      <td>${stageCell}</td>
+      <td style="text-align:left;font-weight:600">${nameCell}</td>
+      <td style="text-align:left">${addrCell}</td>
+      <td>${cityCell}</td><td>${stateCell}</td>
+      <td class="num">${sfCell}</td>
+      <td class="num">${rentCell}</td>
       <td class="num">${est}</td>
-      <td class="ctr" style="white-space:nowrap">
-        <span style="font-weight:700;color:${probColor}">${d.prob!=null?d.prob+'%':'—'}</span>
-        ${d.prob!=null?`<span class="prob-mini"><span class="prob-mini-fill" style="width:${d.prob}%;background:${probColor}"></span></span>`:''}
-      </td>
-      <td class="ctr">${d.closeDate||'—'}</td>
+      <td class="ctr" style="white-space:nowrap">${probCell}</td>
+      <td class="ctr">${closeCell}</td>
       <td class="num">${comm}</td>
-      <td style="text-align:left;max-width:220px;white-space:normal;font-size:11px">${d.notes||'—'}${d.competing&&d.competing!=='None'?`<br><span style="color:#888;font-size:10px">🏢 ${d.competing}</span>`:''}</td>
+      <td style="text-align:left;max-width:220px;white-space:normal;font-size:11px">${notesCell}</td>
       <td style="text-align:left;min-width:150px">
         <input type="text" placeholder="Add comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
         ${d.comments&&d.comments.length?`<div style="font-size:9px;color:#888;margin-top:2px">${d.comments.length} comment${d.comments.length>1?'s':''} — see + detail</div>`:''}
       </td>
-      <td><button class="btn-del" onclick="deletePipelineDeal(${d.id})">✕</button></td>`;
+      <td>${actionCell}</td>`;
     tb.appendChild(tr);
 
     const detailTr = document.createElement('tr');
@@ -2017,6 +2052,66 @@ function buildPipelineUI(){
 
 function toggleDealDetail(id){
   if(_expandedDeals.has(id)) _expandedDeals.delete(id); else _expandedDeals.add(id);
+  buildPipelineUI();
+}
+
+function escAttr(s){ return (s==null?'':String(s)).replace(/"/g,'&quot;'); }
+
+function dealTypeOptionsHtml(sel){
+  const opts = ['Extension','Relocation','Expansion','New Location','Blend & Extend','Build-to-Suit','Purchase'];
+  return `<option value=""${!sel?' selected':''}>Deal Type...</option>` + opts.map(o=>`<option${o===sel?' selected':''}>${o}</option>`).join('');
+}
+function stageOptionsHtml(sel){
+  const opts = ['Prospecting','Touring','LOI','Lease Negotiation','Lease Execution'];
+  return opts.map(o=>`<option${o===sel?' selected':''}>${o}</option>`).join('');
+}
+
+function startEditDeal(id){
+  _editingDeals.add(id);
+  buildPipelineUI();
+}
+
+function cancelEditDeal(id){
+  _editingDeals.delete(id);
+  buildPipelineUI();
+}
+
+function onEditStageChange(id){
+  const stageSel = document.getElementById('edit-stage-'+id);
+  const probInput = document.getElementById('edit-prob-'+id);
+  if(!stageSel || !probInput) return;
+  const def = STAGE_PROB_DEFAULT[stageSel.value];
+  if(def!=null) probInput.value = def;
+}
+
+function saveEditDeal(id){
+  const d = _pipelineData.find(x=>x.id===id);
+  if(!d) return;
+  const val  = fieldId => { const el = document.getElementById(fieldId+'-'+id); return el?el.value:null; };
+  const name = (val('edit-name')||'').trim();
+  if(!name){ alert('Location / City Name is required.'); return; }
+
+  d.name       = name;
+  d.dealType   = val('edit-dealtype') || null;
+  d.stage      = val('edit-stage') || d.stage;
+  d.addr       = (val('edit-addr')||'').trim() || null;
+  d.city       = (val('edit-city')||'').trim() || null;
+  d.state      = (val('edit-state')||'').trim() || null;
+  const sf     = parseFloat(val('edit-sf'));
+  d.sf         = isNaN(sf) ? null : sf;
+  const rent   = parseFloat(val('edit-rent'));
+  d.rent       = isNaN(rent) ? null : rent;
+  const prob   = parseFloat(val('edit-prob'));
+  d.prob       = isNaN(prob) ? null : Math.min(100, Math.max(0, prob));
+  d.closeDate  = (val('edit-close')||'').trim() || null;
+  d.notes      = (val('edit-notes')||'').trim() || null;
+  d.competing  = (val('edit-competing')||'').trim() || null;
+  const term   = parseFloat(val('edit-termyears'));
+  d.termYears  = isNaN(term) ? null : term;
+  d.holdover   = d.dealType==='Extension';
+
+  _editingDeals.delete(id);
+  savePipeline();
   buildPipelineUI();
 }
 
