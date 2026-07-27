@@ -222,10 +222,6 @@ table.dtbl td.ctr{text-align:center}
 .map-fullscreen-overlay .map-wrap>div:first-child{height:100%!important}
 .map-fullscreen-close{align-self:flex-end;margin-bottom:10px;background:#fff;border:none;border-radius:4px;padding:7px 14px;font-size:12px;font-weight:600;color:#0d2040;cursor:pointer}
 
-/* COMMISSION REVEAL-ON-HOVER */
-.comm-reveal-btn{opacity:0;transition:opacity 0.15s}
-.comm-reveal:hover .comm-reveal-btn{opacity:1}
-
 /* BAR CHART HIGHLIGHT PULSE (Over/Under cross-filter) */
 @keyframes barChartPulse{
   0%{box-shadow:0 0 0 0 rgba(214,171,92,0.65)}
@@ -1920,9 +1916,7 @@ function buildPipelineUI(){
   el.style.gap = '8px';
   const brokerRow = isBrokerVerified()
     ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${commCards.map(cardHtml).join('')}</div>`
-    : `<div class="comm-reveal" style="border:1px dashed #d0d4da;border-radius:6px;padding:10px;text-align:center">
-         <button class="modal-btn comm-reveal-btn" style="background:#0d2040" onclick="requestBrokerAccess()">🔒 Verify MedWest Email to View Commissions</button>
-       </div>`;
+    : '';
   el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${topCards.map(cardHtml).join('')}</div>${brokerRow}`;
 
   // Deals by Stage chart (Lease Execution excluded — deal is done)
