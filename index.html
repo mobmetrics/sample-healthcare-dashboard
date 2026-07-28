@@ -2440,10 +2440,17 @@ function getDashboardTourSteps(){
   ];
 }
 
+let _activeTour = null;
 function startDashboardTour(){
   if(!window.driver || !window.driver.js){ alert('The tour library failed to load — check your connection and try again.'); return; }
   const driver = window.driver.js.driver;
+  // Guard against overlapping tours: if one is already running (or was left
+  // half-open), tear it down first. Two live instances fight each other and
+  // make the tour jump steps or vanish mid-run.
+  if(_activeTour){ try{ _activeTour.destroy(); }catch(e){} _activeTour = null; }
   const tourObj = driver({
+    animate:false,                  // snap between steps — avoids the transition-window race with charts/maps still rendering
+    disableActiveInteraction:true,  // block clicks on the highlighted element so a stray click can't re-render the page out from under the tour
     showProgress:true,
     progressText:'{{current}} of {{total}}',
     allowClose:true,
@@ -2453,8 +2460,10 @@ function startDashboardTour(){
     nextBtnText:'Next →',
     prevBtnText:'← Back',
     doneBtnText:'Done',
+    onDestroyed:()=>{ _activeTour = null; },
     steps:getDashboardTourSteps()
   });
+  _activeTour = tourObj;
   tourObj.drive();
 }
 
