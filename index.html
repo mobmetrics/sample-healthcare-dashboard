@@ -647,7 +647,7 @@ select option:active{background-color:#29374d!important;color:#fff!important}
               <tr>
                 <th></th><th>#</th><th>Type</th><th>Stage</th><th>Location / City</th><th>Address</th><th>City</th><th>State</th>
                 <th>Est. SF</th><th>Rent $/SF/Mo</th><th>Est. Monthly</th>
-                <th>Prob</th><th>Est. Close</th><th>Commission Est.</th>
+                <th>Prob</th><th>Est. Close</th>
                 <th>Notes / Next Step</th><th>Comment</th><th>Action</th>
               </tr>
             </thead>
@@ -1906,8 +1906,6 @@ function buildPipelineUI(){
   const totalDeals     = _pipelineData.length;
   const holdovers      = _pipelineData.filter(d=>d.holdover).length;
   const weightedMonthly = _pipelineData.reduce((s,d)=>s+((d.sf&&d.rent&&d.prob)?d.sf*d.rent*(d.prob/100):0),0);
-  const newComm     = _pipelineData.reduce((s,d)=>s+((d.sf&&d.rent&&d.termYears&&commRate(d.dealType)===0.04)?d.sf*d.rent*0.04:0),0);
-  const renewalComm = _pipelineData.reduce((s,d)=>s+((d.sf&&d.rent&&d.termYears&&commRate(d.dealType)===0.02)?d.sf*d.rent*0.02:0),0);
 
   const cardHtml = k => `<div style="background:${k.bg};color:#fff;border-radius:6px;padding:10px 14px;text-align:center">
     <div style="font-size:10px;opacity:0.75;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${k.lbl}</div>
@@ -1919,19 +1917,11 @@ function buildPipelineUI(){
     {lbl:'Weighted Monthly Value', val:weightedMonthly?'$'+Math.round(weightedMonthly/1000)+'K':'—', bg:'#d6ab5c', sub:'prob-weighted'},
     {lbl:'Holdover Leases',        val:holdovers,                                                   bg:holdovers?'#a32d2d':'#0d2040', sub:holdovers?'⚠ action needed':''}
   ];
-  const commCards = [
-    {lbl:'New Business Commission (4%)', val:newComm?'$'+Math.round(newComm/1000)+'K':'—',         bg:'#1a5e3a', sub:'monthly value basis'},
-    {lbl:'Renewal Commission (2%)',      val:renewalComm?'$'+Math.round(renewalComm/1000)+'K':'—', bg:'#1a5e3a', sub:'monthly value basis'}
-  ];
-
   const el = document.getElementById('pipeline-kpis');
   el.style.display = 'flex';
   el.style.flexDirection = 'column';
   el.style.gap = '8px';
-  const brokerRow = isBrokerVerified()
-    ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">${commCards.map(cardHtml).join('')}</div>`
-    : '';
-  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${topCards.map(cardHtml).join('')}</div>${brokerRow}`;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${topCards.map(cardHtml).join('')}</div>`;
 
   // Deals by Stage chart (Lease Execution excluded — deal is done)
   destroyChart('pipeline');
@@ -1946,13 +1936,12 @@ function buildPipelineUI(){
   tb.innerHTML = '';
   if(!_pipelineData.length){
     const empty = document.createElement('tr');
-    empty.innerHTML = '<td colspan="17" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
+    empty.innerHTML = '<td colspan="16" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
     tb.appendChild(empty);
   }
   const noteTypeColors = {'Rent Negotiation':'#bf360c','Renewal Discussion':'#1565c0','Lease Amendment':'#4a148c','Touring Alternatives':'#1b5e20','General Update':'#0d2040'};
   _pipelineData.forEach((d,i)=>{
     const est  = d.sf&&d.rent ? fmt$(d.sf*d.rent) : '—';
-    const comm = d.sf&&d.rent&&d.termYears ? '$'+Math.round(d.sf*d.rent*commRate(d.dealType)).toLocaleString() : '—';
     const probColor = (d.prob||0)>=70?'#2e7d32':(d.prob||0)>=45?'#e65100':'#c62828';
     const holdClass = d.holdover ? 'row-holdover' : '';
     const expanded = _expandedDeals.has(d.id);
@@ -2001,7 +1990,6 @@ function buildPipelineUI(){
       <td class="num">${est}</td>
       <td class="ctr" style="white-space:nowrap">${probCell}</td>
       <td class="ctr">${closeCell}</td>
-      <td class="num">${comm}</td>
       <td style="text-align:left;max-width:220px;white-space:normal;font-size:11px">${notesCell}</td>
       <td style="text-align:left;min-width:150px">
         <input type="text" placeholder="Add comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
@@ -2024,7 +2012,7 @@ function buildPipelineUI(){
         </div>
       </div>` : '';
     const dealComments = d.comments || [];
-    detailTr.innerHTML = `<td colspan="17" style="background:#f7f8fa;padding:12px 16px 14px 46px">
+    detailTr.innerHTML = `<td colspan="16" style="background:#f7f8fa;padding:12px 16px 14px 46px">
       ${relocBlock}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040">Lease Notes / Updates — ${d.name}</div>
