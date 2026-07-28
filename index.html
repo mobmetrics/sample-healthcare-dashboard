@@ -63,6 +63,8 @@ table.dtbl tr:nth-child(even) td{background:#fafbfd}
 table.dtbl tr:nth-child(even):hover td{background:#f0f4f8}
 table.dtbl td.num{text-align:right}
 table.dtbl td.ctr{text-align:center}
+table.dtbl td[data-editable]{cursor:pointer}
+table.dtbl td[data-editable]:hover{background:#eaf1fb}
 #tbl-sat th,#tbl-sat td{white-space:nowrap}
 #tbl-sat td{text-align:left}
 #tbl-sat th{text-align:left}
@@ -764,10 +766,10 @@ let _selectedKpiLocation = null;
 // ---- Default seed data (used when localStorage is empty) ----
 const DEFAULT_PIPELINE = [
   {id:1000001,name:'Coastal Medical Group',addr:'4455 Morena Blvd',city:'San Diego',state:'CA',sf:3200,rent:3.37,stage:'Lease Negotiation',dealType:'Extension',holdover:true,origExpiry:'2025-06-30',prob:72,closeDate:'2026-09',termYears:3,competing:'None — tenant prefers current location',notes:'Holdover since Jun 2025. Counter sent 6/28 on TI request ($18/SF). Follow-up call 7/15.'},
-  {id:1000002,name:'Advanced Orthopedics',addr:'8901 Miramar Rd (current)',city:'San Diego',state:'CA',sf:5800,rent:4.25,stage:'Touring',dealType:'Relocation',holdover:false,origExpiry:null,prob:45,closeDate:'2026-10',termYears:5,competing:'8880 Rio San Diego Dr; 3252 Holiday Ct',notes:'Current lease ends Dec 2026. Must occupy by Oct. Prefers North Clairemont corridor; needs 4/1000 parking.'},
-  {id:1000003,name:'Pacific Coast Dermatology',addr:'2850 Pio Pico Dr',city:'Carlsbad',state:'CA',sf:2600,rent:3.20,stage:'LOI',dealType:'Blend & Extend',holdover:false,origExpiry:null,prob:55,closeDate:'2026-08',termYears:3,competing:'None — in-place restructure',notes:'Blended rate at $3.20/SF/Mo accepted in principle. $15/SF TI. LOI drafted; execution Aug 2026.'},
-  {id:1000004,name:'Bay Area Pediatrics',addr:'2211 Fifth Ave',city:'San Diego',state:'CA',sf:2100,rent:3.85,stage:'Lease Negotiation',dealType:'Extension',holdover:true,origExpiry:'2025-03-31',prob:80,closeDate:'2026-07',termYears:3,competing:'None',notes:'Holdover since Mar 2025. Verbal agreement: 3-yr renewal at $3.85/SF/Mo NNN. Lease amendment in draft.'},
-  {id:1000005,name:'Summit Health Partners',addr:'Escondido/Vista Corridor',city:'Escondido',state:'CA',sf:8000,rent:3.50,stage:'Prospecting',dealType:'New Location',holdover:false,origExpiry:null,prob:25,closeDate:'2026-12',termYears:5,competing:'Escondido Medical Arts; 1011 Nordahl Rd',notes:'Early-stage. Board approval required Q3 2026 before LOI. Initial site tours completed Jun 5.'},
+  {id:1000002,name:'Advanced Orthopedics',addr:'8901 Miramar Rd (current)',city:'San Diego',state:'CA',sf:5800,rent:4.25,stage:'Touring',dealType:'Relocation',holdover:false,origExpiry:null,prob:40,closeDate:'2026-10',termYears:5,competing:'8880 Rio San Diego Dr; 3252 Holiday Ct',notes:'Current lease ends Dec 2026. Must occupy by Oct. Prefers North Clairemont corridor; needs 4/1000 parking.'},
+  {id:1000003,name:'Pacific Coast Dermatology',addr:'2850 Pio Pico Dr',city:'Carlsbad',state:'CA',sf:2600,rent:3.20,stage:'LOI',dealType:'Blend & Extend',holdover:false,origExpiry:null,prob:60,closeDate:'2026-08',termYears:3,competing:'None — in-place restructure',notes:'Blended rate at $3.20/SF/Mo accepted in principle. $15/SF TI. LOI drafted; execution Aug 2026.'},
+  {id:1000004,name:'Bay Area Pediatrics',addr:'2211 Fifth Ave',city:'San Diego',state:'CA',sf:2100,rent:3.85,stage:'Lease Negotiation',dealType:'Extension',holdover:true,origExpiry:'2025-03-31',prob:90,closeDate:'2026-07',termYears:3,competing:'None',notes:'Holdover since Mar 2025. Verbal agreement: 3-yr renewal at $3.85/SF/Mo NNN. Lease amendment in draft.'},
+  {id:1000005,name:'Summit Health Partners',addr:'Escondido/Vista Corridor',city:'Escondido',state:'CA',sf:8000,rent:3.50,stage:'Prospecting',dealType:'New Location',holdover:false,origExpiry:null,prob:20,closeDate:'2026-12',termYears:5,competing:'Escondido Medical Arts; 1011 Nordahl Rd',notes:'Early-stage. Board approval required Q3 2026 before LOI. Initial site tours completed Jun 5.'},
   {id:1000006,name:'Desert Valley Imaging',addr:'72780 Country Club Dr',city:'Rancho Mirage',state:'CA',sf:3500,rent:3.65,stage:'LOI',dealType:'Expansion',holdover:false,origExpiry:null,prob:65,closeDate:'2026-09',termYears:5,competing:'Adjacent suite — same building',notes:'Expanding into adjacent Ste 310B. LOI submitted 6/18. Requesting 12-mo abatement + $40/SF TI.'},
   {id:1000007,name:'Nexus Behavioral Health',addr:'1800 Thibodo Rd',city:'Vista',state:'CA',sf:4400,rent:3.10,stage:'Lease Execution',dealType:'New Location',holdover:false,origExpiry:null,prob:95,closeDate:'2026-07',termYears:5,competing:'None — deal locked',notes:'LOI executed. 5-yr term at $3.10/SF/Mo NNN, $45/SF TI confirmed. Lease docs sent to tenant 6/20.'}
 ];
@@ -1977,20 +1979,21 @@ function buildPipelineUI(){
       ? `<div style="display:flex;gap:4px"><button class="btn-save" onclick="saveEditDeal(${d.id})">✓ Save</button><button class="btn-cancel" onclick="cancelEditDeal(${d.id})">Cancel</button></div>`
       : `<div style="display:flex;gap:4px"><button class="btn-edit" onclick="startEditDeal(${d.id})">✎ Edit</button><button class="btn-del" onclick="deletePipelineDeal(${d.id})">✕</button></div>`;
 
+    const editAttr = editing ? '' : ` data-editable="1" title="Click to edit" onclick="startEditDeal(${d.id})"`;
     tr.innerHTML = `
       <td><button onclick="toggleDealDetail(${d.id})" style="background:none;border:1px solid #d0d4da;border-radius:4px;width:20px;height:20px;cursor:pointer;font-weight:700;color:#0d2040;line-height:1">${expanded?'−':'+'}</button></td>
       <td>${i+1}</td>
-      <td>${typeCell}</td>
-      <td>${stageCell}</td>
-      <td style="text-align:left;font-weight:600">${nameCell}</td>
-      <td style="text-align:left">${addrCell}</td>
-      <td>${cityCell}</td><td>${stateCell}</td>
-      <td class="num">${sfCell}</td>
-      <td class="num">${rentCell}</td>
+      <td${editAttr}>${typeCell}</td>
+      <td${editAttr}>${stageCell}</td>
+      <td style="text-align:left;font-weight:600"${editAttr}>${nameCell}</td>
+      <td style="text-align:left"${editAttr}>${addrCell}</td>
+      <td${editAttr}>${cityCell}</td><td${editAttr}>${stateCell}</td>
+      <td class="num"${editAttr}>${sfCell}</td>
+      <td class="num"${editAttr}>${rentCell}</td>
       <td class="num">${est}</td>
-      <td class="ctr" style="white-space:nowrap">${probCell}</td>
-      <td class="ctr">${closeCell}</td>
-      <td style="text-align:left;max-width:220px;white-space:normal;font-size:11px">${notesCell}</td>
+      <td class="ctr" style="white-space:nowrap"${editAttr}>${probCell}</td>
+      <td class="ctr"${editAttr}>${closeCell}</td>
+      <td style="text-align:left;max-width:220px;white-space:normal;font-size:11px"${editAttr}>${notesCell}</td>
       <td style="text-align:left;min-width:150px">
         <input type="text" placeholder="Add comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
         ${d.comments&&d.comments.length?`<div style="font-size:9px;color:#888;margin-top:2px">${d.comments.length} comment${d.comments.length>1?'s':''} — see + detail</div>`:''}
