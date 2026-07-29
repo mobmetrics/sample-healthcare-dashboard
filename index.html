@@ -2070,7 +2070,10 @@ function buildPipelineUI(){
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
           ${['a','b','c'].map(k=>`<div>
             <label style="font-size:9px;color:#888;display:block;margin-bottom:2px">Option ${k.toUpperCase()}</label>
-            <input type="text" value="${((d.relocOptions&&d.relocOptions[k])||'').replace(/"/g,'&quot;')}" placeholder="Address / notes" onchange="updateRelocOption(${d.id},'${k}',this.value)" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
+            <div style="display:flex;gap:4px">
+              <input id="reloc-${d.id}-${k}" type="text" value="${escAttr((d.relocOptions&&d.relocOptions[k])||'')}" placeholder="Address / notes — Enter to log" onkeydown="if(event.key==='Enter'){event.preventDefault();submitRelocOption(${d.id},'${k}')}" style="flex:1;min-width:0;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
+              <button class="btn-sec" style="padding:3px 8px;font-size:10px;flex-shrink:0" title="Add to Lease Notes" onclick="submitRelocOption(${d.id},'${k}')">Add</button>
+            </div>
           </div>`).join('')}
         </div>
       </div>` : '';
@@ -2166,12 +2169,23 @@ function saveEditDeal(id){
   buildPipelineUI();
 }
 
-function updateRelocOption(id,key,val){
+function submitRelocOption(id,key){
   const d = _pipelineData.find(x=>x.id===id);
   if(!d) return;
+  const input = document.getElementById(`reloc-${id}-${key}`);
+  if(!input) return;
+  const val = input.value.trim();
+  if(!val) return;
+  const prevVal = (d.relocOptions && d.relocOptions[key]) || '';
   d.relocOptions = d.relocOptions || {};
-  d.relocOptions[key] = val.trim();
-  savePipeline(); buildPipelineUI();
+  d.relocOptions[key] = val;
+  savePipeline();
+
+  const action = prevVal ? 'updated' : 'added';
+  _leaseNotes.push({id:Date.now(), date:new Date().toLocaleDateString('en-US'), loc:d.name, type:'Touring Alternatives', note:`Relocation Option ${key.toUpperCase()} ${action}: ${val}`});
+  saveNotes();
+
+  buildPipelineUI();
 }
 
 function deleteNote(id){ _leaseNotes=_leaseNotes.filter(n=>n.id!==id); saveNotes(); buildPipelineUI(); }
