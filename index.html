@@ -460,9 +460,21 @@ select option:active{background-color:#29374d!important;color:#fff!important}
       <div class="section-title">Rate Comparison — Contract vs. Market</div>
       <div class="filter-bar">
         <label>Filter by Location:</label>
-        <select id="rate1-filter" onchange="filterRate1()">
-          <option value="all">All Locations</option>
-        </select>
+        <div id="rate1-ms" style="position:relative">
+          <button type="button" id="rate1-ms-btn" onclick="toggleRate1Dropdown()" style="padding:4px 10px;border-radius:4px;border:1px solid #ccc;font-size:12px;background:#fff;color:#333;cursor:pointer;min-width:170px;text-align:left;display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <span id="rate1-ms-label">All Locations</span><span style="font-size:9px;color:#888">&#9662;</span>
+          </button>
+          <div id="rate1-ms-panel" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;background:#fff;border:1px solid #d0d4da;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:6px 0;max-height:260px;overflow-y:auto;z-index:20;min-width:210px">
+            <label style="display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600;color:#0d2040;border-bottom:1px solid #eef0f3">
+              <input type="checkbox" id="rate1-ms-all" checked onchange="toggleRate1All(this.checked)"> All Locations
+            </label>
+            <div id="rate1-ms-options"></div>
+          </div>
+        </div>
+      </div>
+      <div class="full card" id="rate1-compare-card" style="display:none">
+        <div class="card-title">Side-by-Side Comparison</div>
+        <div id="rate1-compare-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
       </div>
       <div class="full card">
         <div class="card-title">Contract Monthly Cost vs. Market Gross Monthly by Sq Ft</div>
@@ -902,7 +914,7 @@ function showSection(id){
   if(id==='exec')      { initExecCharts(); initMap('exec'); }
   if(id==='expir')     { buildExpirTable(); initMap('expir'); }
   if(id==='opex')      { buildOpexTable(); initOpexChart(); }
-  if(id==='rate1')     { buildRate1Table(); buildRate2Chart(); buildRentScheduleTable(); }
+  if(id==='rate1')     { resetRate1Selection(); buildRate1Table(); buildRate2Chart(); buildRentScheduleTable(); }
   if(id==='addrkey')   { buildAddrTable(); }
   if(id==='analytics') { initAnalyticsCharts(); }
   if(id==='pipeline')  { buildPipelineUI(); }
@@ -1316,6 +1328,14 @@ function buildExpirTimelineRows(filterName){
   el.innerHTML=html;
 }
 
+function highlightExpirTableRow(filterName){
+  const tb = document.getElementById('tbody-expir');
+  if(!tb) return;
+  [...tb.children].forEach(tr=>{
+    tr.style.background = tr.dataset.loc===filterName ? 'rgba(13,32,64,.07)' : '';
+  });
+}
+
 function selectExpirProperty(name){
   _selectedExpirLoc = name;
   const loc = LOCATIONS.find(l=>l.name===name);
@@ -1324,6 +1344,7 @@ function selectExpirProperty(name){
   buildExpirAlertCards(name);
   buildExpirStackedBar(name);
   buildExpirTimelineRows(name);
+  highlightExpirTableRow(name);
   if(loc&&loc.lat&&loc.lng&&_mapInstances['expir']) _mapInstances['expir'].flyTo([loc.lat,loc.lng],14,{duration:0.8});
 }
 
@@ -1334,6 +1355,7 @@ function clearExpirSelection(){
   buildExpirAlertCards(null);
   buildExpirStackedBar(null);
   buildExpirTimelineRows(null);
+  highlightExpirTableRow(null);
   if(_mapInstances['expir']) _mapInstances['expir'].flyTo([34.0,-116.5],6,{duration:0.8});
 }
 
@@ -1429,7 +1451,10 @@ function buildExpirTable(){
     const borderColor = mo===null?'transparent':mo<0?'#111':mo<6?'#c62828':mo<18?'#e65100':'transparent';
     const tr = document.createElement('tr');
     tr.style.borderLeft = `3px solid ${borderColor}`;
-    tr.innerHTML = `<td>${i+1}</td><td style="cursor:pointer;color:#0d2040;font-weight:600;white-space:nowrap" onclick="selectExpirProperty('${loc.name}')">${loc.name}</td>
+    tr.style.cursor = 'pointer';
+    tr.dataset.loc = loc.name;
+    tr.onclick = () => selectExpirProperty(loc.name);
+    tr.innerHTML = `<td>${i+1}</td><td style="color:#0d2040;font-weight:600;white-space:nowrap">${loc.name}</td>
       <td>${loc.options ? `<span class="badge" style="background:#1565c0">${loc.options}</span>` : '<span class="badge badge-dash">—</span>'}</td>
       <td>${loc.opt1NotifBegins||'—'}</td><td>${loc.opt1MonthsUntil??'—'}</td><td>${loc.opt1NoticeEnd||'—'}</td>
       <td>${loc.opt2NotifBegins||'—'}</td><td>${loc.opt2MonthsUntil??'—'}</td><td>${loc.opt2NoticeEnd||'—'}</td>
@@ -1495,17 +1520,95 @@ function initOpexChart(){
 // ============================================================
 // RATE COMPARISON
 // ============================================================
+let _rate1Selected = new Set(); // empty = All Locations
+
+function initRate1Filter(){
+  const optsEl = document.getElementById('rate1-ms-options');
+  if(!optsEl || optsEl.children.length) return;
+  LOCATIONS.forEach(loc=>{
+    const lbl = document.createElement('label');
+    lbl.style.cssText = 'display:flex;align-items:center;gap:8px;padding:5px 12px;font-size:12px;cursor:pointer;color:#333';
+    lbl.innerHTML = `<input type="checkbox" value="${loc.name}" onchange="toggleRate1Option('${loc.name}',this.checked)"> ${loc.name}`;
+    optsEl.appendChild(lbl);
+  });
+}
+
+function toggleRate1Dropdown(){
+  const panel = document.getElementById('rate1-ms-panel');
+  if(panel) panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+}
+
+document.addEventListener('click', function(e){
+  const wrap = document.getElementById('rate1-ms');
+  const panel = document.getElementById('rate1-ms-panel');
+  if(wrap && panel && !wrap.contains(e.target)) panel.style.display='none';
+});
+
+function toggleRate1All(checked){
+  if(checked){
+    _rate1Selected.clear();
+    document.querySelectorAll('#rate1-ms-options input[type=checkbox]').forEach(cb=>cb.checked=false);
+  }
+  updateRate1Label();
+  buildRate1Table();
+  buildRate2Chart();
+}
+
+function toggleRate1Option(name, checked){
+  if(checked) _rate1Selected.add(name); else _rate1Selected.delete(name);
+  const allCb = document.getElementById('rate1-ms-all');
+  if(allCb) allCb.checked = _rate1Selected.size===0;
+  updateRate1Label();
+  buildRate1Table();
+  buildRate2Chart();
+}
+
+function updateRate1Label(){
+  const label = document.getElementById('rate1-ms-label');
+  if(!label) return;
+  if(_rate1Selected.size===0) label.textContent = 'All Locations';
+  else if(_rate1Selected.size===1) label.textContent = [..._rate1Selected][0];
+  else label.textContent = _rate1Selected.size+' Selected';
+}
+
+function resetRate1Selection(){
+  _rate1Selected.clear();
+  const allCb = document.getElementById('rate1-ms-all');
+  if(allCb) allCb.checked = true;
+  document.querySelectorAll('#rate1-ms-options input[type=checkbox]').forEach(cb=>cb.checked=false);
+  updateRate1Label();
+  const panel = document.getElementById('rate1-ms-panel');
+  if(panel) panel.style.display='none';
+}
+
+function buildRate1CompareStrip(){
+  const card = document.getElementById('rate1-compare-card');
+  const grid = document.getElementById('rate1-compare-grid');
+  if(!card||!grid) return;
+  if(_rate1Selected.size<2){ card.style.display='none'; grid.innerHTML=''; return; }
+  card.style.display='block';
+  grid.innerHTML = [..._rate1Selected].map(name=>{
+    const loc = LOCATIONS.find(l=>l.name===name);
+    if(!loc) return '';
+    const diff = loc.contractSF&&loc.marketSF ? (((loc.contractSF-loc.marketSF)/loc.marketSF)*100).toFixed(1) : null;
+    const cvmColor = diff===null ? '#888' : parseFloat(diff)<0 ? '#2e7d32' : '#c62828';
+    return `<div style="border:1px solid #e0e3e8;border-radius:6px;padding:10px 12px">
+      <div style="font-size:12px;font-weight:700;color:#0d2040;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
+      <div style="font-size:11px;color:#555;display:flex;justify-content:space-between;margin-bottom:3px"><span>Contract $/SF</span><span style="font-weight:600;color:#0d2040">${loc.contractSF?fmt$(loc.contractSF):'—'}</span></div>
+      <div style="font-size:11px;color:#555;display:flex;justify-content:space-between;margin-bottom:3px"><span>Market $/SF</span><span style="font-weight:600;color:#0d2040">${loc.marketSF?fmt$(loc.marketSF):'—'}</span></div>
+      <div style="font-size:11px;color:#555;display:flex;justify-content:space-between;margin-bottom:3px"><span>% vs Market</span><span style="font-weight:600;color:${cvmColor}">${diff!==null?diff+'%':'—'}</span></div>
+      <div style="font-size:11px;color:#555;display:flex;justify-content:space-between"><span>Remaining Rent</span><span style="font-weight:600;color:#0d2040">${loc.remaining!==null?fmt$(loc.remaining):'—'}</span></div>
+    </div>`;
+  }).join('');
+}
+
 function buildRate1Table(){
+  initRate1Filter();
   const tb = document.getElementById('tbody-rate1');
   tb.innerHTML = '';
-  const sel = document.getElementById('rate1-filter');
-  if(sel.children.length<=1){
-    LOCATIONS.forEach(loc=>{ const o=document.createElement('option'); o.value=loc.name; o.textContent=loc.name; sel.appendChild(o); });
-  }
-  const filter = sel.value;
   let idx=0;
   LOCATIONS.forEach(loc=>{
-    if(filter!=='all'&&loc.name!==filter) return;
+    if(_rate1Selected.size>0 && !_rate1Selected.has(loc.name)) return;
     if(!loc.contractSF&&!loc.marketSF) return;
     idx++;
     const diff = loc.contractSF&&loc.marketSF ? (((loc.contractSF-loc.marketSF)/loc.marketSF)*100).toFixed(1) : null;
@@ -1519,13 +1622,12 @@ function buildRate1Table(){
       <td class="ctr">${loc.remaining!==null?fmt$(loc.remaining):'—'}</td>`;
     tb.appendChild(tr);
   });
+  buildRate1CompareStrip();
 }
 
-function filterRate1(){ buildRate1Table(); }
-
 function buildRate2Chart(){
-  if(_chartInstances['rate2']) return;
-  const locs = LOCATIONS.filter(l=>l.contractSF&&l.marketSF);
+  destroyChart('rate2');
+  const locs = LOCATIONS.filter(l=>l.contractSF&&l.marketSF&&(_rate1Selected.size===0||_rate1Selected.has(l.name)));
   const labels = locs.map(l=>l.name);
   _chartInstances['rate2'] = new Chart(document.getElementById('chart-rate2'),{
     type:'bar',
@@ -2390,10 +2492,10 @@ function getDashboardTourSteps(){
       }
     },
     {
-      element: tourGoTo('rate1','#rate1-filter'),
+      element: tourGoTo('rate1','#rate1-ms-btn'),
       popover:{
         title:'Compare rates instantly',
-        description:'Use this dropdown to filter the table to one location and see how your contract rate stacks up against market.',
+        description:'Use this dropdown to filter the table to one or more locations and see how contract rates stack up against market.',
         side:'bottom', align:'start'
       }
     },
