@@ -410,11 +410,11 @@ select option:active{background-color:#29374d!important;color:#fff!important}
           <table class="dtbl" id="tbl-expir">
             <thead>
               <tr>
-                <th>#</th><th>Location Name ⇅</th><th>Options</th>
+                <th>#</th><th id="th-expir-name" data-label="Location Name" onclick="sortExpirTable('name')" style="cursor:pointer">Location Name ⇅</th><th>Options</th>
                 <th>Option 1 Notification Begins</th><th>Month Until Option 1 Opens</th>
                 <th>Option 1 Notice End</th><th>Option 2 Notification Begins</th>
                 <th>Month Until Option 2 Opens</th><th>Option 2 Notice End</th>
-                <th>Months to Expiration ⇅</th><th>Expiration ⇅</th>
+                <th id="th-expir-mo" data-label="Months to Expiration" onclick="sortExpirTable('mo')" style="cursor:pointer">Months to Expiration ⇅</th><th id="th-expir-expiry" data-label="Expiration" onclick="sortExpirTable('expiry')" style="cursor:pointer">Expiration ⇅</th>
               </tr>
             </thead>
             <tbody id="tbody-expir"></tbody>
@@ -1434,17 +1434,41 @@ function buildExpirActionCenter(){
   buildExpirTimelineRows(null);
 }
 
-function buildExpirTable(){
-  buildExpirActionCenter();
-  const tb = document.getElementById('tbody-expir');
-  if(tb.children.length) return;
-  buildExpirAlertCards(null);
+let _expirSortCol = 'mo'; // 'name' | 'mo' | 'expiry'
+let _expirSortDir = 'asc';
 
-  // -- Table (unchanged columns; adds urgency left-border per row) --
+function sortExpirTable(col){
+  if(_expirSortCol===col){ _expirSortDir = _expirSortDir==='asc'?'desc':'asc'; }
+  else { _expirSortCol = col; _expirSortDir = 'asc'; }
+  renderExpirTableRows();
+  updateExpirSortHeaders();
+}
+
+function updateExpirSortHeaders(){
+  const ids = {name:'th-expir-name', mo:'th-expir-mo', expiry:'th-expir-expiry'};
+  Object.entries(ids).forEach(([col,id])=>{
+    const th = document.getElementById(id);
+    if(!th) return;
+    const label = th.dataset.label;
+    th.textContent = label+' '+(col===_expirSortCol ? (_expirSortDir==='asc'?'▲':'▼') : '⇅');
+  });
+}
+
+function renderExpirTableRows(){
+  const tb = document.getElementById('tbody-expir');
+  if(!tb) return;
+  tb.innerHTML = '';
+  const dir = _expirSortDir==='asc' ? 1 : -1;
   const sorted = [...LOCATIONS].sort((a,b)=>{
+    if(_expirSortCol==='name') return a.name.localeCompare(b.name)*dir;
+    if(_expirSortCol==='expiry'){
+      const va = a.expiry?new Date(a.expiry).getTime():Infinity;
+      const vb = b.expiry?new Date(b.expiry).getTime():Infinity;
+      return (va-vb)*dir;
+    }
     const ma = a.expiry?monthsUntil(a.expiry):9999;
     const mb = b.expiry?monthsUntil(b.expiry):9999;
-    return ma-mb;
+    return (ma-mb)*dir;
   });
   sorted.forEach((loc,i)=>{
     const mo = monthsUntil(loc.expiry);
@@ -1454,6 +1478,7 @@ function buildExpirTable(){
     tr.style.cursor = 'pointer';
     tr.dataset.loc = loc.name;
     tr.onclick = () => selectExpirProperty(loc.name);
+    if(loc.name===_selectedExpirLoc) tr.style.background = 'rgba(13,32,64,.07)';
     tr.innerHTML = `<td>${i+1}</td><td style="color:#0d2040;font-weight:600;white-space:nowrap">${loc.name}</td>
       <td>${loc.options ? `<span class="badge" style="background:#1565c0">${loc.options}</span>` : '<span class="badge badge-dash">—</span>'}</td>
       <td>${loc.opt1NotifBegins||'—'}</td><td>${loc.opt1MonthsUntil??'—'}</td><td>${loc.opt1NoticeEnd||'—'}</td>
@@ -1462,6 +1487,15 @@ function buildExpirTable(){
       <td>${expiryBadge(loc.expiry)} ${loc.expiry||'—'}</td>`;
     tb.appendChild(tr);
   });
+}
+
+function buildExpirTable(){
+  buildExpirActionCenter();
+  const tb = document.getElementById('tbody-expir');
+  if(tb.children.length) return;
+  buildExpirAlertCards(null);
+  renderExpirTableRows();
+  updateExpirSortHeaders();
 }
 
 // ============================================================
@@ -1895,7 +1929,7 @@ function initAnalyticsCharts(){
   const dData   = [...top5.map(l=>l.monthly), rest.length?restTotal:0];
   _chartInstances['donut'] = new Chart(document.getElementById('chart-donut'),{
     type:'doughnut',
-    data:{ labels:dLabels.filter((_,i)=>dData[i]>0), datasets:[{data:dData.filter(v=>v>0),backgroundColor:['#d6ab5c','#29374d','#e1c58d','#32445e','#efdfc7','#5b7ba3'],borderWidth:1}]},
+    data:{ labels:dLabels.filter((_,i)=>dData[i]>0), datasets:[{data:dData.filter(v=>v>0),backgroundColor:['#d6ab5c','#29374d','#e1c58d','#32445e','#efdfc7','#0d2040'],borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{
       legend:{position:'right',labels:{font:{size:10}}},
       tooltip:{callbacks:{label:item=>{const v=item.parsed;return item.label+': $'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}}}
