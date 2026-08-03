@@ -1183,6 +1183,14 @@ function toggleGanttOptions(){
 // EXPIRATION INTERACTIVE STATE
 // ============================================================
 let _expirItems = [], _expirCategories = {}, _selectedExpirLoc = null;
+let _keyDeadlinesShowOptions = true;
+
+function toggleKeyDeadlinesOptions(){
+  _keyDeadlinesShowOptions = !_keyDeadlinesShowOptions;
+  const btn = document.getElementById('keydead-opt-toggle');
+  if(btn) btn.textContent = _keyDeadlinesShowOptions ? 'Hide Option Windows' : 'Show Option Windows';
+  buildExpirTimelineRows(_selectedExpirLoc);
+}
 
 function _categorizeExpir(){
   const now = new Date();
@@ -1299,11 +1307,11 @@ function buildExpirTimelineRows(filterName){
     :         {color:'#2e7d32', tc:'#fff', tag:'18+ Mo'};
   const months=[];
   for(let i=0;i<7;i++){const d=new Date(now);d.setMonth(d.getMonth()+i*3);months.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));}
-  let html=`<div style="display:flex;align-items:center;gap:5px;padding-left:148px;margin-bottom:4px">
+  let html=(_keyDeadlinesShowOptions ? `<div style="display:flex;align-items:center;gap:5px;padding-left:148px;margin-bottom:4px">
     <span style="display:inline-block;width:12px;height:8px;background:#d6ab5c;border:2px solid #000;box-sizing:border-box;border-radius:2px;flex-shrink:0"></span>
     <span style="font-size:9px;color:#888">Option Window</span>
-  </div>
-  <div style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
+  </div>` : '')+
+  `<div style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
   const items = [...LOCATIONS].filter(l=>l.expiry).sort((a,b)=>monthsUntil(a.expiry)-monthsUntil(b.expiry));
   items.forEach(loc=>{
     const mo = monthsUntil(loc.expiry);
@@ -1321,7 +1329,7 @@ function buildExpirTimelineRows(filterName){
       const beginMs = new Date(loc.opt2NotifBegins).getTime(), noticeEndMs = new Date(loc.opt2NoticeEnd).getTime();
       if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt2NotifBegins), r:pct(loc.opt2NoticeEnd)});
     }
-    const optBars = optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:#d6ab5c;border:2px solid #000;box-sizing:border-box;border-radius:2px"></div>`).join('');
+    const optBars = _keyDeadlinesShowOptions ? optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:#d6ab5c;border:2px solid #000;box-sizing:border-box;border-radius:2px"></div>`).join('') : '';
     html+=`<div onclick="selectExpirProperty('${loc.name}')" style="display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;margin-bottom:5px;cursor:pointer;background:${sel?'rgba(13,32,64,.07)':'transparent'};border:1px solid ${sel?'#0d2040':'transparent'};transition:background .15s">
       <div style="font-size:10px;font-weight:${sel?700:500};color:#0d2040;width:78px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
       <span style="font-size:8px;font-weight:700;background:${cfg.color};color:${cfg.tc};padding:1px 5px;border-radius:3px;flex-shrink:0;width:50px;text-align:center">${cfg.tag}</span>
@@ -1436,7 +1444,7 @@ function buildExpirActionCenter(){
       </div>
     </div>
     <div class="card" style="display:flex;flex-direction:column;height:100%">
-      <div class="card-title">Key Deadlines — Next 18 Months</div>
+      <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">Key Deadlines — Next 18 Months<button id="keydead-opt-toggle" onclick="toggleKeyDeadlinesOptions()" style="font-size:10px;padding:3px 10px;border:1px solid #c0c8d8;border-radius:4px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600;letter-spacing:.02em">Hide Option Windows</button></div>
       <div id="expir-timeline-rows" style="flex:1;min-height:0;overflow-y:auto;padding-right:4px"></div>
     </div>
   </div>`;
