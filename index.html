@@ -560,8 +560,10 @@ select option:active{background-color:#29374d!important;color:#fff!important}
       </div>
       <div class="two-col">
         <div class="card">
-          <div class="card-title">Monthly Cost Concentration — Top Locations</div>
+          <div class="card-title">Monthly Cost Concentration — All Locations</div>
           <div style="position:relative;height:260px"><canvas id="chart-donut"></canvas></div>
+          <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.5">Share of total monthly cost by property. <span style="color:#0d2040;font-weight:600">Click a slice to highlight that property in the chart above.</span></div>
+          <div id="donut-list" style="margin-top:8px;font-size:11px"></div>
         </div>
         <div class="card">
           <div class="card-title">Contract vs. Market Rate — Over / Under</div>
@@ -1921,17 +1923,19 @@ function initAnalyticsCharts(){
     }
   });
 
-  // Donut: top locations by monthly cost
+  // Donut: all locations by monthly cost
   const sorted = [...LOCATIONS].filter(l=>l.monthly).sort((a,b)=>b.monthly-a.monthly);
-  const top5 = sorted.slice(0,5), rest = sorted.slice(5);
-  const restTotal = rest.reduce((s,l)=>s+(l.monthly||0),0);
-  const dLabels = [...top5.map(l=>l.name), rest.length?'Others':''];
-  const dData   = [...top5.map(l=>l.monthly), rest.length?restTotal:0];
+  window._donutLocs = sorted;
+  const dLabels = sorted.map(l=>l.name);
+  const dData   = sorted.map(l=>l.monthly);
+  const dColors = sorted.map(l=>DOT_COLORS[LOCATIONS.indexOf(l)%DOT_COLORS.length]);
   _chartInstances['donut'] = new Chart(document.getElementById('chart-donut'),{
     type:'doughnut',
-    data:{ labels:dLabels.filter((_,i)=>dData[i]>0), datasets:[{data:dData.filter(v=>v>0),backgroundColor:['#d6ab5c','#29374d','#e1c58d','#32445e','#efdfc7','#0d2040'],borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{
-      legend:{position:'right',labels:{font:{size:10}}},
+    data:{ labels:dLabels, datasets:[{data:dData,backgroundColor:dColors,borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      onClick:(_,el)=>{ if(!el[0]) return; highlightDonutBar(dLabels[el[0].index]); },
+      plugins:{
+      legend:{position:'right',labels:{font:{size:8},boxWidth:9,padding:5}},
       tooltip:{callbacks:{label:item=>{const v=item.parsed;return item.label+': $'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}}}
     }}
   });
@@ -1972,11 +1976,14 @@ function initAnalyticsCharts(){
 }
 
 let _overUnderActiveKey = null;
+let _donutActiveName = null;
 
 function highlightOverUnderBars(key){
   _overUnderActiveKey = (_overUnderActiveKey===key) ? null : key;
+  _donutActiveName = null;
   applyOverUnderHighlight();
   renderOverUnderIndicator();
+  renderDonutIndicator();
 }
 
 function clearOverUnderHighlight(){
@@ -1985,21 +1992,39 @@ function clearOverUnderHighlight(){
   renderOverUnderIndicator();
 }
 
+function highlightDonutBar(name){
+  _donutActiveName = (_donutActiveName===name) ? null : name;
+  _overUnderActiveKey = null;
+  applyOverUnderHighlight();
+  renderDonutIndicator();
+  renderOverUnderIndicator();
+}
+
+function clearDonutHighlight(){
+  _donutActiveName = null;
+  applyOverUnderHighlight();
+  renderDonutIndicator();
+}
+
 function applyOverUnderHighlight(){
   const chart = _chartInstances['scatter'];
   const locs = window._scatterLocs;
   if(!chart || !locs) return;
   const baseColors = ['#0d2040','#d6ab5c'];
-  if(!_overUnderActiveKey || !window._overUnderData){
-    chart.data.datasets.forEach((ds,i)=>{ ds.backgroundColor = baseColors[i]; });
-  } else {
+  if(_donutActiveName){
+    chart.data.datasets.forEach((ds,i)=>{
+      ds.backgroundColor = locs.map(l => l.name===_donutActiveName ? baseColors[i] : 'rgba(190,195,205,0.35)');
+    });
+  } else if(_overUnderActiveKey && window._overUnderData){
     const names = new Set((window._overUnderData[_overUnderActiveKey]||[]).map(l=>l.name));
     chart.data.datasets.forEach((ds,i)=>{
       ds.backgroundColor = locs.map(l => names.has(l.name) ? baseColors[i] : 'rgba(190,195,205,0.35)');
     });
+  } else {
+    chart.data.datasets.forEach((ds,i)=>{ ds.backgroundColor = baseColors[i]; });
   }
   chart.update();
-  if(_overUnderActiveKey){
+  if(_overUnderActiveKey || _donutActiveName){
     const card = document.getElementById('scatter-card');
     if(card){ card.classList.remove('flash-highlight'); void card.offsetWidth; card.classList.add('flash-highlight'); }
   }
@@ -2017,6 +2042,13 @@ function renderOverUnderIndicator(){
   const cfg = map[_overUnderActiveKey];
   const count = (window._overUnderData[_overUnderActiveKey]||[]).length;
   el.innerHTML = `<span style="font-weight:700;color:${cfg.color}">${cfg.label} (${count})</span> highlighted in the chart above — <span style="color:#1565c0;cursor:pointer;text-decoration:underline" onclick="clearOverUnderHighlight()">clear</span>`;
+}
+
+function renderDonutIndicator(){
+  const el = document.getElementById('donut-list');
+  if(!el) return;
+  if(!_donutActiveName){ el.innerHTML=''; return; }
+  el.innerHTML = `<span style="font-weight:700;color:#0d2040">${_donutActiveName}</span> highlighted in the chart above — <span style="color:#1565c0;cursor:pointer;text-decoration:underline" onclick="clearDonutHighlight()">clear</span>`;
 }
 
 // ============================================================
