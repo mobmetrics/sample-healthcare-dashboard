@@ -827,6 +827,7 @@ const LOCATIONS = [
 const RENT_YEARS = [2026,2027,2028,2029,2030,2031,2032,2033];
 const YEAR_COLORS = ['#d6ab5c','#f99a52','#fbb97a','#fcd4a8','#a5d6a7','#66bb6a','#388e3c','#1b5e20'];
 const DOT_COLORS = ['#d6ab5c','#0d2040','#f99a52','#1a3560','#fbb97a','#243e72','#fcd4a8','#2e5294','#c59d55','#3a6ab5','#c45a10','#4d80cc','#0a1830','#f6924a','#122848','#fca872'];
+const GOLD_NAVY_COLORS = ['#0a1830','#8f6420','#16305c','#a97a2e','#1e3f75','#b8873c','#243e72','#c59d55','#29374d','#d6ab5c','#2e5294','#dab876','#3a6ab5','#e1c58d','#4d80cc','#efdfc7'];
 
 const KPI_DEFAULTS = {
   locations: String(LOCATIONS.length),
@@ -1928,7 +1929,7 @@ function initAnalyticsCharts(){
   window._donutLocs = sorted;
   const dLabels = sorted.map(l=>l.name);
   const dData   = sorted.map(l=>l.monthly);
-  const dColors = sorted.map(l=>DOT_COLORS[LOCATIONS.indexOf(l)%DOT_COLORS.length]);
+  const dColors = sorted.map(l=>GOLD_NAVY_COLORS[LOCATIONS.indexOf(l)%GOLD_NAVY_COLORS.length]);
   _chartInstances['donut'] = new Chart(document.getElementById('chart-donut'),{
     type:'doughnut',
     data:{ labels:dLabels, datasets:[{data:dData,backgroundColor:dColors,borderWidth:1}]},
