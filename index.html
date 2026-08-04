@@ -555,6 +555,7 @@ select option:active{background-color:#29374d!important;color:#fff!important}
       <div class="full card" id="scatter-card">
         <div class="card-title">Contract vs. Market Rate
           <span style="float:right;font-size:10px;color:#666">Sort: A→Z</span>
+          <span id="scatter-clear-btn" onclick="clearScatterHighlight()" style="display:none;float:right;font-size:10px;color:#1565c0;cursor:pointer;text-decoration:underline;font-weight:600;margin-right:10px">✕ Clear Highlight</span>
         </div>
         <div style="position:relative;height:280px"><canvas id="chart-scatter"></canvas></div>
       </div>
@@ -2040,10 +2041,20 @@ function applyOverUnderHighlight(){
     chart.data.datasets.forEach((ds,i)=>{ ds.backgroundColor = baseColors[i]; });
   }
   chart.update();
+  const scatterClearBtn = document.getElementById('scatter-clear-btn');
+  if(scatterClearBtn) scatterClearBtn.style.display = (_donutActiveName || _overUnderActiveKey) ? 'inline' : 'none';
   if(_overUnderActiveKey || _donutActiveName){
     const card = document.getElementById('scatter-card');
     if(card){ card.classList.remove('flash-highlight'); void card.offsetWidth; card.classList.add('flash-highlight'); }
   }
+}
+
+function clearScatterHighlight(){
+  _donutActiveName = null;
+  _overUnderActiveKey = null;
+  applyOverUnderHighlight();
+  renderDonutIndicator();
+  renderOverUnderIndicator();
 }
 
 function renderOverUnderIndicator(){
