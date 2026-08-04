@@ -172,6 +172,12 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 .modal-form input,.modal-form select,.modal-form textarea{width:100%;padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:12px}
 .modal-form textarea{height:70px;resize:vertical}
 .modal-btn{background:#d6ab5c;color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;margin-top:4px}
+.suggest-fab{position:fixed;bottom:24px;right:24px;z-index:9500;width:52px;height:52px;border-radius:50%;background:#0d2040;color:#fff;border:none;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(13,32,64,0.35);display:flex;align-items:center;justify-content:center;transition:transform .15s,background .15s}
+.suggest-fab:hover{background:#d6ab5c;transform:translateY(-2px) scale(1.05)}
+.suggest-fab-label{position:fixed;bottom:38px;right:84px;z-index:9499;background:#0d2040;color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:6px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}
+.suggest-fab:hover+.suggest-fab-label{opacity:1}
+.sf-success{display:none;text-align:center;padding:24px 0}
+.sf-success.show{display:block}
 
 /* NOTES TABLE */
 .note-type{display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;color:#fff;background:#0d2040}
@@ -801,6 +807,42 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 </div>
 
 <div class="map-fullscreen-overlay" id="map-fullscreen-overlay"></div>
+
+<!-- SUGGESTION BOX -->
+<button class="suggest-fab" onclick="openSuggestModal()" title="Send a suggestion">💡</button>
+<div class="suggest-fab-label">Got a suggestion?</div>
+
+<div class="modal-overlay" id="suggestModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('suggestModal')">✕</button>
+    <h3>💡 Suggestion Box</h3>
+    <div id="sfFormWrap">
+      <p style="font-size:12px;color:#666;margin-bottom:14px;line-height:1.6;">Spot something off, or have an idea to improve this dashboard? Send it straight to Tori.</p>
+      <div class="modal-form">
+        <div class="row"><label>Name</label><input type="text" id="sfName"/></div>
+        <div class="row"><label>Email</label><input type="email" id="sfEmail"/></div>
+        <div class="row"><label>Category</label>
+          <select id="sfCategory">
+            <option value="Bug">🐞 Bug</option>
+            <option value="New Feature">✨ New Feature</option>
+            <option value="Data Correction">📊 Data Correction</option>
+            <option value="Other">💬 Other</option>
+          </select>
+        </div>
+        <div class="row"><label>Suggestion</label><textarea id="sfMessage" placeholder="What would make this dashboard better?"></textarea></div>
+      </div>
+    </div>
+    <div id="sfSuccess" class="sf-success">
+      <div style="font-size:36px;margin-bottom:8px;">✅</div>
+      <div style="font-size:14px;font-weight:700;color:#0d2040;margin-bottom:4px;">Thanks — sent!</div>
+      <div style="font-size:12px;color:#666;">Your suggestion was emailed to Tori directly.</div>
+    </div>
+    <div id="sfFooter">
+      <button class="modal-btn" id="sfSubmitBtn" onclick="submitSuggestion()">Send Suggestion</button>
+      <button class="modal-btn" style="background:#888;margin-left:8px" onclick="closeModal('suggestModal')">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ============================================================
@@ -2404,6 +2446,75 @@ function openLeaseNote(prefillName){
   document.getElementById('modal-leasenote').classList.add('open');
 }
 function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// ─── SUGGESTION BOX ────────────────────────────────────────────────────
+function openSuggestModal(){
+  resetSuggestForm();
+  document.getElementById('suggestModal').classList.add('open');
+}
+
+// Get your own free access key at https://web3forms.com (no password needed —
+// email-verify only) and paste it below in place of YOUR_ACCESS_KEY_HERE.
+const WEB3FORMS_ACCESS_KEY = 'YOUR_ACCESS_KEY_HERE';
+
+function resetSuggestForm(){
+  document.getElementById('sfName').value = '';
+  document.getElementById('sfEmail').value = '';
+  document.getElementById('sfCategory').value = 'Bug';
+  document.getElementById('sfMessage').value = '';
+  document.getElementById('sfFormWrap').style.display = 'block';
+  document.getElementById('sfFooter').style.display = 'block';
+  document.getElementById('sfSuccess').classList.remove('show');
+  const btn = document.getElementById('sfSubmitBtn');
+  btn.disabled = false;
+  btn.textContent = 'Send Suggestion';
+}
+
+async function submitSuggestion(){
+  const name = document.getElementById('sfName').value.trim();
+  const email = document.getElementById('sfEmail').value.trim();
+  const category = document.getElementById('sfCategory').value;
+  const message = document.getElementById('sfMessage').value.trim();
+
+  if(!name || !email || !message){
+    alert('Please fill in your name, email, and suggestion before sending.');
+    return;
+  }
+  if(WEB3FORMS_ACCESS_KEY === 'YOUR_ACCESS_KEY_HERE'){
+    alert('The suggestion box isn\'t fully set up yet — an access key is still needed. Contact tori@medwestrealty.com directly for now.');
+    return;
+  }
+
+  const btn = document.getElementById('sfSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+
+  try{
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_ACCESS_KEY,
+        subject: `[Dashboard Suggestion] ${category} — ${name}`,
+        from_name: `${name} (Sample Healthcare Dashboard)`,
+        name, email, category, message,
+      }),
+    });
+    const data = await res.json();
+    if(data.success){
+      document.getElementById('sfFormWrap').style.display = 'none';
+      document.getElementById('sfFooter').style.display = 'none';
+      document.getElementById('sfSuccess').classList.add('show');
+    } else {
+      throw new Error(data.message || 'Unknown error');
+    }
+  } catch(e){
+    console.error('Suggestion submit failed:', e);
+    alert('Something went wrong sending your suggestion. Please try again, or email tori@medwestrealty.com directly.');
+    btn.disabled = false;
+    btn.textContent = 'Send Suggestion';
+  }
+}
 
 function populateExpiringList(){
   const win = parseInt(document.getElementById('exp-window').value)||24;
