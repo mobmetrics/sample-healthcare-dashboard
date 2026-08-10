@@ -335,7 +335,7 @@ select option:active{background-color:#29374d!important;color:#fff!important}
     <a onclick="showSection('contact')">Contact Us</a>
     <a onclick="showSection('pipeline')">★ Pipeline Deals</a>
   </nav>
-  <div id="sidebar-footer">MedWest Realty © 2026<br>Sample Healthcare Dashboard</div>
+  <div id="sidebar-footer">MedWest Realty © 2026<br>Sample Healthcare Dashboard<br><span onclick="openLoginLog()" style="cursor:pointer;text-decoration:underline;opacity:0.7">Login Log</span></div>
 </div>
 
 <!-- MAIN -->
@@ -807,6 +807,15 @@ select option:active{background-color:#29374d!important;color:#fff!important}
       <button class="modal-btn" onclick="saveLeaseNote()">Save Note</button>
       <button class="modal-btn" style="background:#888;margin-left:8px" onclick="closeModal('modal-leasenote')">Cancel</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-loginlog">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-loginlog')">✕</button>
+    <h3>Login Log</h3>
+    <p style="font-size:11px;color:#888;margin-bottom:10px;line-height:1.5">One row per person — their most recent sign-in, across any computer.</p>
+    <div id="loginlog-body"></div>
   </div>
 </div>
 
@@ -2594,12 +2603,59 @@ function handleSignIn(){
   const isNewUser = !getSignedInUser();
   localStorage.setItem('pp_user', JSON.stringify({name, email}));
   document.getElementById('signin-gate').classList.remove('open');
+  recordLoginServer(name, email);
 
   if(isNewUser){
     localStorage.setItem('pp_seen_version', DASHBOARD_VERSION);
     showTutorialPrompt('welcome');
   } else {
     checkForFeatureTour();
+  }
+}
+
+// Records this sign-in to the shared login log (Cloudflare Pages Function + KV).
+// Fire-and-forget: a network hiccup here should never block sign-in.
+function recordLoginServer(name, email){
+  fetch('/api/loginlog', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email })
+  }).catch(err => console.warn('Login log not recorded (this is non-blocking):', err));
+}
+
+// Admin: fetches and renders the shared "last signed in" list (one row per email).
+async function openLoginLog(){
+  document.getElementById('modal-loginlog').classList.add('open');
+  const body = document.getElementById('loginlog-body');
+  body.innerHTML = '<div style="font-size:12px;color:#888;padding:10px 0">Loading…</div>';
+  try{
+    const res = await fetch('/api/loginlog');
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const list = await res.json();
+    if(!list.length){
+      body.innerHTML = '<div style="font-size:12px;color:#888;padding:10px 0">No sign-ins recorded yet.</div>';
+      return;
+    }
+    body.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="text-align:left;border-bottom:1px solid #e0e3e8">
+        <th style="padding:5px 8px 5px 0;color:#888;font-weight:600">Name</th>
+        <th style="padding:5px 8px;color:#888;font-weight:600">Email</th>
+        <th style="padding:5px 0 5px 8px;color:#888;font-weight:600;white-space:nowrap">Last Signed In</th>
+      </tr></thead>
+      <tbody>${list.map(u=>{
+        const d = new Date(u.lastAt);
+        const dateStr = isNaN(d) ? '—' : d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+        const timeStr = isNaN(d) ? '' : d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        return `<tr style="border-bottom:1px solid #f0f2f5">
+          <td style="padding:6px 8px 6px 0;font-weight:600;color:#0d2040">${u.name||'—'}</td>
+          <td style="padding:6px 8px;color:#555">${u.email||'—'}</td>
+          <td style="padding:6px 0 6px 8px;color:#555;white-space:nowrap">${dateStr}${timeStr?' · '+timeStr:''}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  } catch(err){
+    console.warn('Failed to load login log:', err);
+    body.innerHTML = '<div style="font-size:12px;color:#c62828;padding:10px 0">Couldn\'t load the login log right now.</div>';
   }
 }
 
