@@ -561,19 +561,23 @@ select option:active{background-color:#29374d!important;color:#fff!important}
       <div class="full card" id="scatter-card">
         <div class="card-title">Contract vs. Market Rate
           <span style="float:right;font-size:10px;color:#666">Sort: A→Z</span>
-          <span id="scatter-clear-btn" onclick="clearScatterHighlight()" style="display:none;float:right;font-size:10px;color:#1565c0;cursor:pointer;text-decoration:underline;font-weight:600;margin-right:10px">✕ Clear Highlight</span>
+          <span id="scatter-clear-btn" onclick="clearScatterHighlight()" style="display:none;float:right;font-size:10px;padding:2px 8px;border:1px solid #c0c8d8;border-radius:3px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600;margin-right:10px">✕ Clear Highlight</span>
         </div>
         <div style="position:relative;height:280px"><canvas id="chart-scatter"></canvas></div>
       </div>
       <div class="two-col">
         <div class="card">
-          <div class="card-title">Monthly Cost Concentration — All Locations</div>
+          <div class="card-title">Monthly Cost Concentration — All Locations
+            <span id="donut-clear-btn" onclick="clearDonutHighlight()" style="display:none;float:right;font-size:10px;padding:2px 8px;border:1px solid #c0c8d8;border-radius:3px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600">✕ Clear</span>
+          </div>
           <div style="position:relative;height:260px"><canvas id="chart-donut"></canvas></div>
           <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.5">Share of total monthly cost by property. <span style="color:#0d2040;font-weight:600">Click a slice to highlight that property in the chart above.</span></div>
           <div id="donut-list" style="margin-top:8px;font-size:11px"></div>
         </div>
         <div class="card">
-          <div class="card-title">Contract vs. Market Rate — Over / Under</div>
+          <div class="card-title">Contract vs. Market Rate — Over / Under
+            <span id="overunder-clear-btn" onclick="clearOverUnderHighlight()" style="display:none;float:right;font-size:10px;padding:2px 8px;border:1px solid #c0c8d8;border-radius:3px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600">✕ Clear</span>
+          </div>
           <div style="position:relative;height:200px"><canvas id="chart-overunder"></canvas></div>
           <div style="font-size:10px;color:#888;margin-top:8px;line-height:1.5">Count of locations paying above vs. below current market rate. Over-market leases represent renewal negotiation opportunities. <span style="color:#0d2040;font-weight:600">Click a slice to highlight those properties in the chart above.</span></div>
           <div id="overunder-list" style="margin-top:8px;font-size:11px"></div>
@@ -1167,7 +1171,7 @@ function buildGanttChart(){
         return [pct(new Date(loc.opt1NotifBegins).getTime()), pct(new Date(loc.opt1NoticeEnd).getTime())];
       }),
       backgroundColor:'#d6ab5c',
-      borderColor:'#000',
+      borderColor:'#0d2040',
       borderWidth:1.5,
       borderSkipped:false,
       borderRadius:2,
@@ -1182,7 +1186,7 @@ function buildGanttChart(){
         return [pct(new Date(loc.opt2NotifBegins).getTime()), pct(new Date(loc.opt2NoticeEnd).getTime())];
       }),
       backgroundColor:'#d6ab5c',
-      borderColor:'#000',
+      borderColor:'#0d2040',
       borderWidth:1.5,
       borderSkipped:false,
       borderRadius:2,
@@ -1351,7 +1355,7 @@ function buildExpirTimelineRows(filterName){
   const months=[];
   for(let i=0;i<7;i++){const d=new Date(now);d.setMonth(d.getMonth()+i*3);months.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));}
   let html=(_keyDeadlinesShowOptions ? `<div style="display:flex;align-items:center;gap:5px;padding-left:148px;margin-bottom:4px">
-    <span style="display:inline-block;width:12px;height:8px;background:#d6ab5c;border:2px solid #000;box-sizing:border-box;border-radius:2px;flex-shrink:0"></span>
+    <span style="display:inline-block;width:12px;height:8px;background:#d6ab5c;border:2px solid #0d2040;box-sizing:border-box;border-radius:2px;flex-shrink:0"></span>
     <span style="font-size:9px;color:#888">Option Window</span>
   </div>` : '')+
   `<div style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
@@ -1372,7 +1376,7 @@ function buildExpirTimelineRows(filterName){
       const beginMs = new Date(loc.opt2NotifBegins).getTime(), noticeEndMs = new Date(loc.opt2NoticeEnd).getTime();
       if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt2NotifBegins), r:pct(loc.opt2NoticeEnd)});
     }
-    const optBars = _keyDeadlinesShowOptions ? optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:#d6ab5c;border:2px solid #000;box-sizing:border-box;border-radius:2px"></div>`).join('') : '';
+    const optBars = _keyDeadlinesShowOptions ? optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:#d6ab5c;border:2px solid #0d2040;box-sizing:border-box;border-radius:2px"></div>`).join('') : '';
     html+=`<div onclick="selectExpirProperty('${loc.name}')" style="display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;margin-bottom:5px;cursor:pointer;background:${sel?'rgba(13,32,64,.07)':'transparent'};border:1px solid ${sel?'#0d2040':'transparent'};transition:background .15s">
       <div style="font-size:10px;font-weight:${sel?700:500};color:#0d2040;width:78px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
       <span style="font-size:8px;font-weight:700;background:${cfg.color};color:${cfg.tc};padding:1px 5px;border-radius:3px;flex-shrink:0;width:50px;text-align:center">${cfg.tag}</span>
@@ -2080,11 +2084,15 @@ function applyOverUnderHighlight(){
       ds.backgroundColor = locs.map(l => names.has(l.name) ? baseColors[i] : 'rgba(190,195,205,0.35)');
     });
   } else {
-    chart.data.datasets.forEach((ds,i)=>{ ds.backgroundColor = baseColors[i]; });
+    chart.data.datasets.forEach((ds,i)=>{ ds.backgroundColor = locs.map(()=>baseColors[i]); });
   }
   chart.update();
   const scatterClearBtn = document.getElementById('scatter-clear-btn');
   if(scatterClearBtn) scatterClearBtn.style.display = (_donutActiveName || _overUnderActiveKey) ? 'inline' : 'none';
+  const donutClearBtn = document.getElementById('donut-clear-btn');
+  if(donutClearBtn) donutClearBtn.style.display = _donutActiveName ? 'inline' : 'none';
+  const overunderClearBtn = document.getElementById('overunder-clear-btn');
+  if(overunderClearBtn) overunderClearBtn.style.display = _overUnderActiveKey ? 'inline' : 'none';
   if(_overUnderActiveKey || _donutActiveName){
     const card = document.getElementById('scatter-card');
     if(card){ card.classList.remove('flash-highlight'); void card.offsetWidth; card.classList.add('flash-highlight'); }
