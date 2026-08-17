@@ -1013,6 +1013,18 @@ function resetKPIs(){
 const TILE_SAT = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
 const TILE_STD = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
+// Frames the map on the actual property pins. Falls back to a wide western-US
+// view only if no location has coordinates.
+function _propertyBounds(){
+  const pts = LOCATIONS.filter(l=>l.lat&&l.lng).map(l=>[l.lat,l.lng]);
+  return pts.length ? L.latLngBounds(pts) : null;
+}
+function _fitToProperties(m){
+  const b = _propertyBounds();
+  if(b) m.fitBounds(b,{padding:[28,28],maxZoom:11});
+  else  m.setView([34.0,-116.5],6);
+}
+
 function initMap(which){
   if(_mapInstances[which]) return;
   const validLocs = LOCATIONS.filter(l=>l.lat&&l.lng);
@@ -1027,6 +1039,7 @@ function initMap(which){
       L.circleMarker([loc.lat,loc.lng],{radius:8,fillColor:col,color:'#fff',weight:1.5,fillOpacity:1})
         .addTo(m).bindPopup(`<b>${loc.name}</b><br>${loc.city}, ${loc.state}<br>Exp: ${loc.expiry||'—'}`);
     });
+    _fitToProperties(m);
     _mapInstances[which] = m;
   }
   if(which==='expir'){
@@ -1039,8 +1052,9 @@ function initMap(which){
       L.circleMarker([loc.lat,loc.lng],{radius:9,fillColor:col,color:'#fff',weight:1.5,fillOpacity:1})
         .addTo(m).bindPopup(`<b>${loc.name}</b><br>${loc.city}, ${loc.state}<br>Exp: ${loc.expiry||'—'}<br>${mo!==null?mo+' months':''}`);
     });
+    _fitToProperties(m);
     _mapInstances[which] = m;
-    setTimeout(()=>{ m.invalidateSize(); }, 80);
+    setTimeout(()=>{ m.invalidateSize(); _fitToProperties(m); }, 80);
   }
   if(which==='sat'){
     const m = L.map('map-sat',{zoomControl:true}).setView(center,zoom);
@@ -1056,8 +1070,8 @@ function initMap(which){
   }
 }
 
-function resetExpirMap(){ if(_mapInstances.expir){ _mapInstances.expir.setView([34.0,-116.5],6); } }
-function resetSatMap(){   if(_mapInstances.sat){   _mapInstances.sat.setView([34.0,-116.5],6); } }
+function resetExpirMap(){ if(_mapInstances.expir){ _fitToProperties(_mapInstances.expir); } }
+function resetSatMap(){   if(_mapInstances.sat){   _fitToProperties(_mapInstances.sat);   } }
 
 function toggleMapTile(which){
   const m = _mapInstances[which];
@@ -1075,7 +1089,7 @@ function toggleMapTile(which){
 }
 
 function zoomOutMap(which){
-  if(_mapInstances[which]) _mapInstances[which].setView([34.0,-116.5],6);
+  if(_mapInstances[which]) _fitToProperties(_mapInstances[which]);
 }
 function zoomInMap(which){
   if(_mapInstances[which]) _mapInstances[which].zoomIn();
@@ -1505,10 +1519,10 @@ function buildExpirActionCenter(){
       </div>
     </div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-    <div class="card" style="padding:10px;display:flex;flex-direction:column;height:100%">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;height:344px">
+    <div class="card" style="padding:10px;display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden">
       <div class="card-title">Location Map</div>
-      <div class="map-wrap" id="map-wrap-expir" style="flex:1;min-height:300px;position:relative">
+      <div class="map-wrap" id="map-wrap-expir" style="flex:1;min-height:0;position:relative">
         <div style="height:100%;border-radius:6px;overflow:hidden" id="map-expir"></div>
         <div class="map-ctrls">
           <button class="map-btn" id="tile-btn-expir" onclick="toggleMapTile('expir')">🛰 Satellite</button>
@@ -1525,7 +1539,7 @@ function buildExpirActionCenter(){
         </div>
       </div>
     </div>
-    <div class="card" style="display:flex;flex-direction:column;height:100%">
+    <div class="card" style="display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden">
       <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">Key Deadlines — Next 18 Months<button id="keydead-opt-toggle" onclick="toggleKeyDeadlinesOptions()" style="font-size:10px;padding:3px 10px;border:1px solid #c0c8d8;border-radius:4px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600;letter-spacing:.02em">Hide Option Windows</button></div>
       <div id="expir-timeline-rows" style="flex:1;min-height:0;overflow-y:auto;padding-right:4px"></div>
     </div>
