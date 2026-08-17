@@ -1440,7 +1440,6 @@ function selectExpirProperty(name){
   if(clearBtn) clearBtn.style.display='inline-block';
   buildExpirAlertCards(name);
   buildExpirStackedBar(name);
-  buildExpirDonut(name);
   buildExpirTimelineRows(name);
   highlightExpirTableRow(name);
   if(loc&&loc.lat&&loc.lng&&_mapInstances['expir']) _mapInstances['expir'].flyTo([loc.lat,loc.lng],14,{duration:0.8});
@@ -1452,7 +1451,6 @@ function clearExpirSelection(){
   if(clearBtn) clearBtn.style.display='none';
   buildExpirAlertCards(null);
   buildExpirStackedBar(null);
-  buildExpirDonut(null);
   buildExpirTimelineRows(null);
   highlightExpirTableRow(null);
   if(_mapInstances['expir']) _mapInstances['expir'].flyTo([34.0,-116.5],6,{duration:0.8});
@@ -1502,23 +1500,14 @@ function buildExpirStackedBar(filterName){
       <button id="expir-clear-btn" onclick="clearExpirSelection()" style="display:${filterName?'inline-block':'none'};font-size:10px;padding:2px 8px;border:1px solid #c0c8d8;border-radius:3px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600">✕ Clear</button>
     </div>
     <div style="height:62px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:14px">${barSegs}</div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;flex:1;align-content:center">${statCols}</div>`;
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">${statCols}</div>`;
 }
 
 function buildExpirActionCenter(){
   const el = document.getElementById('expir-action-center');
   if(!el||el.children.length) return;
   _categorizeExpir();
-  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:stretch">
-    <div class="card" id="expir-stacked-bar-section" style="display:flex;flex-direction:column"></div>
-    <div class="card">
-      <div class="card-title">Priority Mix</div>
-      <div style="display:flex;align-items:center;gap:26px">
-        <canvas id="chart-expir-donut" width="170" height="170" style="flex-shrink:0"></canvas>
-        <div id="expir-donut-legend" style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;column-gap:26px"></div>
-      </div>
-    </div>
-  </div>
+  el.innerHTML=`<div class="card" id="expir-stacked-bar-section" style="display:flex;flex-direction:column;margin-bottom:14px"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;height:344px">
     <div class="card" style="padding:10px;display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden">
       <div class="card-title">Location Map</div>
@@ -1545,7 +1534,6 @@ function buildExpirActionCenter(){
     </div>
   </div>`;
   buildExpirStackedBar(null);
-  buildExpirDonut(null);
   buildExpirTimelineRows(null);
 }
 
