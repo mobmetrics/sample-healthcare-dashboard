@@ -1353,7 +1353,7 @@ function buildExpirDonut(filterName){
     data=[expired.length,actNow.length,noOpt.length,actSoon.length,monitor.length,safe,noDate.length];
     colors=['#111','#c62828','#e65100','#f9a825','#888','#2e7d32','#c0c8d8'];
   }
-  if(legendEl) legendEl.innerHTML=labels.map((l,i)=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0"></div><div style="font-size:10px;color:#555;flex:1">${l}</div><div style="font-size:12px;font-weight:600;color:#0d2040">${data[i]}</div></div>`).join('');
+  if(legendEl) legendEl.innerHTML=labels.map((l,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0"><div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0"></div><div style="font-size:11px;color:#555;flex:1">${l}</div><div style="font-size:13px;font-weight:600;color:#0d2040">${data[i]}</div></div>`).join('');
   const ctx = document.getElementById('chart-expir-donut');
   if(!ctx) return;
   _chartInstances['expir-donut']=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},options:{responsive:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+c.raw}}},cutout:'58%'}});
@@ -1472,13 +1472,13 @@ function buildExpirStackedBar(filterName){
     if(!c.count) return '';
     const pct=(c.count/total*100).toFixed(1);
     const dim=filterName&&selectedCat!==c.key;
-    return `<div style="width:${pct}%;background:${c.color};height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${c.tc};opacity:${dim?'0.18':'1'};transition:opacity .2s" title="${c.label}: ${c.count}">${c.count}</div>`;
+    return `<div style="width:${pct}%;background:${c.color};height:100%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:${c.tc};opacity:${dim?'0.18':'1'};transition:opacity .2s" title="${c.label}: ${c.count}">${c.count}</div>`;
   }).join('');
   const statCols = cats.map(c=>{
     const dim=filterName&&selectedCat!==c.key;
-    return `<div style="text-align:center;border-top:3px solid ${c.color};padding-top:5px;opacity:${dim?'0.2':'1'};transition:opacity .2s">
-      <div style="font-size:17px;font-weight:700;color:${c.color}">${c.count}</div>
-      <div style="font-size:9px;color:#888;margin-top:1px">${c.label}</div>
+    return `<div style="text-align:center;border-top:3px solid ${c.color};padding-top:7px;opacity:${dim?'0.2':'1'};transition:opacity .2s">
+      <div style="font-size:24px;font-weight:700;color:${c.color}">${c.count}</div>
+      <div style="font-size:10px;color:#888;margin-top:1px">${c.label}</div>
     </div>`;
   }).join('');
   const titleSuffix = filterName ? ` <span style="font-size:10px;color:#1565c0;font-weight:400;text-transform:none;letter-spacing:0">— ${filterName}</span>` : '';
@@ -1487,21 +1487,21 @@ function buildExpirStackedBar(filterName){
       <div class="card-title" style="margin-bottom:0">Action Priority Breakdown${titleSuffix}</div>
       <button id="expir-clear-btn" onclick="clearExpirSelection()" style="display:${filterName?'inline-block':'none'};font-size:10px;padding:2px 8px;border:1px solid #c0c8d8;border-radius:3px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600">✕ Clear</button>
     </div>
-    <div style="height:34px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:11px">${barSegs}</div>
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">${statCols}</div>`;
+    <div style="height:62px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:14px">${barSegs}</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;flex:1;align-content:center">${statCols}</div>`;
 }
 
 function buildExpirActionCenter(){
   const el = document.getElementById('expir-action-center');
   if(!el||el.children.length) return;
   _categorizeExpir();
-  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px;align-items:start">
-    <div class="card" id="expir-stacked-bar-section"></div>
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:stretch">
+    <div class="card" id="expir-stacked-bar-section" style="display:flex;flex-direction:column"></div>
     <div class="card">
       <div class="card-title">Priority Mix</div>
-      <div style="display:flex;align-items:center;gap:14px">
-        <canvas id="chart-expir-donut" width="140" height="140" style="flex-shrink:0"></canvas>
-        <div id="expir-donut-legend" style="flex:1;min-width:0"></div>
+      <div style="display:flex;align-items:center;gap:26px">
+        <canvas id="chart-expir-donut" width="170" height="170" style="flex-shrink:0"></canvas>
+        <div id="expir-donut-legend" style="flex:1;min-width:0;display:grid;grid-template-columns:1fr 1fr;column-gap:26px"></div>
       </div>
     </div>
   </div>
