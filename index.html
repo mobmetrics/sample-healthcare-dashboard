@@ -1250,19 +1250,29 @@ function toggleKeyDeadlinesOptions(){
 
 function _categorizeExpir(){
   const now = new Date();
-  const actNow=[], noOpt=[], actSoon=[], monitor=[];
+  const expired=[], actNow=[], noOpt=[], actSoon=[], monitor=[], noDate=[];
+  // A lease with no expiration date on record cannot be triaged in either
+  // direction. Surface it explicitly instead of letting it fall through to
+  // the "Safe" remainder, which would report an unknown as a positive.
+  LOCATIONS.filter(l=>!l.expiry).forEach(loc=>{
+    noDate.push({loc,cat:'noDate', deadline:null, mo:null});
+  });
   [...LOCATIONS].filter(l=>l.expiry).sort((a,b)=>(monthsUntil(a.expiry)||999)-(monthsUntil(b.expiry)||999)).forEach(loc=>{
     const mo = monthsUntil(loc.expiry);
     const opt1Open = loc.opt1NotifBegins && loc.opt1NoticeEnd && new Date(loc.opt1NotifBegins)<=now && new Date(loc.opt1NoticeEnd)>=now;
     const opt1SoonMs = loc.opt1NotifBegins && new Date(loc.opt1NotifBegins)>now ? (new Date(loc.opt1NotifBegins)-now) : null;
     const opt1SoonMo = opt1SoonMs ? opt1SoonMs/2592000000 : null;
-    if(opt1Open)                              actNow.push({loc,cat:'actNow', deadline:loc.opt1NoticeEnd, days:Math.round((new Date(loc.opt1NoticeEnd)-now)/86400000)});
+    // Past expiration outranks every other signal — a holdover lease is the
+    // most urgent thing on the board and must never read as "Safe" or hide
+    // inside "No Option".
+    if(mo!==null&&mo<0)                       expired.push({loc,cat:'expired',deadline:loc.expiry, mo});
+    else if(opt1Open)                         actNow.push({loc,cat:'actNow', deadline:loc.opt1NoticeEnd, days:Math.round((new Date(loc.opt1NoticeEnd)-now)/86400000)});
     else if(!loc.options&&mo!==null&&mo<14)   noOpt.push({loc,cat:'noOpt',  deadline:loc.expiry, mo});
     else if(opt1SoonMo!==null&&opt1SoonMo<8)  actSoon.push({loc,cat:'actSoon',deadline:loc.opt1NotifBegins, days:Math.round(opt1SoonMs/86400000)});
     else if(opt1SoonMo!==null&&opt1SoonMo<24) monitor.push({loc,cat:'monitor',deadline:loc.opt1NotifBegins, mo:Math.round(opt1SoonMo)});
   });
-  _expirItems = [...actNow,...noOpt,...actSoon,...monitor];
-  _expirCategories = {actNow,noOpt,actSoon,monitor,safe:LOCATIONS.length-_expirItems.length};
+  _expirItems = [...expired,...actNow,...noOpt,...actSoon,...monitor,...noDate];
+  _expirCategories = {expired,actNow,noOpt,actSoon,monitor,noDate,safe:LOCATIONS.length-_expirItems.length};
 }
 
 function buildExpirAlertCards(filterName){
@@ -1329,19 +1339,19 @@ function showAlertCardDetail(key){
 
 function buildExpirDonut(filterName){
   destroyChart('expir-donut');
-  const {actNow,noOpt,actSoon,monitor,safe} = _expirCategories;
+  const {expired,actNow,noOpt,actSoon,monitor,noDate,safe} = _expirCategories;
   const legendEl = document.getElementById('expir-donut-legend');
   let labels,data,colors;
   if(filterName){
     const item = _expirItems.find(i=>i.loc.name===filterName);
     const cat = item?item.cat:'safe';
-    const map = {actNow:['Act Now','#c62828'],noOpt:['No Option','#e65100'],actSoon:['Prepare','#f9a825'],monitor:['Monitor','#888'],safe:['Safe','#2e7d32']};
+    const map = {expired:['Expired','#111'],actNow:['Act Now','#c62828'],noOpt:['No Option','#e65100'],actSoon:['Prepare','#f9a825'],monitor:['Monitor','#888'],noDate:['No Date','#c0c8d8'],safe:['Safe','#2e7d32']};
     const [lbl,color] = map[cat]||map.safe;
     labels=[lbl,'Other']; data=[1,LOCATIONS.length-1]; colors=[color,'#e4e6ea'];
   } else {
-    labels=['Act Now','No Option','Prepare','Monitor','Safe'];
-    data=[actNow.length,noOpt.length,actSoon.length,monitor.length,safe];
-    colors=['#c62828','#e65100','#f9a825','#888','#2e7d32'];
+    labels=['Expired','Act Now','No Option','Prepare','Monitor','Safe','No Date'];
+    data=[expired.length,actNow.length,noOpt.length,actSoon.length,monitor.length,safe,noDate.length];
+    colors=['#111','#c62828','#e65100','#f9a825','#888','#2e7d32','#c0c8d8'];
   }
   if(legendEl) legendEl.innerHTML=labels.map((l,i)=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px"><div style="width:10px;height:10px;border-radius:2px;background:${colors[i]};flex-shrink:0"></div><div style="font-size:10px;color:#555;flex:1">${l}</div><div style="font-size:12px;font-weight:600;color:#0d2040">${data[i]}</div></div>`).join('');
   const ctx = document.getElementById('chart-expir-donut');
@@ -1416,6 +1426,7 @@ function selectExpirProperty(name){
   if(clearBtn) clearBtn.style.display='inline-block';
   buildExpirAlertCards(name);
   buildExpirStackedBar(name);
+  buildExpirDonut(name);
   buildExpirTimelineRows(name);
   highlightExpirTableRow(name);
   if(loc&&loc.lat&&loc.lng&&_mapInstances['expir']) _mapInstances['expir'].flyTo([loc.lat,loc.lng],14,{duration:0.8});
@@ -1427,6 +1438,7 @@ function clearExpirSelection(){
   if(clearBtn) clearBtn.style.display='none';
   buildExpirAlertCards(null);
   buildExpirStackedBar(null);
+  buildExpirDonut(null);
   buildExpirTimelineRows(null);
   highlightExpirTableRow(null);
   if(_mapInstances['expir']) _mapInstances['expir'].flyTo([34.0,-116.5],6,{duration:0.8});
@@ -1435,22 +1447,26 @@ function clearExpirSelection(){
 function buildExpirStackedBar(filterName){
   const el = document.getElementById('expir-stacked-bar-section');
   if(!el) return;
-  const {actNow,noOpt,actSoon,monitor,safe} = _expirCategories;
-  const total = actNow.length+noOpt.length+actSoon.length+monitor.length+(safe||0);
+  const {expired,actNow,noOpt,actSoon,monitor,noDate,safe} = _expirCategories;
+  const total = expired.length+actNow.length+noOpt.length+actSoon.length+monitor.length+noDate.length+(safe||0);
   let selectedCat = null;
   if(filterName){
-    if(actNow.find(i=>i.loc.name===filterName)) selectedCat='actNow';
+    if(expired.find(i=>i.loc.name===filterName)) selectedCat='expired';
+    else if(actNow.find(i=>i.loc.name===filterName)) selectedCat='actNow';
     else if(noOpt.find(i=>i.loc.name===filterName)) selectedCat='noOpt';
     else if(actSoon.find(i=>i.loc.name===filterName)) selectedCat='actSoon';
     else if(monitor.find(i=>i.loc.name===filterName)) selectedCat='monitor';
+    else if(noDate.find(i=>i.loc.name===filterName)) selectedCat='noDate';
     else selectedCat='safe';
   }
   const cats=[
+    {key:'expired',label:'Expired',   count:expired.length, color:'#111',    tc:'#fff'},
     {key:'actNow', label:'Act Now',   count:actNow.length,  color:'#c62828', tc:'#fff'},
     {key:'noOpt',  label:'No Option', count:noOpt.length,   color:'#e65100', tc:'#fff'},
     {key:'actSoon',label:'Prepare',   count:actSoon.length, color:'#f9a825', tc:'#333'},
     {key:'monitor',label:'Monitor',   count:monitor.length, color:'#888',    tc:'#fff'},
     {key:'safe',   label:'Safe',      count:safe||0,        color:'#2e7d32', tc:'#fff'},
+    {key:'noDate', label:'No Date',   count:noDate.length,  color:'#c0c8d8', tc:'#333'},
   ];
   const barSegs = cats.map(c=>{
     if(!c.count) return '';
@@ -1472,14 +1488,24 @@ function buildExpirStackedBar(filterName){
       <button id="expir-clear-btn" onclick="clearExpirSelection()" style="display:${filterName?'inline-block':'none'};font-size:10px;padding:2px 8px;border:1px solid #c0c8d8;border-radius:3px;background:#f0f4f8;color:#0d2040;cursor:pointer;font-weight:600">✕ Clear</button>
     </div>
     <div style="height:34px;border-radius:6px;overflow:hidden;display:flex;margin-bottom:11px">${barSegs}</div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">${statCols}</div>`;
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">${statCols}</div>`;
 }
 
 function buildExpirActionCenter(){
   const el = document.getElementById('expir-action-center');
   if(!el||el.children.length) return;
   _categorizeExpir();
-  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:14px;align-items:start">
+    <div class="card" id="expir-stacked-bar-section"></div>
+    <div class="card">
+      <div class="card-title">Priority Mix</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <canvas id="chart-expir-donut" width="140" height="140" style="flex-shrink:0"></canvas>
+        <div id="expir-donut-legend" style="flex:1;min-width:0"></div>
+      </div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
     <div class="card" style="padding:10px;display:flex;flex-direction:column;height:100%">
       <div class="card-title">Location Map</div>
       <div class="map-wrap" id="map-wrap-expir" style="flex:1;min-height:300px;position:relative">
@@ -1504,6 +1530,8 @@ function buildExpirActionCenter(){
       <div id="expir-timeline-rows" style="flex:1;min-height:0;overflow-y:auto;padding-right:4px"></div>
     </div>
   </div>`;
+  buildExpirStackedBar(null);
+  buildExpirDonut(null);
   buildExpirTimelineRows(null);
 }
 
@@ -2012,10 +2040,13 @@ function initAnalyticsCharts(){
     }}
   });
 
-  // OpEx coverage donut
+  // OpEx coverage donut — canvas is not present in the markup, so guard before
+  // handing Chart.js a null element (this was logging "can't acquire context"
+  // on every visit to Portfolio Analytics).
+  const opexCovEl = document.getElementById('chart-opexcoverage');
   const withOpex = LOCATIONS.filter(l=>l.opexAnnual&&l.opexAnnual>0).length;
   const noOpex   = LOCATIONS.length - withOpex;
-  _chartInstances['opexcoverage'] = new Chart(document.getElementById('chart-opexcoverage'),{
+  if(opexCovEl) _chartInstances['opexcoverage'] = new Chart(opexCovEl,{
     type:'doughnut',
     data:{ labels:['With OpEx Data','No OpEx Data'], datasets:[{data:[withOpex,noOpex],backgroundColor:['#29374d','#ddd'],borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:11}}}}}
@@ -2230,7 +2261,7 @@ function buildPipelineUI(){
   </div>`;
   const topCards = [
     {lbl:'Active Deals',           val:totalDeals,                                                  bg:'#0d2040', sub:''},
-    {lbl:'Weighted Monthly Value', val:weightedMonthly?'$'+Math.round(weightedMonthly/1000)+'K':'—', bg:'#d6ab5c', sub:'prob-weighted'},
+    {lbl:'Weighted Monthly Cost', val:weightedMonthly?'$'+Math.round(weightedMonthly/1000)+'K':'—', bg:'#d6ab5c', sub:'prob-weighted'},
     {lbl:'Holdover Leases',        val:holdovers,                                                   bg:holdovers?'#a32d2d':'#0d2040', sub:holdovers?'⚠ action needed':''}
   ];
   const el = document.getElementById('pipeline-kpis');
@@ -2472,7 +2503,12 @@ function openSuggestModal(){
 
 // Get your own free access key at https://web3forms.com (no password needed —
 // email-verify only) and paste it below in place of d4c6fe0d-a012-46a6-9275-117a19bfc850.
+// Web3Forms public form key. Web3Forms states this is safe in client-side code.
+// Find it at app.web3forms.com -> your form -> Form Setup -> Form Access Key.
 const WEB3FORMS_ACCESS_KEY = 'd4c6fe0d-a012-46a6-9275-117a19bfc850';
+// Sentinel for dashboards cloned from this template that have no key yet.
+// Never set WEB3FORMS_ACCESS_KEY to this value expecting it to work.
+const WEB3FORMS_KEY_PLACEHOLDER = 'PASTE_YOUR_WEB3FORMS_ACCESS_KEY_HERE';
 
 function resetSuggestForm(){
   document.getElementById('sfName').value = '';
@@ -2497,7 +2533,7 @@ async function submitSuggestion(){
     alert('Please fill in your name, email, and suggestion before sending.');
     return;
   }
-  if(WEB3FORMS_ACCESS_KEY === 'd4c6fe0d-a012-46a6-9275-117a19bfc850'){
+  if(!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY === WEB3FORMS_KEY_PLACEHOLDER){
     alert('The suggestion box isn\'t fully set up yet — an access key is still needed. Contact tori@medwestrealty.com directly for now.');
     return;
   }
