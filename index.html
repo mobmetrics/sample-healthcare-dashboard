@@ -732,10 +732,10 @@ select option:active{background-color:#29374d!important;color:#fff!important}
           <table class="dtbl">
             <thead>
               <tr>
-                <th></th><th>#</th><th>Type</th><th>Stage</th><th>Location / City</th><th>Address</th><th>City</th><th>State</th>
-                <th>Est. SF</th><th>Rent $/SF/Mo</th><th>Est. Monthly</th>
+                <th></th><th>#</th><th>Deal</th><th>Location / Address</th>
+                <th>Size &amp; Rate</th>
                 <th>Prob</th><th>Est. Close</th>
-                <th>Notes / Next Step</th><th>Comment</th><th>Action</th>
+                <th>Notes / Next Step</th><th>Action</th>
               </tr>
             </thead>
             <tbody id="tbody-pipeline"></tbody>
@@ -2212,7 +2212,10 @@ function addDealComment(id,inputEl){
   d.comments = d.comments || [];
   d.comments.push({text:val, date:new Date().toISOString().slice(0,10)});
   inputEl.value = '';
+  _expandedDeals.add(id);
   savePipeline(); buildPipelineUI();
+  const again = document.getElementById('cmt-'+id);
+  if(again) again.focus();
 }
 
 function dealTypeBadge(t){
@@ -2285,7 +2288,7 @@ function buildPipelineUI(){
   tb.innerHTML = '';
   if(!_pipelineData.length){
     const empty = document.createElement('tr');
-    empty.innerHTML = '<td colspan="16" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
+    empty.innerHTML = '<td colspan="9" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
     tb.appendChild(empty);
   }
   const noteTypeColors = {'Rent Negotiation':'#bf360c','Renewal Discussion':'#1565c0','Lease Amendment':'#4a148c','Touring Alternatives':'#1b5e20','General Update':'#0d2040'};
@@ -2298,18 +2301,36 @@ function buildPipelineUI(){
     const tr = document.createElement('tr');
     tr.className = (holdClass + (editing?' row-editing':'')).trim();
 
-    const typeCell = editing
-      ? `<select id="edit-dealtype-${d.id}" class="tbl-edit-select">${dealTypeOptionsHtml(d.dealType)}</select>`
-      : `${dealTypeBadge(d.dealType)}${d.holdover?'<br><span style="font-size:9px;color:#a32d2d;font-weight:700">HOLDOVER</span>':''}`;
-    const stageCell = editing
-      ? `<select id="edit-stage-${d.id}" class="tbl-edit-select" onchange="onEditStageChange(${d.id})">${stageOptionsHtml(d.stage)}</select>`
-      : `<span class="stage ${stageClass(d.stage)}">${d.stage}</span>`;
-    const nameCell  = editing ? `<input id="edit-name-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.name)}">` : d.name;
-    const addrCell  = editing ? `<input id="edit-addr-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.addr)}">` : (d.addr||'—');
-    const cityCell  = editing ? `<input id="edit-city-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.city)}">` : (d.city||'—');
-    const stateCell = editing ? `<input id="edit-state-${d.id}" class="tbl-edit-input" type="text" maxlength="2" value="${escAttr(d.state)}">` : (d.state||'—');
-    const sfCell    = editing ? `<input id="edit-sf-${d.id}" class="tbl-edit-input" type="number" value="${d.sf||''}">` : (d.sf?d.sf.toLocaleString():'—');
-    const rentCell  = editing ? `<input id="edit-rent-${d.id}" class="tbl-edit-input" type="number" step="0.01" value="${d.rent||''}">` : (d.rent?'$'+d.rent.toFixed(2):'—');
+    const cCount = (d.comments||[]).length;
+
+    const dealCell = editing
+      ? `<select id="edit-dealtype-${d.id}" class="tbl-edit-select" style="margin-bottom:4px">${dealTypeOptionsHtml(d.dealType)}</select>
+         <select id="edit-stage-${d.id}" class="tbl-edit-select" onchange="onEditStageChange(${d.id})">${stageOptionsHtml(d.stage)}</select>`
+      : `${dealTypeBadge(d.dealType)}${d.holdover?'<br><span style="font-size:9px;color:#a32d2d;font-weight:700">HOLDOVER</span>':''}
+         <div style="margin-top:4px"><span class="stage ${stageClass(d.stage)}">${d.stage}</span></div>`;
+
+    const locCell = editing
+      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Location / City Name</label>
+         <input id="edit-name-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.name)}" style="margin-bottom:4px">
+         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Address</label>
+         <input id="edit-addr-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.addr)}" style="margin-bottom:4px">
+         <div style="display:flex;gap:4px">
+           <input id="edit-city-${d.id}" class="tbl-edit-input" type="text" placeholder="City" value="${escAttr(d.city)}">
+           <input id="edit-state-${d.id}" class="tbl-edit-input" type="text" maxlength="2" placeholder="ST" value="${escAttr(d.state)}" style="max-width:48px">
+         </div>`
+      : `<div style="font-weight:600">${d.name}</div>
+         <div style="color:#555;font-size:11px;margin-top:1px">${d.addr||'—'}</div>
+         <div style="color:#888;font-size:10px;margin-top:1px">${[d.city,d.state].filter(Boolean).join(', ')||'—'}</div>`;
+
+    const sizeCell = editing
+      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Est. Sq Ft</label>
+         <input id="edit-sf-${d.id}" class="tbl-edit-input" type="number" value="${d.sf||''}" style="margin-bottom:4px">
+         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Rent $/SF/Mo</label>
+         <input id="edit-rent-${d.id}" class="tbl-edit-input" type="number" step="0.01" value="${d.rent||''}">`
+      : `<div style="font-weight:600">${d.sf?d.sf.toLocaleString()+' SF':'—'}</div>
+         <div style="color:#555;font-size:11px;margin-top:1px">${d.rent?'$'+d.rent.toFixed(2)+' /SF/Mo':'—'}</div>
+         <div style="color:#888;font-size:10px;margin-top:1px">${est==='—'?'—':est+' /mo'}</div>`;
+
     const probCell  = editing
       ? `<input id="edit-prob-${d.id}" class="tbl-edit-input" type="number" min="0" max="100" value="${d.prob!=null?d.prob:''}">`
       : `<span style="font-weight:700;color:${probColor}">${d.prob!=null?d.prob+'%':'—'}</span>${d.prob!=null?`<span class="prob-mini"><span class="prob-mini-fill" style="width:${d.prob}%;background:${probColor}"></span></span>`:''}`;
@@ -2321,31 +2342,25 @@ function buildPipelineUI(){
          <input id="edit-competing-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.competing)}" style="margin-bottom:4px">
          <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Term (yrs)</label>
          <input id="edit-termyears-${d.id}" class="tbl-edit-input" type="number" step="0.5" value="${d.termYears||''}">`
-      : `${d.notes||'—'}${d.competing&&d.competing!=='None'?`<br><span style="color:#888;font-size:10px">🏢 ${d.competing}</span>`:''}`;
+      : `${d.notes||'—'}${d.competing&&d.competing!=='None'?`<br><span style="color:#888;font-size:10px">🏢 ${d.competing}</span>`:''}${cCount?`<div style="margin-top:4px;padding-top:4px;border-top:1px solid #e6e8ec;color:#1a6b8a;font-size:10px">💬 ${d.comments[cCount-1].text}${cCount>1?` <span style="color:#888">(+${cCount-1} more)</span>`:''}</div>`:''}`;
     const actionCell = editing
       ? `<div style="display:flex;gap:4px"><button class="btn-save" onclick="saveEditDeal(${d.id})">✓ Save</button><button class="btn-cancel" onclick="cancelEditDeal(${d.id})">Cancel</button></div>`
       : `<div style="display:flex;gap:4px"><button class="btn-edit" onclick="startEditDeal(${d.id})">✎ Edit</button><button class="btn-del" onclick="deletePipelineDeal(${d.id})">✕</button></div>`;
 
     const editAttr = editing ? '' : ` data-editable="1" title="Click to edit" onclick="startEditDeal(${d.id})"`;
     tr.innerHTML = `
-      <td><button onclick="toggleDealDetail(${d.id})" style="background:none;border:1px solid #d0d4da;border-radius:4px;width:20px;height:20px;cursor:pointer;font-weight:700;color:#0d2040;line-height:1">${expanded?'−':'+'}</button></td>
-      <td>${i+1}</td>
-      <td${editAttr}>${typeCell}</td>
-      <td${editAttr}>${stageCell}</td>
-      <td style="text-align:left;font-weight:600"${editAttr}>${nameCell}</td>
-      <td style="text-align:left"${editAttr}>${addrCell}</td>
-      <td${editAttr}>${cityCell}</td><td${editAttr}>${stateCell}</td>
-      <td class="num"${editAttr}>${sfCell}</td>
-      <td class="num"${editAttr}>${rentCell}</td>
-      <td class="num">${est}</td>
-      <td class="ctr" style="white-space:nowrap"${editAttr}>${probCell}</td>
-      <td class="ctr"${editAttr}>${closeCell}</td>
-      <td style="text-align:left;max-width:220px;white-space:normal;font-size:11px"${editAttr}>${notesCell}</td>
-      <td style="text-align:left;min-width:150px">
-        <input type="text" placeholder="Add comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="width:100%;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
-        ${d.comments&&d.comments.length?`<div style="font-size:9px;color:#888;margin-top:2px">${d.comments.length} comment${d.comments.length>1?'s':''} — see + detail</div>`:''}
+      <td style="white-space:nowrap;vertical-align:top;padding-top:8px">
+        <button onclick="toggleDealDetail(${d.id})" title="${expanded?'Collapse':'Expand'} notes &amp; comments" style="background:none;border:1px solid #d0d4da;border-radius:4px;width:20px;height:20px;cursor:pointer;font-weight:700;color:#0d2040;line-height:1">${expanded?'−':'+'}</button>
+        ${cCount?`<div onclick="toggleDealDetail(${d.id})" title="${cCount} comment${cCount>1?'s':''}" style="font-size:9px;font-weight:700;color:#1a6b8a;margin-top:3px;cursor:pointer">💬 ${cCount}</div>`:''}
       </td>
-      <td>${actionCell}</td>`;
+      <td style="vertical-align:top;padding-top:9px">${i+1}</td>
+      <td style="white-space:normal;min-width:104px;vertical-align:top"${editAttr}>${dealCell}</td>
+      <td style="text-align:left;white-space:normal;min-width:170px;max-width:240px;vertical-align:top"${editAttr}>${locCell}</td>
+      <td style="text-align:left;white-space:normal;min-width:104px;vertical-align:top"${editAttr}>${sizeCell}</td>
+      <td class="ctr" style="white-space:nowrap;vertical-align:top;padding-top:9px"${editAttr}>${probCell}</td>
+      <td class="ctr" style="vertical-align:top;padding-top:9px"${editAttr}>${closeCell}</td>
+      <td style="text-align:left;max-width:280px;white-space:normal;font-size:11px;vertical-align:top"${editAttr}>${notesCell}</td>
+      <td style="vertical-align:top;padding-top:8px">${actionCell}</td>`;
     tb.appendChild(tr);
 
     const detailTr = document.createElement('tr');
@@ -2365,7 +2380,7 @@ function buildPipelineUI(){
         </div>
       </div>` : '';
     const dealComments = d.comments || [];
-    detailTr.innerHTML = `<td colspan="16" style="background:#f7f8fa;padding:12px 16px 14px 46px">
+    detailTr.innerHTML = `<td colspan="9" style="background:#f7f8fa;padding:12px 16px 14px 46px;text-align:left;white-space:normal">
       ${relocBlock}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040">Lease Notes / Updates — ${d.name}</div>
@@ -2380,7 +2395,11 @@ function buildPipelineUI(){
           <button class="btn-del" style="flex-shrink:0" onclick="deleteNote(${n.id})">✕</button>
         </div>`;
       }).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No notes logged yet.</div>'}
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040;margin-top:12px;margin-bottom:6px">Comments — ${d.name}</div>
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040;margin-top:14px;margin-bottom:6px">Comments — ${d.name}</div>
+      <div style="display:flex;gap:6px;max-width:680px;margin-bottom:4px">
+        <input id="cmt-${d.id}" type="text" placeholder="Add a comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="flex:1;min-width:0;font-size:11px;padding:5px 8px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
+        <button class="btn-sec" style="background:#1a6b8a;font-size:10px;padding:3px 12px;flex-shrink:0" onclick="addDealComment(${d.id},document.getElementById('cmt-${d.id}'))">Post</button>
+      </div>
       ${dealComments.length ? dealComments.slice().reverse().map(c=>`
         <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
           <span style="white-space:nowrap;color:#888;min-width:70px">${c.date}</span>
@@ -2849,7 +2868,7 @@ function getDashboardTourSteps(){
       element: tourGoTo('pipeline','#sec-pipeline .tbl-wrap'),
       popover:{
         title:'Click any cell to edit',
-        description:"Click directly on a row's data to update it in place — no separate edit screen needed. Drop a note in the Comment column anytime to track where a deal stands.",
+        description:"Click directly on a row's data to update it in place — no separate edit screen needed. Click the + button to open a deal's notes and comments, where you can log a comment anytime to track where things stand.",
         side:'top', align:'start'
       }
     },
