@@ -295,6 +295,101 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 .mw-tour-popover .driver-popover-next-btn{background:#dc2f3a!important;color:#fff!important;border:none!important;text-shadow:none!important}
 .mw-tour-popover .driver-popover-progress-text{color:#888;font-size:10px}
 
+/* ============================================================
+   MOBILE / TABLET  —  everything below only applies at <=900px.
+   Desktop layout above is untouched.
+   ============================================================ */
+#nav-toggle{display:none;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.28);color:#fff;font-size:19px;line-height:1;width:42px;height:42px;min-width:42px;border-radius:7px;cursor:pointer;flex-shrink:0}
+#nav-toggle:active{background:rgba(255,255,255,0.25)}
+#nav-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1200}
+#nav-backdrop.open{display:block}
+
+@media (max-width:900px){
+  body{font-size:14px}
+
+  /* Sidebar becomes a slide-over drawer */
+  #nav-toggle{display:block}
+  #sidebar{position:fixed;top:0;left:0;z-index:1300;width:262px;min-width:262px;height:100vh;
+           transform:translateX(-100%);transition:transform .22s ease;box-shadow:2px 0 18px rgba(0,0,0,.35)}
+  #sidebar.open{transform:translateX(0)}
+  #sidebar nav a{padding:14px 18px;font-size:15px}
+  #sidebar-logo{padding:16px 16px 14px}
+
+  /* Topbar */
+  #topbar{padding:10px 12px;gap:10px}
+  #topbar .title{font-size:13px;line-height:1.25}
+  #topbar .subtitle{font-size:9px}
+  #tour-nav-btn{font-size:11px;padding:7px 10px}
+
+  /* KPI strip: 2 across instead of 4 */
+  #kpi-bar{grid-template-columns:1fr 1fr;gap:8px;padding:10px 12px}
+  .kpi-card{padding:9px 10px}
+  .kpi-card .kpi-val{font-size:15px}
+  .kpi-card .kpi-lbl{font-size:9px}
+
+  /* Content + one-column stacking */
+  #content{padding:12px;max-height:calc(100vh - 150px);-webkit-overflow-scrolling:touch}
+  .two-col,.three-col{grid-template-columns:1fr}
+  #sec-opex.active{height:auto;display:block}
+  #sec-opex.active .two-col{display:grid}
+  #sec-opex.active .tbl-wrap{max-height:70vh}
+  .card{padding:12px}
+  .map-container{height:200px}
+  .map-container-lg{height:230px}
+
+  /* Tables keep every column and swipe sideways */
+  .tbl-wrap{-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+            border:1px solid #e6e8ec;border-radius:6px;position:relative}
+  .tbl-wrap::after{content:'← swipe to see more →';display:block;position:sticky;left:0;
+            font-size:10px;color:#8a94a3;text-align:center;padding:5px 0 2px;background:#fff}
+  table.dtbl{font-size:12px}
+  table.dtbl th,table.dtbl td{white-space:nowrap}
+
+  /* Forms stay fully usable — full-width fields, 16px stops iOS zoom-on-focus */
+  .form-row{flex-direction:column;gap:9px}
+  .form-row input,.form-row select{width:100%;flex:none;min-width:0;max-width:none!important;font-size:16px;padding:10px 12px}
+  .pipeline-actions{flex-direction:column}
+  .pipeline-actions button{width:100%;padding:12px;font-size:13px}
+
+  /* Touch targets */
+  #tbody-pipeline .btn-edit,#tbody-pipeline .btn-del,#tbody-pipeline .btn-save,#tbody-pipeline .btn-cancel{padding:8px 10px;font-size:11px}
+  #tbody-pipeline > tr > td{padding-top:14px;padding-bottom:14px}
+  select.stage{font-size:12px;padding:6px 4px 6px 8px}
+  #tbody-pipeline input[type=text]{font-size:16px;padding:9px 10px}
+  /* Give the notes column real width so it doesn't squeeze into a tall ribbon */
+  #tbody-pipeline td.cell-notes{min-width:228px!important;max-width:228px!important}
+
+  /* Expanded panel stays pinned to the screen instead of scrolling off sideways */
+  #tbody-pipeline tr.deal-detail > td{padding:12px 12px 14px 12px!important}
+  .detail-inner{position:sticky;left:0;width:calc(100vw - 78px);max-width:calc(100vw - 78px)}
+  .reloc-grid{grid-template-columns:1fr!important}
+  .detail-inner input[type=text]{font-size:16px!important}
+  /* Note / comment rows stack so the text gets full width instead of a narrow column */
+  .note-row{flex-wrap:wrap!important;padding:8px 0!important}
+  .note-row .note-text{flex:1 0 100%!important;order:3;margin-top:3px;line-height:1.5}
+  .note-row .btn-del{order:2;margin-left:auto}
+  /* Comment box: input over a full-width Post button, clear of the suggestion bubble */
+  .cmt-form{flex-direction:column;gap:8px!important}
+  .cmt-form button{width:100%;padding:11px!important;font-size:12px!important}
+
+  /* Modals fill the screen properly */
+  .modal-box{width:100%;max-width:94vw;max-height:88vh;padding:16px}
+  .modal-form input,.modal-form select,.modal-form textarea{font-size:16px}
+
+  /* Expiration alert cards: 5 across -> 2 across */
+  .alert-grid{grid-template-columns:1fr 1fr!important;gap:8px!important}
+
+  /* Suggestion button out of the way of the table */
+  .suggest-fab{transform:scale(.85)}
+  .suggest-fab-label{display:none}
+}
+
+@media (max-width:430px){
+  #topbar .title{font-size:12px}
+  .section-title{font-size:14px}
+  .kpi-card .kpi-val{font-size:14px}
+  .kpi-card .kpi-lbl{font-size:8px}
+}
 </style>
 </head>
 <body>
@@ -324,6 +419,7 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 </div>
 
 <!-- SIDEBAR -->
+<div id="nav-backdrop" onclick="closeSidebar()"></div>
 <div id="sidebar">
   <div id="sidebar-logo">
     <svg viewBox="0 0 180 52" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:160px">
@@ -350,9 +446,12 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 <!-- MAIN -->
 <div id="main">
   <div id="topbar">
-    <div>
-      <div class="title">PulsePath Health — Portfolio Dashboard</div>
-      <div class="subtitle">Updated June 2026</div>
+    <div style="display:flex;align-items:center;gap:12px;min-width:0">
+      <button id="nav-toggle" onclick="toggleSidebar()" aria-label="Open menu" aria-expanded="false">☰</button>
+      <div style="min-width:0">
+        <div class="title">PulsePath Health — Portfolio Dashboard</div>
+        <div class="subtitle">Updated June 2026</div>
+      </div>
     </div>
     <div style="display:flex;align-items:center;gap:16px">
       <button id="tour-nav-btn" onclick="startDashboardTour()">🎓 Tour</button>
@@ -972,7 +1071,23 @@ function destroyChart(id){
 // ============================================================
 const TAB_NAMES = {exec:'Executive Summary',expir:'Expiration Overview',opex:'Operating Expenses',rate1:'Rate Comparison',addrkey:'Property Address Key',analytics:'Portfolio Analytics',contact:'Contact Us',pipeline:'Pipeline Deals'};
 
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  sb.classList.contains('open') ? closeSidebar() : openSidebar();
+}
+function openSidebar(){
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('nav-backdrop').classList.add('open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded','true');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('nav-backdrop').classList.remove('open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded','false');
+}
+
 function showSection(id){
+  closeSidebar();
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('#sidebar nav a').forEach(a=>a.classList.remove('active'));
   document.getElementById('sec-'+id).classList.add('active');
@@ -1340,7 +1455,7 @@ function buildAlertCards(elId, locs, keyPrefix, filterName){
       sub2:fmtList(optOpen,l=>l.name+' · Notify by '+l.opt1NoticeEnd,keyPrefix+'-opt','Option Windows Open'),
       bg:'#d6ab5c',bl:'#8f6420'}
   ];
-  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">${
+  el.innerHTML=`<div class="alert-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">${
     cards.map(c=>`<div style="background:${c.bg};color:#fff;border-radius:8px;padding:14px 16px;border-left:4px solid ${c.bl}">
       <div style="font-size:26px;font-weight:700;line-height:1;margin-bottom:4px">${c.n}</div>
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${c.lbl}</div>
@@ -2373,7 +2488,7 @@ function buildPipelineUI(){
       <td style="text-align:left;white-space:normal;min-width:104px;vertical-align:top"${editAttr}>${sizeCell}</td>
       <td class="ctr" style="white-space:nowrap;vertical-align:top"${editAttr}>${probCell}</td>
       <td class="ctr" style="vertical-align:top"${editAttr}>${closeCell}</td>
-      <td style="text-align:left;max-width:280px;white-space:normal;font-size:11px;vertical-align:top;line-height:1.45"${editAttr}>${notesCell}</td>
+      <td class="cell-notes" style="text-align:left;max-width:280px;white-space:normal;font-size:11px;vertical-align:top;line-height:1.45"${editAttr}>${notesCell}</td>
       <td style="vertical-align:top">${actionCell}</td>`;
     tb.appendChild(tr);
 
@@ -2384,7 +2499,7 @@ function buildPipelineUI(){
     const relocBlock = d.dealType==='Relocation' ? `
       <div style="margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#1a4f80;margin-bottom:5px">Relocation Options</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        <div class="reloc-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
           ${['a','b','c'].map(k=>`<div>
             <label style="font-size:9px;color:#888;display:block;margin-bottom:2px">Option ${k.toUpperCase()}</label>
             <div style="display:flex;gap:4px">
@@ -2406,7 +2521,7 @@ function buildPipelineUI(){
           <span class="stage ${stageClass(h.to)}">${h.to}</span>
         </div>`).join('')
         : `<div style="font-size:11px;color:#888;padding:5px 0">No stage changes logged yet — still at <span class="stage ${stageClass(d.stage)}">${d.stage}</span> since the deal was added.</div>`}`;
-    detailTr.innerHTML = `<td colspan="9" style="background:#f7f8fa;padding:12px 16px 14px 46px;text-align:left;white-space:normal">
+    detailTr.innerHTML = `<td colspan="9" style="background:#f7f8fa;padding:12px 16px 14px 46px;text-align:left;white-space:normal"><div class="detail-inner">
       ${relocBlock}
       ${stageBlock}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:6px">
@@ -2415,24 +2530,24 @@ function buildPipelineUI(){
       </div>
       ${dealNotes.length ? dealNotes.slice().reverse().map(n=>{
         const bg = noteTypeColors[n.type]||'#0d2040';
-        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
+        return `<div class="note-row" style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
           <span style="white-space:nowrap;color:#888;min-width:70px">${n.date}</span>
           <span class="note-type" style="background:${bg};flex-shrink:0">${n.type}</span>
-          <span style="flex:1">${n.note}</span>
+          <span class="note-text" style="flex:1">${n.note}</span>
           <button class="btn-del" style="flex-shrink:0" onclick="deleteNote(${n.id})">✕</button>
         </div>`;
       }).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No notes logged yet.</div>'}
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040;margin-top:14px;margin-bottom:6px">Comments — ${d.name}</div>
-      <div style="display:flex;gap:6px;max-width:680px;margin-bottom:4px">
+      <div class="cmt-form" style="display:flex;gap:6px;max-width:680px;margin-bottom:4px">
         <input id="cmt-${d.id}" type="text" placeholder="Add a comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="flex:1;min-width:0;font-size:11px;padding:5px 8px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
         <button class="btn-sec" style="background:#1a6b8a;font-size:10px;padding:3px 12px;flex-shrink:0" onclick="addDealComment(${d.id},document.getElementById('cmt-${d.id}'))">Post</button>
       </div>
       ${dealComments.length ? dealComments.slice().reverse().map(c=>`
-        <div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
+        <div class="note-row" style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
           <span style="white-space:nowrap;color:#888;min-width:70px">${c.date}</span>
-          <span style="flex:1">${c.text}</span>
+          <span class="note-text" style="flex:1">${c.text}</span>
         </div>`).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No comments yet.</div>'}
-    </td>`;
+    </div></td>`;
     tb.appendChild(detailTr);
   });
 }
