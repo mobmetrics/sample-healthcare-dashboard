@@ -67,6 +67,11 @@ table.dtbl td.num{text-align:right}
 table.dtbl td.ctr{text-align:center}
 table.dtbl td[data-editable]{cursor:pointer}
 table.dtbl td[data-editable]:hover{background:#eaf1fb}
+/* Pipeline table — roomier rows and a visible divider between deals */
+#tbody-pipeline > tr > td{padding-top:13px;padding-bottom:13px;border-bottom:1px solid #ccd3dd}
+#tbody-pipeline > tr.deal-detail > td{padding-top:12px;padding-bottom:14px;border-bottom:2px solid #ccd3dd}
+#tbody-pipeline > tr.deal-row.has-detail > td{border-bottom:1px dashed #dfe4ea}
+#sec-pipeline table.dtbl th{padding-top:9px;padding-bottom:9px}
 #tbl-sat th,#tbl-sat td{white-space:nowrap}
 #tbl-sat td{text-align:left}
 #tbl-sat th{text-align:left}
@@ -2303,7 +2308,7 @@ function buildPipelineUI(){
     const expanded = _expandedDeals.has(d.id);
     const editing = _editingDeals.has(d.id);
     const tr = document.createElement('tr');
-    tr.className = (holdClass + (editing?' row-editing':'')).trim();
+    tr.className = ('deal-row ' + holdClass + (editing?' row-editing':'') + (expanded?' has-detail':'')).replace(/\s+/g,' ').trim();
 
     const cCount = (d.comments||[]).length;
     const sCount = (d.stageHistory||[]).length;
@@ -2358,21 +2363,22 @@ function buildPipelineUI(){
 
     const editAttr = editing ? '' : ` data-editable="1" title="Click to edit" onclick="startEditDeal(${d.id})"`;
     tr.innerHTML = `
-      <td style="white-space:nowrap;vertical-align:top;padding-top:8px">
+      <td style="white-space:nowrap;vertical-align:top">
         <button onclick="toggleDealDetail(${d.id})" title="${expanded?'Collapse':'Expand'} notes &amp; comments" style="background:none;border:1px solid #d0d4da;border-radius:4px;width:20px;height:20px;cursor:pointer;font-weight:700;color:#0d2040;line-height:1">${expanded?'−':'+'}</button>
         ${cCount?`<div onclick="toggleDealDetail(${d.id})" title="${cCount} comment${cCount>1?'s':''}" style="font-size:9px;font-weight:700;color:#1a6b8a;margin-top:3px;cursor:pointer">💬 ${cCount}</div>`:''}
       </td>
-      <td style="vertical-align:top;padding-top:9px">${i+1}</td>
+      <td style="vertical-align:top">${i+1}</td>
       <td style="white-space:normal;min-width:104px;vertical-align:top"${editAttr}>${dealCell}</td>
       <td style="text-align:left;white-space:normal;min-width:170px;max-width:240px;vertical-align:top"${editAttr}>${locCell}</td>
       <td style="text-align:left;white-space:normal;min-width:104px;vertical-align:top"${editAttr}>${sizeCell}</td>
-      <td class="ctr" style="white-space:nowrap;vertical-align:top;padding-top:9px"${editAttr}>${probCell}</td>
-      <td class="ctr" style="vertical-align:top;padding-top:9px"${editAttr}>${closeCell}</td>
-      <td style="text-align:left;max-width:280px;white-space:normal;font-size:11px;vertical-align:top"${editAttr}>${notesCell}</td>
-      <td style="vertical-align:top;padding-top:8px">${actionCell}</td>`;
+      <td class="ctr" style="white-space:nowrap;vertical-align:top"${editAttr}>${probCell}</td>
+      <td class="ctr" style="vertical-align:top"${editAttr}>${closeCell}</td>
+      <td style="text-align:left;max-width:280px;white-space:normal;font-size:11px;vertical-align:top;line-height:1.45"${editAttr}>${notesCell}</td>
+      <td style="vertical-align:top">${actionCell}</td>`;
     tb.appendChild(tr);
 
     const detailTr = document.createElement('tr');
+    detailTr.className = 'deal-detail';
     detailTr.style.display = expanded ? '' : 'none';
     const dealNotes = _leaseNotes.filter(n=>n.loc===d.name);
     const relocBlock = d.dealType==='Relocation' ? `
