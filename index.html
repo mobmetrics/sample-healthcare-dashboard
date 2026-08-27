@@ -457,7 +457,7 @@ select option:active{background-color:#29374d!important;color:#fff!important}
     </svg>
   </div>
   <nav>
-    <a onclick="showSection('exec')" class="active">Executive Summary</a>
+    <a onclick="showSection('exec')" class="active">Portfolio Summary</a>
     <a onclick="showSection('expir')">Expiration Overview</a>
     <a onclick="showSection('opex')">Operating Expenses</a>
     <a onclick="showSection('rate1')">Rate Comparison</a>
@@ -501,7 +501,7 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 
     <!-- 1. EXECUTIVE SUMMARY -->
     <div id="sec-exec" class="section active">
-      <div class="section-title">Executive Summary</div>
+      <div class="section-title">Portfolio Summary</div>
       <div id="exec-pulse" style="margin-bottom:14px"></div>
       <div class="two-col">
         <div class="card">
@@ -1095,7 +1095,7 @@ function destroyChart(id){
 // ============================================================
 // NAVIGATION
 // ============================================================
-const TAB_NAMES = {exec:'Executive Summary',expir:'Expiration Overview',opex:'Operating Expenses',rate1:'Rate Comparison',addrkey:'Property Address Key',analytics:'Portfolio Analytics',contact:'Contact Us',pipeline:'Pipeline Deals'};
+const TAB_NAMES = {exec:'Portfolio Summary',expir:'Expiration Overview',opex:'Operating Expenses',rate1:'Rate Comparison',addrkey:'Property Address Key',analytics:'Portfolio Analytics',contact:'Contact Us',pipeline:'Pipeline Deals'};
 
 function toggleSidebar(){
   const sb = document.getElementById('sidebar');
@@ -2980,7 +2980,7 @@ function getDashboardTourSteps(){
       element:'#sidebar nav',
       popover:{
         title:'Everything starts here',
-        description:'Executive Summary, Expiration Overview, Operating Expenses, Rate Comparison, Property Address Key, Portfolio Analytics, Contact Us, and Pipeline Deals — click any tab to jump straight to it.',
+        description:'Portfolio Summary, Expiration Overview, Operating Expenses, Rate Comparison, Property Address Key, Portfolio Analytics, Contact Us, and Pipeline Deals — click any tab to jump straight to it.',
         side:'right', align:'start'
       }
     },
