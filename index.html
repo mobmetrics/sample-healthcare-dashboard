@@ -117,6 +117,32 @@ select.stage option{background:#fff;color:#333;font-weight:500}
 /* prob bar inline */
 .prob-mini{display:inline-block;width:40px;height:4px;background:#e0e3e8;border-radius:2px;vertical-align:middle;margin-left:4px}
 .prob-mini-fill{height:100%;border-radius:2px}
+/* DEAL HEADER BAND LAYOUT (pipeline table) */
+#tbody-pipeline > tr.deal-band > td{padding-top:8px;padding-bottom:8px;border-bottom:none;
+  border-top:2px solid #ccd3dd;background:#f2f5fa}
+#tbody-pipeline > tr.deal-band:first-child > td{border-top:none}
+#tbody-pipeline > tr.deal-data > td{padding-top:7px;padding-bottom:12px;vertical-align:top}
+#tbody-pipeline > tr.deal-data.has-detail > td{border-bottom:1px dashed #dfe4ea}
+#tbody-pipeline td.deal-gut{width:46px;vertical-align:top;text-align:center;white-space:nowrap;
+  background:#e1e9f4!important;border-right:1px solid #ccd6e4;padding:8px 7px 10px}
+.gut-num{display:flex;width:22px;height:22px;margin:0 auto 6px;border-radius:5px;background:#0d2040;
+  color:#fff;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.gut-tog{background:#fff;border:1px solid #d0d4da;border-radius:4px;width:22px;height:22px;cursor:pointer;
+  font-weight:700;color:#0d2040;line-height:1;font-size:13px}
+.gut-tog:hover{background:#0d2040;border-color:#0d2040;color:#fff}
+.gut-cmt{font-size:9px;font-weight:700;color:#1a6b8a;margin-top:4px;cursor:pointer}
+#tbody-pipeline td.deal-band-cell{text-align:left;white-space:normal}
+.deal-band-flex{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.deal-band-act{margin-left:auto}
+.band-name{font-weight:600;color:#0d2040;font-size:12.5px}
+.band-addr{color:#66707e;font-size:11px;margin-left:7px}
+tr:not(.row-editing) .deal-band-tags > div{display:inline-block;margin-top:0!important;vertical-align:middle}
+tr:not(.row-editing) .deal-band-tags br{display:none}
+tr:not(.row-editing) .deal-band-tags .stage{margin-left:6px}
+tr:not(.row-editing) .deal-band-tags br + span{margin-left:8px}
+.row-editing .deal-band-id{flex:0 0 330px}
+.row-editing .deal-band-tags{flex:0 0 210px}
+#tbody-pipeline td.cell-notes{text-align:left;white-space:normal;font-size:11px;line-height:1.45}
 
 /* COMPARISON */
 .higher{color:#c62828;font-weight:600}
@@ -840,10 +866,10 @@ select option:active{background-color:#29374d!important;color:#fff!important}
           <table class="dtbl">
             <thead>
               <tr>
-                <th></th><th>#</th><th>Deal</th><th>Location / Address</th>
-                <th>Size &amp; Rate</th>
+                <th></th>
+                <th>Size</th><th>Rate</th><th>Monthly</th>
                 <th>Prob</th><th>Est. Close</th>
-                <th>Notes / Next Step</th><th>Action</th>
+                <th>Notes / Next Step</th>
               </tr>
             </thead>
             <tbody id="tbody-pipeline"></tbody>
@@ -2412,7 +2438,7 @@ function buildPipelineUI(){
   tb.innerHTML = '';
   if(!_pipelineData.length){
     const empty = document.createElement('tr');
-    empty.innerHTML = '<td colspan="9" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
+    empty.innerHTML = '<td colspan="7" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
     tb.appendChild(empty);
   }
   const noteTypeColors = {'Rent Negotiation':'#bf360c','Renewal Discussion':'#1565c0','Lease Amendment':'#4a148c','Touring Alternatives':'#1b5e20','General Update':'#0d2040'};
@@ -2423,7 +2449,7 @@ function buildPipelineUI(){
     const expanded = _expandedDeals.has(d.id);
     const editing = _editingDeals.has(d.id);
     const tr = document.createElement('tr');
-    tr.className = ('deal-row ' + holdClass + (editing?' row-editing':'') + (expanded?' has-detail':'')).replace(/\s+/g,' ').trim();
+    tr.className = ('deal-band ' + holdClass + (editing?' row-editing':'')).replace(/\s+/g,' ').trim();
 
     const cCount = (d.comments||[]).length;
     const sCount = (d.stageHistory||[]).length;
@@ -2451,14 +2477,17 @@ function buildPipelineUI(){
          <div style="color:#555;font-size:11px;margin-top:1px">${d.addr||'—'}</div>
          <div style="color:#888;font-size:10px;margin-top:1px">${[d.city,d.state].filter(Boolean).join(', ')||'—'}</div>`;
 
-    const sizeCell = editing
+    const sfCell = editing
       ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Est. Sq Ft</label>
-         <input id="edit-sf-${d.id}" class="tbl-edit-input" type="number" value="${d.sf||''}" style="margin-bottom:4px">
-         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Rent $/SF/Mo</label>
+         <input id="edit-sf-${d.id}" class="tbl-edit-input" type="number" value="${d.sf||''}">`
+      : `<span style="font-weight:600">${d.sf?d.sf.toLocaleString()+' SF':'—'}</span>`;
+    const rateCell = editing
+      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Rent $/SF/Mo</label>
          <input id="edit-rent-${d.id}" class="tbl-edit-input" type="number" step="0.01" value="${d.rent||''}">`
-      : `<div style="font-weight:600">${d.sf?d.sf.toLocaleString()+' SF':'—'}</div>
-         <div style="color:#555;font-size:11px;margin-top:1px">${d.rent?'$'+d.rent.toFixed(2)+' /SF/Mo':'—'}</div>
-         <div style="color:#888;font-size:10px;margin-top:1px">${est==='—'?'—':est+' /mo'}</div>`;
+      : `${d.rent?'$'+d.rent.toFixed(2)+' <span style="color:#888;font-size:10px">/SF/Mo</span>':'—'}`;
+    const monthlyCell = editing
+      ? `<div style="color:#888;font-size:10px;padding-top:15px">${est==='—'?'—':est+' /mo'}</div>`
+      : `${est==='—'?'—':est+' <span style="color:#888;font-size:10px">/mo</span>'}`;
 
     const probCell  = editing
       ? `<input id="edit-prob-${d.id}" class="tbl-edit-input" type="number" min="0" max="100" value="${d.prob!=null?d.prob:''}">`
@@ -2477,20 +2506,33 @@ function buildPipelineUI(){
       : `<div style="display:flex;gap:4px"><button class="btn-edit" onclick="startEditDeal(${d.id})">✎ Edit</button><button class="btn-del" onclick="deletePipelineDeal(${d.id})">✕</button></div>`;
 
     const editAttr = editing ? '' : ` data-editable="1" title="Click to edit" onclick="startEditDeal(${d.id})"`;
+    const bandIdCell = editing ? locCell
+      : `<span class="band-name">${d.name}</span><span class="band-addr">${[d.addr,[d.city,d.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')||'—'}</span>`;
     tr.innerHTML = `
-      <td style="white-space:nowrap;vertical-align:top">
-        <button onclick="toggleDealDetail(${d.id})" title="${expanded?'Collapse':'Expand'} notes &amp; comments" style="background:none;border:1px solid #d0d4da;border-radius:4px;width:20px;height:20px;cursor:pointer;font-weight:700;color:#0d2040;line-height:1">${expanded?'−':'+'}</button>
-        ${cCount?`<div onclick="toggleDealDetail(${d.id})" title="${cCount} comment${cCount>1?'s':''}" style="font-size:9px;font-weight:700;color:#1a6b8a;margin-top:3px;cursor:pointer">💬 ${cCount}</div>`:''}
+      <td class="deal-gut" rowspan="2">
+        <span class="gut-num">${i+1}</span>
+        <button onclick="toggleDealDetail(${d.id})" title="${expanded?'Collapse':'Expand'} notes &amp; comments" class="gut-tog">${expanded?'−':'+'}</button>
+        ${cCount?`<div onclick="toggleDealDetail(${d.id})" title="${cCount} comment${cCount>1?'s':''}" class="gut-cmt">💬 ${cCount}</div>`:''}
       </td>
-      <td style="vertical-align:top">${i+1}</td>
-      <td style="white-space:normal;min-width:104px;vertical-align:top"${editAttr}>${dealCell}</td>
-      <td style="text-align:left;white-space:normal;min-width:170px;max-width:240px;vertical-align:top"${editAttr}>${locCell}</td>
-      <td style="text-align:left;white-space:normal;min-width:104px;vertical-align:top"${editAttr}>${sizeCell}</td>
-      <td class="ctr" style="white-space:nowrap;vertical-align:top"${editAttr}>${probCell}</td>
-      <td class="ctr" style="vertical-align:top"${editAttr}>${closeCell}</td>
-      <td class="cell-notes" style="text-align:left;max-width:280px;white-space:normal;font-size:11px;vertical-align:top;line-height:1.45"${editAttr}>${notesCell}</td>
-      <td style="vertical-align:top">${actionCell}</td>`;
+      <td class="deal-band-cell" colspan="6">
+        <div class="deal-band-flex">
+          <div class="deal-band-id"${editAttr}>${bandIdCell}</div>
+          <div class="deal-band-tags"${editAttr}>${dealCell}</div>
+          <div class="deal-band-act">${actionCell}</div>
+        </div>
+      </td>`;
     tb.appendChild(tr);
+
+    const dataTr = document.createElement('tr');
+    dataTr.className = ('deal-data ' + holdClass + (editing?' row-editing':'') + (expanded?' has-detail':'')).replace(/\s+/g,' ').trim();
+    dataTr.innerHTML = `
+      <td class="ctr"${editAttr}>${sfCell}</td>
+      <td class="ctr"${editAttr}>${rateCell}</td>
+      <td class="ctr"${editAttr}>${monthlyCell}</td>
+      <td class="ctr" style="white-space:nowrap"${editAttr}>${probCell}</td>
+      <td class="ctr"${editAttr}>${closeCell}</td>
+      <td class="cell-notes"${editAttr}>${notesCell}</td>`;
+    tb.appendChild(dataTr);
 
     const detailTr = document.createElement('tr');
     detailTr.className = 'deal-detail';
@@ -2521,7 +2563,7 @@ function buildPipelineUI(){
           <span class="stage ${stageClass(h.to)}">${h.to}</span>
         </div>`).join('')
         : `<div style="font-size:11px;color:#888;padding:5px 0">No stage changes logged yet — still at <span class="stage ${stageClass(d.stage)}">${d.stage}</span> since the deal was added.</div>`}`;
-    detailTr.innerHTML = `<td colspan="9" style="background:#f7f8fa;padding:12px 16px 14px 46px;text-align:left;white-space:normal"><div class="detail-inner">
+    detailTr.innerHTML = `<td colspan="7" style="background:#f7f8fa;padding:12px 16px 14px 58px;text-align:left;white-space:normal"><div class="detail-inner">
       ${relocBlock}
       ${stageBlock}
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:6px">
