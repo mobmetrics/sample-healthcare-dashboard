@@ -545,7 +545,7 @@ select option:active{background-color:#29374d!important;color:#fff!important}
       <div id="expir-alerts" style="margin-bottom:14px"></div>
       <div id="expir-action-center" style="margin-bottom:14px"></div>
       <div class="full card">
-        <div class="card-title">Location Expiration by Year</div>
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">Location Expiration by Year<button id="btn-expir-pdf" onclick="downloadExpirPdf()" style="background:#dc2f3a;color:#fff;border:none;padding:7px 14px;border-radius:4px;font-size:12px;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:0">&#11015; Download PDF report</button></div>
         <div class="tbl-wrap">
           <table class="dtbl" id="tbl-expir">
             <thead>
@@ -1740,6 +1740,116 @@ function renderExpirTableRows(){
       <td>${expiryBadge(loc.expiry)} ${loc.expiry||'—'}</td>`;
     tb.appendChild(tr);
   });
+}
+
+// ============================================================
+// LEASE EXPIRATION PDF REPORT
+// ============================================================
+function _loadScriptOnce(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector(`script[src="${src}"]`)) return res();
+    const sc=document.createElement('script'); sc.src=src; sc.onload=()=>res(); sc.onerror=()=>rej(new Error('Could not load '+src));
+    document.head.appendChild(sc);
+  });
+}
+function _pdfOptionsText(o){
+  if(!o) return 'None listed';
+  const words=['None','One','Two','Three','Four','Five','Six'];
+  const parts=String(o).split(';').map(x=>x.trim()).filter(Boolean).map(x=>{
+    const m=x.match(/^(\d+)\s*,\s*(\d+)\s*years?$/i);
+    if(!m) return x;
+    const n=+m[1], yrs=m[2];
+    return (words[n]||n)+' '+yrs+'-year option'+(n===1?'':'s');
+  });
+  if(parts.length<2) return parts[0]||'None listed';
+  return parts[0]+', plus '+parts.slice(1).map(t=>t.charAt(0).toLowerCase()+t.slice(1)).join(', plus ');
+}
+function _pdfLongDate(d){
+  if(!d) return 'No date listed';
+  const [y,m,dd]=d.split('-').map(Number);
+  return new Date(y,m-1,dd).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+}
+async function downloadExpirPdf(){
+  const btn=document.getElementById('btn-expir-pdf');
+  const label=btn?btn.innerHTML:'';
+  if(btn){ btn.disabled=true; btn.innerHTML='Preparing PDF…'; }
+  try{
+    await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    await _loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({orientation:'landscape',unit:'pt',format:'letter'});
+    const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    const NAVY=[41,55,77], RED=[220,47,58];
+    const today=new Date();
+    const asOf=today.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const rows=[...LOCATIONS].sort((a,b)=>{
+      const va=a.expiry?new Date(a.expiry).getTime():Infinity, vb=b.expiry?new Date(b.expiry).getTime():Infinity;
+      return va-vb;
+    }).map(l=>{
+      const mo=monthsUntil(l.expiry);
+      let status='Not listed', fill=[158,158,158];
+      if(mo!==null){
+        if(mo<0){ status='Expired'; fill=[17,17,17]; }
+        else if(mo<6){ status='0–6 months'; fill=[198,40,40]; }
+        else if(mo<18){ status='6–18 months'; fill=[230,81,0]; }
+        else { status='18+ months'; fill=[46,125,50]; }
+      }
+      const street=(l.address||'—')+(l.suite?(/^[A-Za-z]?\d+[A-Za-z]?$/.test(String(l.suite).trim())?', Suite '+l.suite:', '+l.suite):'');
+      const cityLine=[l.city,[l.state,l.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+      return {cells:[l.name, street+'\n'+cityLine, _pdfLongDate(l.expiry), (mo===null||mo<0)?'—':String(mo), status, _pdfOptionsText(l.options)], fill};
+    });
+    const header=()=>{
+      doc.setFillColor(...NAVY); doc.rect(0,0,W,78,'F');
+      doc.setFillColor(...RED); doc.rect(0,78,W,4,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold'); doc.setFontSize(17);
+      doc.text('PulsePath Health — Lease Expiration Report',36,38);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
+      doc.text(`All ${LOCATIONS.length} locations, soonest expiration first  ·  As of ${asOf}`,36,58);
+      doc.setFont('helvetica','bold'); doc.setFontSize(13);
+      doc.text('MEDWEST REALTY',W-36,46,{align:'right'});
+    };
+    const footer=()=>{
+      doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(120,130,145);
+      doc.text('Disclaimer. Information from sources deemed reliable but MedWest Realty does not guarantee the accuracy. Please perform your own due diligence and consult with all appropriate advisors.',36,H-22);
+    };
+    doc.autoTable({
+      startY:104,
+      margin:{left:36,right:36,top:104,bottom:44},
+      head:[['Location','Address','Lease Expiration','Months\nRemaining','Status','Renewal Options']],
+      body:rows.map(r=>r.cells),
+      theme:'plain',
+      rowPageBreak:'avoid',
+      styles:{font:'helvetica',fontSize:8,textColor:[40,40,40],cellPadding:{top:3.5,bottom:3.5,left:5,right:5},valign:'middle'},
+      headStyles:{fillColor:NAVY,textColor:[255,255,255],fontStyle:'bold',fontSize:8.5,valign:'middle'},
+      alternateRowStyles:{fillColor:[244,245,247]},
+      columnStyles:{0:{cellWidth:150,fontStyle:'bold'},1:{cellWidth:190},2:{cellWidth:105},3:{cellWidth:62,halign:'center'},4:{cellWidth:80},5:{cellWidth:'auto'}},
+      didParseCell:(d)=>{
+        if(d.section==='head' && d.column.index===3) d.cell.styles.halign='center';
+        if(d.section==='body' && d.column.index===4){
+          d.cell.styles.fillColor=rows[d.row.index].fill;
+          d.cell.styles.textColor=[255,255,255];
+          d.cell.styles.fontStyle='bold';
+        }
+      },
+      willDrawPage:()=>header(),
+      didDrawPage:()=>footer()
+    });
+    const endY=doc.lastAutoTable.finalY+14;
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(110,120,140);
+    doc.text(`Months remaining is rounded to the nearest month from ${asOf}. Status colors match the Expiration Overview tab.`,36,endY);
+    const pages=doc.internal.getNumberOfPages();
+    if(pages>1){
+      for(let i=1;i<=pages;i++){ doc.setPage(i); doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(120,130,145); doc.text(`Page ${i} of ${pages}`,W-36,H-22,{align:'right'}); }
+    }
+    const stamp=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    doc.save(`PulsePath_Health_Lease_Expiration_Report_${stamp}.pdf`);
+  }catch(e){
+    console.error(e);
+    alert('Sorry — the PDF report could not be created. Please check your internet connection and try again.');
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=label; }
+  }
 }
 
 function buildExpirTable(){
