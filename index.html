@@ -1754,15 +1754,11 @@ function _loadScriptOnce(src){
 }
 function _pdfOptionsText(o){
   if(!o) return 'None listed';
-  const words=['None','One','Two','Three','Four','Five','Six'];
   const parts=String(o).split(';').map(x=>x.trim()).filter(Boolean).map(x=>{
-    const m=x.match(/^(\d+)\s*,\s*(\d+)\s*years?$/i);
-    if(!m) return x;
-    const n=+m[1], yrs=m[2];
-    return (words[n]||n)+' '+yrs+'-year option'+(n===1?'':'s');
+    const m=x.match(/^(\d+)\s*,\s*(\d+)\s*(?:-\s*)?years?$/i);
+    return m ? m[1]+', '+m[2]+' year' : x;
   });
-  if(parts.length<2) return parts[0]||'None listed';
-  return parts[0]+', plus '+parts.slice(1).map(t=>t.charAt(0).toLowerCase()+t.slice(1)).join(', plus ');
+  return parts.length ? parts.join('; ') : 'None listed';
 }
 function _pdfLongDate(d){
   if(!d) return 'No date listed';
@@ -1830,6 +1826,13 @@ async function downloadExpirPdf(){
           d.cell.styles.fillColor=rows[d.row.index].fill;
           d.cell.styles.textColor=[255,255,255];
           d.cell.styles.fontStyle='bold';
+        }
+      },
+      didDrawCell:(d)=>{
+        // Overlap the Status color 1pt into the next cell so no white seam shows at its right edge
+        if(d.section==='body' && d.column.index===5){
+          doc.setFillColor(...rows[d.row.index].fill);
+          doc.rect(d.cell.x-0.75,d.cell.y,1.5,d.cell.height,'F');
         }
       },
       willDrawPage:()=>header(),
