@@ -3029,7 +3029,7 @@ function saveLeaseNote(){
 const DASHBOARD_VERSION = '2026.07.28';
 
 // Approved emails (lowercase). Add or remove addresses here, then redeploy.
-const ALLOWED_EMAILS = ["tori@medwestrealty.com", "bryan@medwestrealty.com", "madi@medwestrealty.com", "casey@medwestrealty.com", "kellie@medwestrealty.com", "stacey@medwestrealty.com", "romina@medwestrealty.com"];
+const ALLOWED_EMAILS = ["tori@medwestrealty.com", "bryan@medwestrealty.com", "madi@medwestrealty.com", "casey@medwestrealty.com", "kellie@medwestrealty.com", "stacey@medwestrealty.com", "romina@medwestrealty.com", "gary@medwestrealty.com"];
 function isAllowedEmail(e){ return ALLOWED_EMAILS.includes(String(e||'').trim().toLowerCase()); }
 function getSignedInUser(){
   let u=null; try{ u=JSON.parse(localStorage.getItem('pp_user')||'null'); }catch(e){}
