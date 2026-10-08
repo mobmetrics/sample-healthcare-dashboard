@@ -9,8 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.8.0/dist/driver.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/driver.js@1.8.0/dist/driver.js.iife.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500&family=Roboto+Condensed:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',Arial,sans-serif;display:flex;height:100vh;overflow:hidden;background:#f5f6f8;font-size:14px}
@@ -424,55 +422,6 @@ select option:active{background-color:#29374d!important;color:#fff!important}
   .kpi-card .kpi-val{font-size:14px}
   .kpi-card .kpi-lbl{font-size:8px}
 }
-/* ===== MEDWEST BRAND OVERRIDES — design option 1a ===== */
-body{font-family:'Archivo',Arial,sans-serif;font-weight:400;background:#F6F7F9;color:#29374D}
-h1,h2,h3,.title,.section-title,.card-title,.kpi-val,.band-name,.name,.cname,button,#sidebar nav a{font-family:'Roboto Condensed',Arial,sans-serif}
-
-/* Sidebar */
-#sidebar{background:#29374D}
-#sidebar nav a{font-size:14px;color:rgba(255,255,255,.75)}
-#sidebar nav a:hover{background:rgba(255,255,255,.06);color:#fff}
-#sidebar nav a.active{background:rgba(255,255,255,.08);color:#fff;border-left-color:#DB3039}
-#sidebar-footer{display:flex;flex-direction:column;gap:8px;padding:16px 18px;border-top:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.6)}
-#sidebar-footer .mw-logo svg{width:140px;height:auto;display:block}
-#sidebar-footer .mw-tagline{font-family:'Roboto Condensed',Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.75)}
-
-/* Top bar: white, no gradient, no gold rule */
-#topbar{background:#fff;border-bottom:1px solid #DDE3EC;padding:16px 28px}
-#topbar .title{color:#29374D;font-size:22px;font-weight:500;letter-spacing:0}
-#topbar .subtitle{color:#DB3039;font-family:'Roboto Condensed',Arial,sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;order:-1;margin:0 0 3px}
-#topbar .subtitle{display:block}
-#nav-toggle{color:#29374D}
-
-/* KPI cards: light, navy numerals, navy top rule */
-#kpi-bar{background:#F6F7F9;border-bottom:none;gap:14px;padding:20px 28px 0}
-.kpi-card{background:#fff;color:#29374D;text-align:left;border-radius:6px;border-bottom:none;border-top:3px solid #29374D;box-shadow:0 1px 3px rgba(41,55,77,.08);padding:14px 16px}
-.kpi-card .kpi-lbl{opacity:1;color:#6C89B2;font-family:'Roboto Condensed',Arial,sans-serif;font-weight:700;letter-spacing:1.2px;font-size:10px}
-.kpi-card .kpi-val{font-size:24px;font-weight:500}
-#content{padding:20px 28px}
-
-/* Sections, cards */
-.section-title{font-size:20px;font-weight:500;color:#29374D;border-bottom:1px solid #DDE3EC}
-.card{border:none;border-radius:6px;box-shadow:0 1px 3px rgba(41,55,77,.08)}
-.card-title{color:#29374D;font-weight:700;letter-spacing:1.2px}
-
-/* Tables */
-table.dtbl th{background:#29374D;font-family:'Roboto Condensed',Arial,sans-serif;font-weight:500;text-transform:uppercase;letter-spacing:.6px;font-size:11px}
-table.dtbl td{color:#29374D;border-bottom:1px solid #DDE3EC}
-table.dtbl tr:nth-child(even) td{background:#F6F7F9}
-.gut-num{background:#29374D}
-.gut-tog{color:#29374D}
-.gut-tog:hover{background:#29374D;border-color:#29374D}
-.band-name{color:#29374D}
-select.stage:focus{outline-color:#DB3039}
-
-/* Contact cards */
-.contact-card{background:#29374D}
-
-
-/* Links */
-a{color:#29374D}
-a:hover{color:#DB3039}
 </style>
 </head>
 <body>
@@ -530,9 +479,7 @@ a:hover{color:#DB3039}
     <a onclick="showSection('contact')">Contact Us</a>
     <a onclick="showSection('pipeline')">★ Pipeline Deals</a>
   </nav>
-  <div id="sidebar-footer"><div class="mw-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192.63 118.55" fill="none"> <path fill-rule="evenodd" d="M2.06 112.66 L3.58 112.66 C4.57 112.66 5.18 112.62 5.43 112.54 C5.68 112.46 5.87 112.31 6.01 112.11 C6.15 111.90 6.22 111.65 6.22 111.34 C6.22 111.00 6.12 110.72 5.94 110.51 C5.76 110.30 5.50 110.17 5.17 110.11 C5.00 110.09 4.50 110.08 3.66 110.08 L2.06 110.08 Z M0.00 118.55 L0.00 108.35 L4.33 108.35 C5.42 108.35 6.21 108.45 6.71 108.63 C7.20 108.81 7.59 109.14 7.89 109.61 C8.19 110.07 8.34 110.61 8.34 111.21 C8.34 111.98 8.11 112.61 7.66 113.11 C7.21 113.60 6.54 113.92 5.65 114.05 C6.09 114.31 6.46 114.59 6.75 114.90 C7.04 115.21 7.43 115.77 7.92 116.56 L9.16 118.55 L6.70 118.55 L5.22 116.33 C4.69 115.54 4.32 115.04 4.13 114.83 C3.94 114.62 3.73 114.48 3.51 114.41 C3.29 114.33 2.95 114.29 2.47 114.29 L2.06 114.29 L2.06 118.55 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M37.76 118.55 L37.76 108.35 L45.32 108.35 L45.32 110.08 L39.82 110.08 L39.82 112.34 L44.93 112.34 L44.93 114.06 L39.82 114.06 L39.82 116.83 L45.51 116.83 L45.51 118.55 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M80.14 114.51 L78.73 110.73 L77.36 114.51 Z M83.93 118.55 L81.69 118.55 L80.80 116.23 L76.72 116.23 L75.88 118.55 L73.70 118.55 L77.67 108.35 L79.85 108.35 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M112.56 118.55 L112.56 108.44 L114.61 108.44 L114.61 116.83 L119.73 116.83 L119.73 118.55 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M149.92 118.55 L149.92 110.08 L146.89 110.08 L146.89 108.35 L154.99 108.35 L154.99 110.08 L151.98 110.08 L151.98 118.55 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M186.48 118.55 L186.48 114.26 L182.75 108.35 L185.16 108.35 L187.56 112.39 L189.91 108.35 L192.28 108.35 L188.53 114.27 L188.53 118.55 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M42.11 0.00 L31.38 29.88 L20.53 0.00 L2.46 0.00 L2.46 43.80 L13.68 43.80 L13.68 9.32 L25.51 43.80 L37.13 43.80 L49.00 9.32 L49.00 36.38 L60.22 36.38 L60.22 0.00 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M49.00 59.91 L49.00 85.83 L37.17 51.35 L25.55 51.35 L13.68 85.83 L13.68 51.35 L2.46 51.35 L2.46 95.16 L20.57 95.16 L31.30 65.28 L42.15 95.16 L60.22 95.16 L60.22 59.91 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M65.23 62.84 L101.77 62.84 L101.77 69.74 L78.90 69.74 L78.90 74.87 L100.12 74.87 L100.12 81.46 L78.90 81.46 L78.90 87.84 L102.43 87.84 L102.43 95.15 L65.23 95.15 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M107.40 84.46 L120.37 83.87 C120.65 85.41 121.22 86.59 122.09 87.39 C123.49 88.70 125.50 89.36 128.11 89.36 C130.05 89.36 131.55 89.02 132.61 88.35 C133.66 87.68 134.19 86.91 134.19 86.03 C134.19 85.19 133.68 84.44 132.68 83.78 C131.68 83.12 129.35 82.49 125.70 81.91 C119.72 80.92 115.46 79.61 112.91 77.98 C110.34 76.35 109.05 74.27 109.05 71.74 C109.05 70.08 109.71 68.51 111.03 67.04 C112.34 65.56 114.32 64.40 116.96 63.55 C119.59 62.71 123.21 62.29 127.81 62.29 C133.44 62.29 137.74 63.05 140.70 64.59 C143.66 66.13 145.42 68.57 145.98 71.92 L133.13 72.47 C132.79 71.02 132.07 69.96 130.98 69.30 C129.89 68.63 128.38 68.30 126.45 68.30 C124.87 68.30 123.67 68.55 122.87 69.04 C122.07 69.53 121.67 70.13 121.67 70.84 C121.67 71.35 122.00 71.82 122.66 72.23 C123.30 72.65 124.83 73.05 127.23 73.42 C133.19 74.36 137.46 75.31 140.04 76.27 C142.62 77.24 144.49 78.43 145.67 79.86 C146.84 81.28 147.43 82.88 147.43 84.64 C147.43 86.71 146.65 88.62 145.08 90.37 C143.52 92.12 141.33 93.45 138.52 94.35 C135.71 95.25 132.17 95.71 127.90 95.71 C120.39 95.71 115.20 94.65 112.31 92.53 C109.42 90.41 107.78 87.72 107.40 84.46" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M151.19 62.84 L192.63 62.84 L192.63 70.82 L178.73 70.82 L178.73 95.15 L165.10 95.15 L165.10 70.82 L151.19 70.82 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M65.23 11.49 L101.77 11.49 L101.77 18.39 L78.90 18.39 L78.90 23.52 L100.12 23.52 L100.12 30.11 L78.90 30.11 L78.90 36.48 L102.43 36.48 L102.43 43.80 L65.23 43.80 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M120.51 18.80 L120.51 36.46 L123.86 36.46 C126.70 36.46 128.73 36.23 129.94 35.77 C131.14 35.31 132.08 34.50 132.76 33.34 C133.44 32.19 133.79 30.32 133.79 27.73 C133.79 24.31 133.02 21.96 131.50 20.70 C129.98 19.44 127.45 18.80 123.92 18.80 Z M106.88 11.49 L127.14 11.49 C131.13 11.49 134.35 11.88 136.81 12.68 C139.27 13.47 141.30 14.61 142.91 16.09 C144.51 17.58 145.68 19.30 146.40 21.27 C147.12 23.24 147.48 25.33 147.48 27.53 C147.48 30.99 146.94 33.67 145.87 35.57 C144.80 37.47 143.31 39.07 141.40 40.35 C139.50 41.64 137.45 42.50 135.26 42.92 C132.27 43.51 129.56 43.80 127.14 43.80 L106.88 43.80 Z" fill="#FFFFFF"></path> <path fill-rule="evenodd" d="M66.38 42.53 L66.38 53.75 L60.22 53.75 L60.22 59.91 L49.00 59.91 L49.00 53.75 L42.84 53.75 L42.84 42.53 L49.00 42.53 L49.00 36.38 L60.22 36.38 L60.22 42.53 Z" fill="#DB3039"></path> </svg></div>
-<div class="mw-tagline">Lease with Confidence, Choose MedWest</div>
-<div>MedWest Realty © 2026 · <span onclick="openLoginLog()" style="cursor:pointer;text-decoration:underline;opacity:0.7">Login Log</span></div></div>
+  <div id="sidebar-footer">MedWest Realty © 2026<br>Sample Healthcare Dashboard<br><span onclick="openLoginLog()" style="cursor:pointer;text-decoration:underline;opacity:0.7">Login Log</span></div>
 </div>
 
 <!-- MAIN -->
@@ -541,8 +488,8 @@ a:hover{color:#DB3039}
     <div style="display:flex;align-items:center;gap:12px;min-width:0">
       <button id="nav-toggle" onclick="toggleSidebar()" aria-label="Open menu" aria-expanded="false">☰</button>
       <div style="min-width:0">
-        <div class="subtitle">Updated June 2026</div>
         <div class="title">PulsePath Health — Portfolio Dashboard</div>
+        <div class="subtitle">Updated June 2026</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:16px">
