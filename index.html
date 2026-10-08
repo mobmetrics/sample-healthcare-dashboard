@@ -3089,7 +3089,7 @@ function saveLeaseNote(){
 // ============================================================
 // Bump this string any time you ship a notable update — signed-in users will
 // automatically be asked if they'd like a tour of what's new.
-const DASHBOARD_VERSION = '2026.07.28';
+const DASHBOARD_VERSION = '2026.10.08';
 
 // Approved emails (lowercase). Add or remove addresses here, then redeploy.
 const ALLOWED_EMAILS = ["tori@medwestrealty.com", "bryan@medwestrealty.com", "madi@medwestrealty.com", "casey@medwestrealty.com", "kellie@medwestrealty.com", "stacey@medwestrealty.com", "romina@medwestrealty.com", "gary@medwestrealty.com"];
@@ -3256,6 +3256,14 @@ function getDashboardTourSteps(){
         title:'Never miss a deadline',
         description:'Expiration Overview flags upcoming lease expirations and key dates, automatically sorted by urgency.',
         side:'bottom', align:'start'
+      }
+    },
+    {
+      element: tourGoTo('expir','#btn-expir-pdf'),
+      popover:{
+        title:'Take it with you',
+        description:'Click Download PDF report to save this expiration table as a PDF — perfect for meetings on the go or for sharing with your team.',
+        side:'left', align:'center'
       }
     },
     {
