@@ -477,6 +477,8 @@ a:hover{color:#DB3039}
 /* Sign-in screen: keep original look (exempt from brand fonts) */
 #signin-gate,#signin-gate h1,#signin-gate label,#signin-gate input{font-family:'Segoe UI',Arial,sans-serif}
 #signin-gate button{font-family:revert}
+/* Hide Action Priority Breakdown card (Expiration Overview) */
+#expir-stacked-bar-section{display:none!important}
 </style>
 </head>
 <body>
@@ -545,7 +547,7 @@ a:hover{color:#DB3039}
     <div style="display:flex;align-items:center;gap:12px;min-width:0">
       <button id="nav-toggle" onclick="toggleSidebar()" aria-label="Open menu" aria-expanded="false">☰</button>
       <div style="min-width:0">
-        <div class="subtitle">Updated June 2026</div>
+        <div class="subtitle">Updated October 2026</div>
         <div class="title">PulsePath Health — Portfolio Dashboard</div>
       </div>
     </div>
@@ -1081,7 +1083,7 @@ const LOCATIONS = [
   { name:"Property13",  address:"351 & 361 Hospital Road",    suite:"522",   city:"Newport Beach", state:"CA", zip:"92663", lat:33.6189, lng:-117.9289, termMo:null, sqft:1825,  monthly:10274.75,  annual:123297.00,  expiry:"2025-05-31", opexAnnual:41172.00,  opexMonthly:3431.00,  contractSF:3.75, marketSF:6.10, remaining:-10293.00,  options:null,         rentSchedule:{2026:null,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
   { name:"Property14",  address:"72780 Country Club Dr",      suite:"305B",  city:"Rancho Mirage", state:"CA", zip:"92270", lat:33.7394, lng:-116.4500, termMo:null, sqft:2433,  monthly:10218.60,  annual:122623.20,  expiry:"2027-06-30", opexAnnual:16057.80,  opexMonthly:1338.15,  contractSF:3.65, marketSF:4.08, remaining:3503.52,    options:"1, 10 year", rentSchedule:{2026:122623.20,2027:126301.90,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-06-30", opt1MonthsUntil:2,    opt1NoticeEnd:"2026-09-28", opt2NotifBegins:"2036-06-29", opt2MonthsUntil:120,opt2NoticeEnd:"2036-09-27" },
   { name:"Property15",  address:"100 N Green Valley Pkwy",    suite:"125",   city:"Henderson",     state:"NV", zip:"89074", lat:36.0395, lng:-114.9817, termMo:null, sqft:19319, monthly:80753.42,  annual:969041.04,  expiry:"2030-03-31", opexAnnual:99686.04,  opexMonthly:8307.17,  contractSF:3.75, marketSF:3.95, remaining:53320.44,   options:"2, 5 year",  rentSchedule:{2026:969041.04,2027:998112.27,2028:1028055.64,2029:1058897.31,2030:1090664.23,2031:null,2032:null,2033:null}, opt1NotifBegins:"2029-03-31", opt1MonthsUntil:36,   opt1NoticeEnd:"2029-06-29", opt2NotifBegins:"2034-03-31", opt2MonthsUntil:93, opt2NoticeEnd:"2034-06-29" },
-  { name:"Property16",  address:"2270 Ridgeview Dr",          suite:"127",   city:"Yuma",          state:"AZ", zip:"85364", lat:32.6927, lng:-114.6277, termMo:null, sqft:8885,  monthly:21324.00,  annual:255888.00,  expiry:"2029-02-28", opexAnnual:5331.00,   opexMonthly:444.25,   contractSF:2.35, marketSF:2.78, remaining:-40515.60,  options:"1, 5 year",  rentSchedule:{2026:255888,2027:263564.64,2028:271471.58,2029:279615.73,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-02-28", opt1MonthsUntil:20,   opt1NoticeEnd:"2028-02-29", opt2NotifBegins:"2033-02-28", opt2MonthsUntil:79, opt2NoticeEnd:"2033-05-29" }
+  { name:"Property16",  address:"2270 Ridgeview Dr",          suite:"127",   city:"Yuma",          state:"AZ", zip:"85364", lat:32.6927, lng:-114.6277, termMo:null, sqft:8885,  monthly:21324.00,  annual:255888.00,  expiry:"2029-02-28", opexAnnual:5331.00,   opexMonthly:444.25,   contractSF:2.35, marketSF:2.78, remaining:-40515.60,  options:"1, 5 year",  rentSchedule:{2026:255888,2027:263564.64,2028:271471.58,2029:279615.73,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-10-28", opt1MonthsUntil:20,   opt1NoticeEnd:"2028-11-27", opt2NotifBegins:"2033-02-28", opt2MonthsUntil:79, opt2NoticeEnd:"2033-05-29" }
 ];
 
 const RENT_YEARS = [2026,2027,2028,2029,2030,2031,2032,2033];
