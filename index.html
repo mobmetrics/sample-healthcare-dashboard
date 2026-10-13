@@ -1384,7 +1384,7 @@ function buildGanttChart(){
   destroyChart('gantt');
   const startYear = 2025, endYear = 2035;
   const startMs = new Date(startYear+'-01-01').getTime();
-  const endMs   = new Date(endYear+'-12-31').getTime();
+  const endMs   = new Date(endYear+'-01-01').getTime();   // axis labels run 2025–2035, so 100% = Jan 1 2035
   const total   = endMs - startMs;
   const pct = ms => Math.max(0, Math.min(100, ((ms-startMs)/total)*100));
 
