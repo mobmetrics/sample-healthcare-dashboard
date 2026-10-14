@@ -93,11 +93,12 @@ table.dtbl td[data-editable]:hover{background:#eaf1fb}
 
 /* PIPELINE */
 .stage{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;color:#fff}
-.stage-prospect{background:#1565c0}
-.stage-touring{background:#6a1b9a}
-.stage-loi{background:#e65100}
-.stage-negotiating{background:#bf360c}
-.stage-lease{background:#2e7d32}
+.stage-prospect{background:#8a94a6}
+.stage-touring{background:#5b7bb5}
+.stage-proposal{background:#3f5f96}
+.stage-loi{background:#c9a24b}
+.stage-negotiating{background:#b9832f}
+.stage-lease{background:#2f8a57}
 .stage-closed{background:#555}
 select.stage{font-family:inherit;line-height:1.3;border:1px solid rgba(255,255,255,.4);padding:2px 2px 2px 7px;max-width:142px;cursor:pointer}
 select.stage:hover{filter:brightness(1.18)}
@@ -113,6 +114,7 @@ select.stage option{background:#fff;color:#333;font-weight:500}
 .dt-blend{background:#fdf3e3;color:#7a4a0a;border:1px solid #ef9f27}
 .dt-bts{background:#f0f0f0;color:#444;border:1px solid #bbb}
 .dt-purchase{background:#e6f4f1;color:#0d6156;border:1px solid #7ecbbe}
+.dt-renew{background:#eef1f6;color:#29374d;border:1px solid #9aa8bf}
 /* holdover row highlight */
 .row-holdover td{background:#fff8f8!important}
 .row-holdover:hover td{background:#fef0f0!important}
@@ -145,6 +147,62 @@ tr:not(.row-editing) .deal-band-tags br + span{margin-left:8px}
 .row-editing .deal-band-id{flex:0 0 330px}
 .row-editing .deal-band-tags{flex:0 0 210px}
 #tbody-pipeline td.cell-notes{text-align:left;white-space:normal;font-size:11px;line-height:1.45}
+
+/* PIPELINE — address-first deal cards (shared via Cloudflare) */
+.pipe-status{font-size:11.5px;margin:-4px 0 10px;padding:6px 10px;border-radius:4px;background:#f2f4f7;color:#5d6676}
+.pipe-status.ok{background:#eef7f1;color:#2f6b45}
+.pipe-status.warn{background:#fdf3e3;color:#7a4a0a}
+.pipe-status a{color:inherit;font-weight:700}
+.pipe-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.pk{background:#fff;border-top:4px solid #29374d;border-radius:6px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pk.gold{border-top-color:#d6ab5c}.pk.red{border-top-color:#dc2f3a}.pk.green{border-top-color:#2f8a57}
+.pk-l{font-size:10.5px;letter-spacing:.08em;color:#6b7383;font-weight:700;text-transform:uppercase}
+.pk-v{font-size:22px;font-weight:700;color:#29374d;margin-top:3px;line-height:1.2}
+.pk-s{font-size:11px;color:#6b7383;margin-top:3px}
+.pa-hint{font-weight:400;font-size:11px;color:#8a92a1;margin-left:8px}
+.pipeline-add input.pa-first{border:2px solid #d6ab5c}
+.pipe-signed{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#eef7f1;border-left:5px solid #2f8a57;padding:10px 14px;border-radius:4px;font-size:12.5px;margin-bottom:10px}
+.ps-h{color:#2f8a57}
+.pipe-list-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap}
+.pipe-sort{font-size:12px;color:#5d6676}
+.pipe-sort select{margin-left:4px;padding:3px 6px;border:1px solid #ccc;border-radius:4px;font-size:12px}
+.pipe-tbl{width:100%;border-collapse:collapse}
+#tbody-pipeline > tr.pc-row > td{padding:0 0 10px!important;border:none!important;text-align:left;white-space:normal;background:transparent!important}
+.pcard{background:#fff;border:1px solid #e3e7ee;border-left:5px solid #8a94a6;border-radius:6px;padding:14px 16px 10px}
+.pcard.pc-holdover{background:#fffafa}
+.pcard.pc-editing{background:#fdf9ef}
+.pc-grid{display:grid;grid-template-columns:minmax(240px,1.1fr) 1.6fr minmax(250px,1fr);gap:20px;align-items:start}
+.pc-addr{font-size:16px;font-weight:700;color:#29374d;line-height:1.25}
+.pc-client{font-size:13.5px;font-weight:700;color:#dc2f3a;margin-top:2px}
+.pc-city{font-size:12px;color:#3d4655;margin-top:2px}
+.pc-tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pc-hold{font-size:9px;color:#a32d2d;font-weight:700}
+.pc-since{font-size:9.5px;color:#888}
+.pc-prog{display:flex;gap:4px;margin-bottom:10px}
+.pc-step{flex:1;text-align:center;min-width:0}
+.pc-step i{display:block;height:6px;border-radius:3px}
+.pc-step span{display:block;font-size:9.5px;color:#9aa1ad;margin-top:3px;line-height:1.15}
+.pc-step.on span{color:#1f2633;font-weight:700}
+.pc-next{font-size:12.5px;line-height:1.45}
+.pc-sub{font-size:11px;color:#6b7383;margin-top:4px}
+.pc-cmt{font-size:11px;color:#1a6b8a;margin-top:6px;padding-top:5px;border-top:1px solid #e6e8ec}
+.pc-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:12.5px}
+.pc-sl{font-size:10.5px;color:#8a92a1}
+.pc-sv{font-weight:700;color:#1f2633}
+.pc-bar{flex:1;height:7px;background:#e6e9ef;border-radius:4px;overflow:hidden}
+.pc-bar i{display:block;height:100%}
+.pc-act{display:flex;gap:4px;justify-content:flex-end;margin-top:10px}
+.pc-foot{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:8px;border-top:1px solid #eef0f4}
+.pc-num{display:inline-flex;width:20px;height:20px;border-radius:4px;background:#29374d;color:#fff;align-items:center;justify-content:center;font-size:10px;font-weight:700}
+.pc-tog{background:#fff;border:1px solid #d0d4da;border-radius:4px;padding:3px 9px;font-size:11px;color:#29374d;cursor:pointer;font-weight:600}
+.pc-tog:hover{background:#29374d;color:#fff;border-color:#29374d}
+.pc-upd{font-size:10.5px;color:#8a92a1;margin-left:auto}
+.pc-detail{margin-top:10px;background:#f7f8fa;border-radius:4px;padding:12px 14px}
+.pc-dh{font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040;margin-bottom:6px}
+.pe-l{font-size:9.5px;color:#888;display:block;margin:4px 0 1px}
+.pcard [data-editable]{cursor:pointer}
+.pipe-wrap::after{display:none!important;content:none!important}
+@media(max-width:900px){.pipe-kpis{grid-template-columns:1fr 1fr}.pc-grid{grid-template-columns:1fr;gap:12px}}
 
 /* COMPARISON */
 .higher{color:#c62828;font-weight:600}
@@ -889,41 +947,34 @@ a:hover{color:#DB3039}
     <!-- 9. PIPELINE DEALS -->
     <div id="sec-pipeline" class="section">
       <div class="section-title" style="border-color:#29374d">★ Pipeline Deals — Prospective Locations</div>
-      <div class="two-col" style="margin-bottom:14px">
-        <div class="card" style="display:flex;flex-direction:column">
-          <div class="card-title">Pipeline Summary</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1;justify-content:center" id="pipeline-kpis"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Deals by Stage</div>
-          <div style="position:relative;height:140px"><canvas id="chart-pipeline"></canvas></div>
-        </div>
-      </div>
+      <div id="pipe-status" class="pipe-status">Loading shared deals…</div>
+      <div class="pipe-kpis" id="pipeline-kpis"></div>
       <div class="pipeline-add">
-        <h4>Add New Pipeline Deal</h4>
+        <h4>Add a Prospective Location <span class="pa-hint">Street address first, then the client</span></h4>
         <div class="form-row">
-          <input id="p-name" placeholder="Location / City Name"/>
-          <input id="p-address" placeholder="Address"/>
+          <input id="p-address" class="pa-first" placeholder="Street address *" style="flex:2.2"/>
+          <input id="p-suite" placeholder="Suite" style="max-width:110px"/>
           <input id="p-city" placeholder="City"/>
           <input id="p-state" placeholder="State" maxlength="2" style="max-width:70px"/>
-          <input id="p-sf" placeholder="Est. Sq Ft" type="number"/>
-          <input id="p-rent" placeholder="Rent $/SF/Mo" type="number" step="0.01"/>
-          <select id="p-stage">
-            <option>Prospecting</option><option>Touring</option><option>LOI</option>
-            <option selected>Lease Negotiation</option><option>Lease Execution</option>
-          </select>
+          <input id="p-zip" placeholder="ZIP" maxlength="10" style="max-width:100px"/>
         </div>
         <div class="form-row">
+          <input id="p-name" placeholder="Client name" value=""/>
           <select id="p-dealtype">
-            <option value="">Deal Type...</option>
-            <option>Extension</option><option>Relocation</option><option>Expansion</option>
+            <option value="">Deal type...</option>
+            <option>Extension</option><option>Renewal</option><option>Relocation</option><option>Expansion</option>
             <option>New Location</option><option>Blend &amp; Extend</option><option>Build-to-Suit</option><option>Purchase</option>
           </select>
-          <input id="p-prob" placeholder="Prob. %" type="number" min="0" max="100" style="max-width:100px"/>
-          <input id="p-closedate" placeholder="Est. Close (YYYY-MM)" style="max-width:160px"/>
-          <input id="p-termyears" placeholder="Term (yrs)" type="number" step="0.5" style="max-width:110px"/>
-          <input id="p-competing" placeholder="Competing Properties"/>
-          <input id="p-notes" placeholder="Notes / Next Step"/>
+          <select id="p-stage"><option value="Prospecting">Searching</option><option>Touring</option><option>Proposal</option><option value="LOI">Letter of Intent</option><option selected>Lease Negotiation</option><option value="Lease Execution">Signed</option></select>
+          <input id="p-sf" placeholder="Size (sq ft)" type="number"/>
+          <input id="p-rent" placeholder="Rent per sq ft / mo" type="number" step="0.01"/>
+          <input id="p-prob" placeholder="Chance of closing %" type="number" min="0" max="100" style="max-width:150px"/>
+          <input id="p-closedate" placeholder="Target date (YYYY-MM)" style="max-width:170px"/>
+        </div>
+        <div class="form-row">
+          <input id="p-notes" placeholder="Next step / notes" style="flex:2"/>
+          <input id="p-competing" placeholder="Other buildings considered"/>
+          <input id="p-termyears" placeholder="Term (years)" type="number" step="0.5" style="max-width:110px"/>
         </div>
         <div class="pipeline-actions">
           <button class="btn-add" onclick="addPipelineDeal()">+ Add Deal</button>
@@ -932,20 +983,19 @@ a:hover{color:#DB3039}
           <button class="btn-sec" style="background:#1a6b8a" onclick="openLeaseNote()">✎ Log Lease Note</button>
         </div>
       </div>
-      <div class="full card">
-        <div class="card-title">Prospective Locations</div>
-        <div class="tbl-wrap">
-          <table class="dtbl">
-            <thead>
-              <tr>
-                <th></th>
-                <th>Size</th><th>Rate</th><th>Monthly</th>
-                <th>Prob</th><th>Est. Close</th>
-                <th>Notes / Next Step</th>
-              </tr>
-            </thead>
-            <tbody id="tbody-pipeline"></tbody>
-          </table>
+      <div id="pipe-signed"></div>
+      <div class="full card pipe-list">
+        <div class="pipe-list-head">
+          <div class="card-title" style="margin:0">Prospective Locations <span id="pipe-count"></span></div>
+          <label class="pipe-sort">Sort by
+            <select id="pipe-sort" onchange="setPipeSort(this.value)">
+              <option value="prob">Chance of closing</option><option value="stage">Furthest along</option>
+              <option value="close">Target date</option><option value="addr">Address</option>
+            </select>
+          </label>
+        </div>
+        <div class="tbl-wrap pipe-wrap">
+          <table class="dtbl pipe-tbl"><tbody id="tbody-pipeline"></tbody></table>
         </div>
       </div>
     </div>
@@ -961,7 +1011,7 @@ a:hover{color:#DB3039}
     <div class="modal-form">
       <div class="row"><label>Location</label><select id="fl-loc"><option value="">Select...</option></select></div>
       <div class="row"><label>Stage</label>
-        <select id="fl-stage"><option>Prospecting</option><option>Touring</option><option>LOI</option><option selected>Lease Negotiation</option><option>Lease Execution</option></select>
+        <select id="fl-stage"><option value="Prospecting">Searching</option><option>Touring</option><option>Proposal</option><option value="LOI">Letter of Intent</option><option selected>Lease Negotiation</option><option value="Lease Execution">Signed</option></select>
       </div>
       <div class="row"><label>Notes / Next Step</label><textarea id="fl-notes"></textarea></div>
       <button class="modal-btn" onclick="addFromLease()">+ Add to Pipeline</button>
@@ -980,7 +1030,7 @@ a:hover{color:#DB3039}
       </div>
       <div id="exp-list" style="margin:10px 0;max-height:180px;overflow-y:auto"></div>
       <div class="row"><label>Stage</label>
-        <select id="exp-stage"><option>Prospecting</option><option>Touring</option><option>LOI</option><option selected>Lease Negotiation</option><option>Lease Execution</option></select>
+        <select id="exp-stage"><option value="Prospecting">Searching</option><option>Touring</option><option>Proposal</option><option value="LOI">Letter of Intent</option><option selected>Lease Negotiation</option><option value="Lease Execution">Signed</option></select>
       </div>
       <div class="row"><label>Notes / Next Step</label><textarea id="exp-notes"></textarea></div>
       <button class="modal-btn" onclick="addExpiringToPipeline()">+ Add Selected to Pipeline</button>
@@ -1123,10 +1173,11 @@ const DEFAULT_NOTES = [
   {id:2000010,date:'5/15/2026',loc:'Nexus Behavioral Health',type:'General Update',note:'LOI executed. 5-year term at $3.10/SF/Mo NNN accepted by both parties. $45/SF TI allowance confirmed in writing. Deal advancing to lease negotiation with landlord counsel this week.'}
 ];
 
+const PIPE_LS_KEY='pp_pipeline', PIPE_NOTES_KEY='pp_notes', PIPE_USER_KEY='pp_user', PIPE_CLIENT_NAME='';
 let _pipelineData = (()=>{ const d=JSON.parse(localStorage.getItem('pp_pipeline')||'null'); return(d&&d.length)?d:DEFAULT_PIPELINE.map(x=>({...x})); })();
 let _expandedDeals = new Set();
 let _editingDeals = new Set();
-const STAGE_PROB_DEFAULT = {Prospecting:20,Touring:40,LOI:60,'Lease Negotiation':90,'Lease Execution':100};
+const STAGE_PROB_DEFAULT = {Prospecting:20,Touring:40,Proposal:50,LOI:60,'Lease Negotiation':90,'Lease Execution':100};
 let _leaseNotes   = (()=>{ const n=JSON.parse(localStorage.getItem('pp_notes')||'null');    return(n&&n.length)?n:DEFAULT_NOTES.map(x=>({...x}));    })();
 let _ganttShowOptions = true;
 let _chartInstances = {};
@@ -1157,7 +1208,7 @@ function expiryBadge(dateStr){
 }
 
 function stageClass(s){
-  return {Prospecting:'stage-prospect',Touring:'stage-touring',LOI:'stage-loi','Lease Negotiation':'stage-negotiating','Lease Execution':'stage-lease'}[s]||'stage-closed';
+  return {Prospecting:'stage-prospect',Touring:'stage-touring',Proposal:'stage-proposal',LOI:'stage-loi','Lease Negotiation':'stage-negotiating','Lease Execution':'stage-lease'}[s]||'stage-closed';
 }
 
 function destroyChart(id){
@@ -1198,7 +1249,7 @@ function showSection(id){
   if(id==='rate1')     { resetRate1Selection(); buildRate1Table(); buildRate2Chart(); buildRentScheduleTable(); }
   if(id==='addrkey')   { buildAddrTable(); }
   if(id==='analytics') { initAnalyticsCharts(); }
-  if(id==='pipeline')  { buildPipelineUI(); }
+  if(id==='pipeline')  { buildPipelineUI(); loadSharedPipeline(); }
 }
 
 // ============================================================
@@ -2569,14 +2620,107 @@ function renderDonutIndicator(){
 // ============================================================
 // PIPELINE
 // ============================================================
-function savePipeline(){ localStorage.setItem('pp_pipeline', JSON.stringify(_pipelineData)); }
-function saveNotes(){    localStorage.setItem('pp_notes',    JSON.stringify(_leaseNotes)); }
+function savePipeline(){ try{ localStorage.setItem('pp_pipeline', JSON.stringify(_pipelineData)); }catch(e){} pushSharedPipeline(); }
+function saveNotes(){    try{ localStorage.setItem('pp_notes',    JSON.stringify(_leaseNotes)); }catch(e){} pushSharedPipeline(); }
+
+// ---- Pipeline helpers (address-first cards) ----
+const PIPE_STAGES = ['Prospecting','Touring','Proposal','LOI','Lease Negotiation','Lease Execution'];
+const PIPE_STAGE_LABEL = {Prospecting:'Searching',Touring:'Touring',Proposal:'Proposal',LOI:'Letter of Intent','Lease Negotiation':'Lease Negotiation','Lease Execution':'Signed'};
+const PIPE_STAGE_COLOR = {Prospecting:'#8a94a6',Touring:'#5b7bb5',Proposal:'#3f5f96',LOI:'#c9a24b','Lease Negotiation':'#b9832f','Lease Execution':'#2f8a57'};
+let _pipeSort = 'prob';
+function stageLabel(s){ return PIPE_STAGE_LABEL[s]||escHtml(s)||'—'; }
+function escHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function dealAddrLine(d){ return [d.addr, d.suite?('Suite '+d.suite):''].filter(Boolean).join(', '); }
+function dealCityLine(d){ return [d.city, [d.state,d.zip].filter(Boolean).join(' ')].filter(Boolean).join(', '); }
+function dealKey(d){ const a=dealAddrLine(d); return a ? d.name+' — '+a : d.name; }
+function fmtMonthYr(s){ if(!s) return '—'; const m=/^(\d{4})-(\d{2})$/.exec(s); if(!m) return escHtml(s); return new Date(+m[1],+m[2]-1,1).toLocaleDateString('en-US',{month:'short',year:'numeric'}); }
+function pipeToday(){ return new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function setPipeSort(v){ _pipeSort=v; buildPipelineUI(); }
+
+// ---- Shared pipeline storage (Cloudflare) ----
+// Deals and lease notes are saved to /api/pipeline (see _worker.js) so everyone
+// who opens this dashboard sees the same list. If the endpoint isn't available,
+// the dashboard falls back to saving in this browser only and says so.
+const PIPE_API = '/api/pipeline';
+const _pipeLocalAtLoad = (()=>{ try{ return JSON.parse(localStorage.getItem(PIPE_LS_KEY)||'null')||[]; }catch(e){ return []; } })();
+let _pipeVersion = 0, _pipeShared = null, _pipeChain = Promise.resolve(), _pipeLocalOnly = [];
+function pipeStatus(html, ok){
+  const el = document.getElementById('pipe-status'); if(!el) return;
+  el.innerHTML = html; el.className = 'pipe-status ' + (ok?'ok':'warn');
+}
+function pipeSharedLabel(updatedAt, by){
+  let s = '✓ Shared — everyone with access to this dashboard sees these deals';
+  if(updatedAt) s += ' · last saved ' + new Date(updatedAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) + (by?' by '+escHtml(by):'');
+  if(_pipeLocalOnly.length) s += ` · <a href="javascript:void(0)" onclick="shareLocalDeals()">${_pipeLocalOnly.length} deal${_pipeLocalOnly.length>1?'s':''} saved only on this computer — click to share</a>`;
+  return s;
+}
+async function loadSharedPipeline(){
+  try{
+    const r = await fetch(PIPE_API, {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+    _pipeShared = true;
+    if(j && Array.isArray(j.pipeline)){
+      _pipeVersion = j.version||0;
+      _pipelineData = j.pipeline;
+      _leaseNotes = Array.isArray(j.notes) ? j.notes : [];
+    } else {
+      _pipeVersion = 0;
+      _pipelineData = DEFAULT_PIPELINE.map(x=>({...x}));
+      _leaseNotes = DEFAULT_NOTES.map(x=>({...x}));
+      await pushSharedPipeline();
+    }
+    const ids = new Set(_pipelineData.map(d=>String(d.id)));
+    const defIds = new Set(DEFAULT_PIPELINE.map(d=>String(d.id)));
+    _pipeLocalOnly = _pipeLocalAtLoad.filter(d=>d && !ids.has(String(d.id)) && !defIds.has(String(d.id)));
+    try{ localStorage.setItem(PIPE_LS_KEY, JSON.stringify(_pipelineData)); localStorage.setItem(PIPE_NOTES_KEY, JSON.stringify(_leaseNotes)); }catch(e){}
+    pipeStatus(pipeSharedLabel(j&&j.updatedAt, j&&j.updatedBy), true);
+  }catch(e){
+    _pipeShared = false;
+    pipeStatus('Saved on this computer only — shared saving is not switched on for this dashboard yet.', false);
+  }
+  const sec = document.getElementById('sec-pipeline');
+  if(sec && sec.classList.contains('active')) buildPipelineUI();
+}
+function pushSharedPipeline(){
+  if(_pipeShared===false) return Promise.resolve();
+  _pipeChain = _pipeChain.then(async ()=>{
+    let by = '';
+    try{ const u = JSON.parse(localStorage.getItem(PIPE_USER_KEY)||'{}'); by = u.name||u.email||''; }catch(e){}
+    try{
+      const r = await fetch(PIPE_API, {method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({baseVersion:_pipeVersion, pipeline:_pipelineData, notes:_leaseNotes, by})});
+      if(r.status===409){
+        await loadSharedPipeline();
+        pipeStatus('Someone else saved a change at the same time — showing the latest list. Please check your last edit and redo it if needed.', false);
+        return;
+      }
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const j = await r.json();
+      _pipeVersion = j.version;
+      pipeStatus(pipeSharedLabel(j.updatedAt, by), true);
+    }catch(e){
+      pipeStatus('Couldn\'t reach shared storage — this change is saved on this computer only for now.', false);
+    }
+  });
+  return _pipeChain;
+}
+function shareLocalDeals(){
+  if(!_pipeLocalOnly.length) return;
+  _pipelineData = _pipelineData.concat(_pipeLocalOnly);
+  _pipeLocalOnly = [];
+  savePipeline(); buildPipelineUI();
+}
+setTimeout(loadSharedPipeline, 0);
+
 
 function addPipelineDeal(){
-  const name      = document.getElementById('p-name').value.trim();
+  const name      = document.getElementById('p-name').value.trim() || PIPE_CLIENT_NAME;
   const addr      = document.getElementById('p-address').value.trim();
   const city      = document.getElementById('p-city').value.trim();
   const state     = document.getElementById('p-state').value.trim();
+  const suite     = document.getElementById('p-suite').value.trim()||null;
+  const zip       = document.getElementById('p-zip').value.trim()||null;
   const sf        = parseFloat(document.getElementById('p-sf').value)||null;
   const rent      = parseFloat(document.getElementById('p-rent').value)||null;
   const stage     = document.getElementById('p-stage').value;
@@ -2587,11 +2731,13 @@ function addPipelineDeal(){
   const competing = document.getElementById('p-competing').value.trim()||null;
   const notes     = document.getElementById('p-notes').value.trim();
   const holdover  = dealType==='Extension';
-  if(!name) return alert('Enter a location name.');
-  _pipelineData.push({id:Date.now(),name,addr,city,state,sf,rent,stage,dealType,prob,closeDate,termYears,competing,notes,holdover});
+  if(!addr) return alert('Enter the street address first (for an area search, type the area, e.g. "Koreatown — area search").');
+  if(!name) return alert('Enter the client name.');
+  _pipelineData.push({id:Date.now(),name,addr,suite,zip,city,state,sf,rent,stage,dealType,prob,closeDate,termYears,competing,notes,holdover,updatedAt:pipeToday()});
   savePipeline();
-  ['p-name','p-address','p-city','p-state','p-sf','p-rent','p-prob','p-closedate','p-termyears','p-competing','p-notes'].forEach(id=>document.getElementById(id).value='');
+  ['p-name','p-address','p-suite','p-zip','p-city','p-state','p-sf','p-rent','p-prob','p-closedate','p-termyears','p-competing','p-notes'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('p-dealtype').value='';
+  document.getElementById('p-name').value=PIPE_CLIENT_NAME;
   buildPipelineUI();
 }
 
@@ -2616,8 +2762,8 @@ function addDealComment(id,inputEl){
 
 function dealTypeBadge(t){
   if(!t) return '<span class="dt-badge dt-bts">—</span>';
-  const cls = t==='Extension'?'dt-expired':t==='Relocation'?'dt-reloc':t==='Expansion'?'dt-expand':t==='New Location'?'dt-newloc':t==='Blend & Extend'?'dt-blend':t==='Purchase'?'dt-purchase':'dt-bts';
-  const lbl = t==='Extension'?'⚠ '+t:t;
+  const cls = t==='Extension'?'dt-expired':t==='Relocation'?'dt-reloc':t==='Expansion'?'dt-expand':t==='New Location'?'dt-newloc':t==='Blend & Extend'?'dt-blend':t==='Purchase'?'dt-purchase':t==='Renewal'?'dt-renew':'dt-bts';
+  const lbl = escHtml(t==='Extension'?'⚠ '+t:t);
   return `<span class="dt-badge ${cls}">${lbl}</span>`;
 }
 
@@ -2646,197 +2792,182 @@ function buildPipelineUI(){
   });
   if(_kept.length!==_pipelineData.length){ _pipelineData = _kept; savePipeline(); }
 
-  const chartStages = ['Prospecting','Touring','LOI','Lease Negotiation'];
-  const counts = {}; chartStages.forEach(s=>counts[s]=0);
-  _pipelineData.forEach(d=>{ if(counts[d.stage]!==undefined) counts[d.stage]++; });
+  const sIdx = s=>PIPE_STAGES.indexOf(s);
+  const active = _pipelineData.filter(d=>d.stage!=='Lease Execution');
+  const signed = _pipelineData.filter(d=>d.stage==='Lease Execution');
+  const holdovers = _pipelineData.filter(d=>d.holdover).length;
+  const weightedMonthly = active.reduce((s,d)=>s+((d.sf&&d.rent&&d.prob)?d.sf*d.rent*(d.prob/100):0),0);
+  const typeCounts = {};
+  active.forEach(d=>{ const t=d.dealType||'Type not set'; typeCounts[t]=(typeCounts[t]||0)+1; });
+  const typeLine = Object.entries(typeCounts).map(([t,n])=>n+' '+escHtml(t.toLowerCase())).join(' · ');
+  const furthest = active.slice().sort((a,b)=>(sIdx(b.stage)-sIdx(a.stage))||((b.prob||0)-(a.prob||0)))[0];
+  const kpi = (cls,lbl,val,sub)=>`<div class="pk ${cls}"><div class="pk-l">${lbl}</div><div class="pk-v">${val}</div><div class="pk-s">${sub||''}</div></div>`;
+  document.getElementById('pipeline-kpis').innerHTML =
+    kpi('', 'Deals in progress', active.length, (typeLine||'No open deals yet')+(holdovers?` · <b style="color:#a32d2d">⚠ ${holdovers} holdover lease${holdovers>1?'s':''}</b>`:'')) +
+    kpi('gold', 'Likely new monthly rent', weightedMonthly?fmt$(weightedMonthly):'—', 'Monthly rent × chance of closing') +
+    kpi('red', 'Furthest along', furthest?escHtml(dealAddrLine(furthest)||furthest.name):'—',
+        furthest?escHtml([furthest.city, stageLabel(furthest.stage), furthest.closeDate?('target '+fmtMonthYr(furthest.closeDate)):''].filter(Boolean).join(' · ')):'') +
+    kpi('green', 'Recently signed', signed.length, signed.length?escHtml(signed.map(d=>dealAddrLine(d)||d.name).join(' · ')):'Signed deals show here for 30 days');
 
-  // KPIs
-  const totalDeals     = _pipelineData.length;
-  const holdovers      = _pipelineData.filter(d=>d.holdover).length;
-  const weightedMonthly = _pipelineData.reduce((s,d)=>s+((d.sf&&d.rent&&d.prob)?d.sf*d.rent*(d.prob/100):0),0);
+  document.getElementById('pipe-signed').innerHTML = signed.map(d=>`<div class="pipe-signed"><b class="ps-h">✓ Recently signed</b><span><b>${escHtml(dealAddrLine(d)||'Address not set')}</b> · ${escHtml(d.name)}${dealCityLine(d)?' · '+escHtml(dealCityLine(d)):''}${d.sf?' · '+d.sf.toLocaleString()+' sq ft':''}${d.dealType?' · '+escHtml(d.dealType):''}${d.closeDate?' · '+fmtMonthYr(d.closeDate):''}</span></div>`).join('');
+  document.getElementById('pipe-count').textContent = '('+_pipelineData.length+')';
+  const sortSel = document.getElementById('pipe-sort'); if(sortSel) sortSel.value = _pipeSort;
 
-  const cardHtml = k => `<div style="background:${k.bg};color:#fff;border-radius:6px;padding:10px 14px;text-align:center">
-    <div style="font-size:10px;opacity:0.75;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${k.lbl}</div>
-    <div style="font-size:22px;font-weight:700">${k.val}</div>
-    ${k.sub?`<div style="font-size:9px;opacity:0.65;margin-top:2px">${k.sub}</div>`:''}
-  </div>`;
-  const topCards = [
-    {lbl:'Active Deals',           val:totalDeals,                                                  bg:'#0d2040', sub:''},
-    {lbl:'Weighted Monthly Cost', val:weightedMonthly?'$'+Math.round(weightedMonthly/1000)+'K':'—', bg:'#d6ab5c', sub:'prob-weighted'},
-    {lbl:'Holdover Leases',        val:holdovers,                                                   bg:holdovers?'#a32d2d':'#0d2040', sub:holdovers?'⚠ action needed':''}
-  ];
-  const el = document.getElementById('pipeline-kpis');
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.gap = '8px';
-  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">${topCards.map(cardHtml).join('')}</div>`;
+  const list = _pipelineData.slice();
+  if(_pipeSort==='prob')  list.sort((a,b)=>(b.prob==null?-1:b.prob)-(a.prob==null?-1:a.prob));
+  if(_pipeSort==='stage') list.sort((a,b)=>sIdx(b.stage)-sIdx(a.stage));
+  if(_pipeSort==='close') list.sort((a,b)=>(a.closeDate||'9999').localeCompare(b.closeDate||'9999'));
+  if(_pipeSort==='addr')  list.sort((a,b)=>(dealAddrLine(a)||'~').localeCompare(dealAddrLine(b)||'~'));
 
-  // Deals by Stage chart (Lease Execution excluded — deal is done)
-  destroyChart('pipeline');
-  _chartInstances['pipeline'] = new Chart(document.getElementById('chart-pipeline'),{
-    type:'bar',
-    data:{ labels:chartStages, datasets:[{data:chartStages.map(s=>counts[s]),backgroundColor:['#1565c0','#6a1b9a','#e65100','#bf360c'],borderRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{stepSize:1},beginAtZero:true},x:{ticks:{font:{size:10}}}}}
-  });
-
-  // Prospective Locations Table
   const tb = document.getElementById('tbody-pipeline');
   tb.innerHTML = '';
-  if(!_pipelineData.length){
+  if(!list.length){
     const empty = document.createElement('tr');
-    empty.innerHTML = '<td colspan="7" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first deal.</td>';
+    empty.innerHTML = '<td colspan="7" style="text-align:center;color:#888;padding:16px;font-size:12px">No pipeline deals yet. Use the form above to add your first prospective location.</td>';
     tb.appendChild(empty);
   }
   const noteTypeColors = {'Rent Negotiation':'#bf360c','Renewal Discussion':'#1565c0','Lease Amendment':'#4a148c','Touring Alternatives':'#1b5e20','General Update':'#0d2040'};
-  _pipelineData.forEach((d,i)=>{
+  list.forEach((d,i)=>{
     const est  = d.sf&&d.rent ? fmt$(d.sf*d.rent) : '—';
     const probColor = (d.prob||0)>=70?'#2e7d32':(d.prob||0)>=45?'#e65100':'#c62828';
-    const holdClass = d.holdover ? 'row-holdover' : '';
     const expanded = _expandedDeals.has(d.id);
     const editing = _editingDeals.has(d.id);
-    const tr = document.createElement('tr');
-    tr.className = ('deal-band ' + holdClass + (editing?' row-editing':'')).replace(/\s+/g,' ').trim();
-
     const cCount = (d.comments||[]).length;
     const sCount = (d.stageHistory||[]).length;
-
-    const dealCell = editing
-      ? `<select id="edit-dealtype-${d.id}" class="tbl-edit-select" style="margin-bottom:4px">${dealTypeOptionsHtml(d.dealType)}</select>
-         <select id="edit-stage-${d.id}" class="tbl-edit-select" onchange="onEditStageChange(${d.id})">${stageOptionsHtml(d.stage)}</select>`
-      : `${dealTypeBadge(d.dealType)}${d.holdover?'<br><span style="font-size:9px;color:#a32d2d;font-weight:700">HOLDOVER</span>':''}
-         <div style="margin-top:4px">
-           <select class="stage ${stageClass(d.stage)}" title="Change stage — the move is logged with today's date"
-                   onclick="event.stopPropagation()" onchange="changeDealStage(${d.id},this.value)">${stageOptionsHtml(d.stage)}</select>
-         </div>
-         ${sCount?`<div style="font-size:9px;color:#888;margin-top:3px">since ${d.stageHistory[sCount-1].date}</div>`:''}`;
-
-    const locCell = editing
-      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Location / City Name</label>
-         <input id="edit-name-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.name)}" style="margin-bottom:4px">
-         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Address</label>
-         <input id="edit-addr-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.addr)}" style="margin-bottom:4px">
-         <div style="display:flex;gap:4px">
-           <input id="edit-city-${d.id}" class="tbl-edit-input" type="text" placeholder="City" value="${escAttr(d.city)}">
-           <input id="edit-state-${d.id}" class="tbl-edit-input" type="text" maxlength="2" placeholder="ST" value="${escAttr(d.state)}" style="max-width:48px">
-         </div>`
-      : `<div style="font-weight:600">${d.name}</div>
-         <div style="color:#555;font-size:11px;margin-top:1px">${d.addr||'—'}</div>
-         <div style="color:#888;font-size:10px;margin-top:1px">${[d.city,d.state].filter(Boolean).join(', ')||'—'}</div>`;
-
-    const sfCell = editing
-      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Est. Sq Ft</label>
-         <input id="edit-sf-${d.id}" class="tbl-edit-input" type="number" value="${d.sf||''}">`
-      : `<span style="font-weight:600">${d.sf?d.sf.toLocaleString()+' SF':'—'}</span>`;
-    const rateCell = editing
-      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Rent $/SF/Mo</label>
-         <input id="edit-rent-${d.id}" class="tbl-edit-input" type="number" step="0.01" value="${d.rent||''}">`
-      : `${d.rent?'$'+d.rent.toFixed(2)+' <span style="color:#888;font-size:10px">/SF/Mo</span>':'—'}`;
-    const monthlyCell = editing
-      ? `<div style="color:#888;font-size:10px;padding-top:15px">${est==='—'?'—':est+' /mo'}</div>`
-      : `${est==='—'?'—':est+' <span style="color:#888;font-size:10px">/mo</span>'}`;
-
-    const probCell  = editing
-      ? `<input id="edit-prob-${d.id}" class="tbl-edit-input" type="number" min="0" max="100" value="${d.prob!=null?d.prob:''}">`
-      : `<span style="font-weight:700;color:${probColor}">${d.prob!=null?d.prob+'%':'—'}</span>${d.prob!=null?`<span class="prob-mini"><span class="prob-mini-fill" style="width:${d.prob}%;background:${probColor}"></span></span>`:''}`;
-    const closeCell = editing ? `<input id="edit-close-${d.id}" class="tbl-edit-input" type="text" placeholder="YYYY-MM" value="${escAttr(d.closeDate)}">` : (d.closeDate||'—');
-    const notesCell = editing
-      ? `<label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Notes / Next Step</label>
-         <input id="edit-notes-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.notes)}" style="margin-bottom:4px">
-         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Competing Properties</label>
-         <input id="edit-competing-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.competing)}" style="margin-bottom:4px">
-         <label style="font-size:9px;color:#888;display:block;margin-bottom:1px">Term (yrs)</label>
-         <input id="edit-termyears-${d.id}" class="tbl-edit-input" type="number" step="0.5" value="${d.termYears||''}">`
-      : `${d.notes||'—'}${d.competing&&d.competing!=='None'?`<br><span style="color:#888;font-size:10px">🏢 ${d.competing}</span>`:''}${cCount?`<div style="margin-top:4px;padding-top:4px;border-top:1px solid #e6e8ec;color:#1a6b8a;font-size:10px">💬 ${d.comments[cCount-1].text}${cCount>1?` <span style="color:#888">(+${cCount-1} more)</span>`:''}</div>`:''}`;
-    const actionCell = editing
-      ? `<div style="display:flex;gap:4px"><button class="btn-save" onclick="saveEditDeal(${d.id})">✓ Save</button><button class="btn-cancel" onclick="cancelEditDeal(${d.id})">Cancel</button></div>`
-      : `<div style="display:flex;gap:4px"><button class="btn-edit" onclick="startEditDeal(${d.id})">✎ Edit</button><button class="btn-del" onclick="deletePipelineDeal(${d.id})">✕</button></div>`;
-
+    const col = PIPE_STAGE_COLOR[d.stage]||'#888';
+    const si = sIdx(d.stage);
     const editAttr = editing ? '' : ` data-editable="1" title="Click to edit" onclick="startEditDeal(${d.id})"`;
-    const bandIdCell = editing ? locCell
-      : `<span class="band-name">${d.name}</span><span class="band-addr">${[d.addr,[d.city,d.state].filter(Boolean).join(', ')].filter(Boolean).join(' · ')||'—'}</span>`;
-    tr.innerHTML = `
-      <td class="deal-gut" rowspan="2">
-        <span class="gut-num">${i+1}</span>
-        <button onclick="toggleDealDetail(${d.id})" title="${expanded?'Collapse':'Expand'} notes &amp; comments" class="gut-tog">${expanded?'−':'+'}</button>
-        ${cCount?`<div onclick="toggleDealDetail(${d.id})" title="${cCount} comment${cCount>1?'s':''}" class="gut-cmt">💬 ${cCount}</div>`:''}
-      </td>
-      <td class="deal-band-cell" colspan="6">
-        <div class="deal-band-flex">
-          <div class="deal-band-id"${editAttr}>${bandIdCell}</div>
-          <div class="deal-band-tags"${editAttr}>${dealCell}</div>
-          <div class="deal-band-act">${actionCell}</div>
-        </div>
-      </td>`;
-    tb.appendChild(tr);
+    const lbl = t=>`<label class="pe-l">${t}</label>`;
 
-    const dataTr = document.createElement('tr');
-    dataTr.className = ('deal-data ' + holdClass + (editing?' row-editing':'') + (expanded?' has-detail':'')).replace(/\s+/g,' ').trim();
-    dataTr.innerHTML = `
-      <td class="ctr"${editAttr}>${sfCell}</td>
-      <td class="ctr"${editAttr}>${rateCell}</td>
-      <td class="ctr"${editAttr}>${monthlyCell}</td>
-      <td class="ctr" style="white-space:nowrap"${editAttr}>${probCell}</td>
-      <td class="ctr"${editAttr}>${closeCell}</td>
-      <td class="cell-notes"${editAttr}>${notesCell}</td>`;
-    tb.appendChild(dataTr);
+    const viewIdentity = `
+      <div class="pc-addr">${escHtml(dealAddrLine(d))||'<span style="color:#8a92a1">Address not set yet</span>'}</div>
+      <div class="pc-client">${escHtml(d.name)}</div>
+      <div class="pc-city">${escHtml(dealCityLine(d))||'—'}</div>
+      <div class="pc-tags">${dealTypeBadge(d.dealType)}${d.holdover?'<span class="pc-hold">HOLDOVER</span>':''}
+        <select class="stage ${stageClass(d.stage)}" title="Change stage — the move is logged with today's date"
+                onclick="event.stopPropagation()" onchange="changeDealStage(${d.id},this.value)">${stageOptionsHtml(d.stage)}</select>
+        ${sCount?`<span class="pc-since">since ${escHtml(d.stageHistory[sCount-1].date)}</span>`:''}
+      </div>`;
+    const editIdentity = `
+      ${lbl('Street address')}<input id="edit-addr-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.addr)}">
+      <div style="display:flex;gap:4px;margin-top:4px">
+        <input id="edit-suite-${d.id}" class="tbl-edit-input" type="text" placeholder="Suite" value="${escAttr(d.suite)}" style="max-width:78px">
+        <input id="edit-city-${d.id}" class="tbl-edit-input" type="text" placeholder="City" value="${escAttr(d.city)}">
+        <input id="edit-state-${d.id}" class="tbl-edit-input" type="text" maxlength="2" placeholder="ST" value="${escAttr(d.state)}" style="max-width:44px">
+        <input id="edit-zip-${d.id}" class="tbl-edit-input" type="text" maxlength="10" placeholder="ZIP" value="${escAttr(d.zip)}" style="max-width:70px">
+      </div>
+      ${lbl('Client name')}<input id="edit-name-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.name)}">
+      <div style="display:flex;gap:4px;margin-top:6px">
+        <select id="edit-dealtype-${d.id}" class="tbl-edit-select">${dealTypeOptionsHtml(d.dealType)}</select>
+        <select id="edit-stage-${d.id}" class="tbl-edit-select" onchange="onEditStageChange(${d.id})">${stageOptionsHtml(d.stage)}</select>
+      </div>`;
 
-    const detailTr = document.createElement('tr');
-    detailTr.className = 'deal-detail';
-    detailTr.style.display = expanded ? '' : 'none';
-    const dealNotes = _leaseNotes.filter(n=>n.loc===d.name);
-    const relocBlock = d.dealType==='Relocation' ? `
-      <div style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#1a4f80;margin-bottom:5px">Relocation Options</div>
-        <div class="reloc-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-          ${['a','b','c'].map(k=>`<div>
-            <label style="font-size:9px;color:#888;display:block;margin-bottom:2px">Option ${k.toUpperCase()}</label>
-            <div style="display:flex;gap:4px">
-              <input id="reloc-${d.id}-${k}" type="text" value="${escAttr((d.relocOptions&&d.relocOptions[k])||'')}" placeholder="Address / notes — Enter to log" onkeydown="if(event.key==='Enter'){event.preventDefault();submitRelocOption(${d.id},'${k}')}" style="flex:1;min-width:0;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
-              <button class="btn-sec" style="padding:3px 8px;font-size:10px;flex-shrink:0" title="Add to Lease Notes" onclick="submitRelocOption(${d.id},'${k}')">Add</button>
-            </div>
-          </div>`).join('')}
+    const progress = `<div class="pc-prog">${PIPE_STAGES.map((s,k)=>`<div class="pc-step${k===si?' on':''}"><i style="background:${k===si?col:(k<si?'#29374d':'#dde1e8')}"></i><span>${stageLabel(s)}</span></div>`).join('')}</div>`;
+    const viewMiddle = `${progress}
+      <div class="pc-next"><b>Next step:</b> ${escHtml(d.notes)||'—'}</div>
+      ${d.competing&&d.competing!=='None'?`<div class="pc-sub">🏢 Other buildings considered: ${escHtml(d.competing)}</div>`:''}
+      ${d.termYears?`<div class="pc-sub">Term: ${escHtml(d.termYears)} years</div>`:''}
+      ${cCount?`<div class="pc-cmt">💬 ${escHtml(d.comments[cCount-1].text)}${cCount>1?` <span style="color:#888">(+${cCount-1} more)</span>`:''}</div>`:''}`;
+    const editMiddle = `${progress}
+      ${lbl('Next step / notes')}<input id="edit-notes-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.notes)}">
+      <div style="display:flex;gap:6px">
+        <div style="flex:2">${lbl('Other buildings considered')}<input id="edit-competing-${d.id}" class="tbl-edit-input" type="text" value="${escAttr(d.competing)}"></div>
+        <div style="flex:1">${lbl('Term (years)')}<input id="edit-termyears-${d.id}" class="tbl-edit-input" type="number" step="0.5" value="${d.termYears||''}"></div>
+      </div>`;
+
+    const stat = (l,v)=>`<div><div class="pc-sl">${l}</div><div class="pc-sv">${v}</div></div>`;
+    const viewStats = `<div class="pc-stats">
+      ${stat('Size', d.sf?d.sf.toLocaleString()+' sq ft':'—')}
+      ${stat('Rent per sq ft / mo', d.rent?'$'+d.rent.toFixed(2):'—')}
+      ${stat('Monthly rent', est)}
+      ${stat('Target date', fmtMonthYr(d.closeDate))}
+      <div style="grid-column:1/3"><div class="pc-sl">Chance of closing</div>
+        <div style="display:flex;align-items:center;gap:6px"><div class="pc-bar"><i style="width:${d.prob||0}%;background:${probColor}"></i></div><b style="color:${probColor}">${d.prob!=null?d.prob+'%':'—'}</b></div></div>
+    </div>`;
+    const editStats = `<div class="pc-stats">
+      <div>${lbl('Size (sq ft)')}<input id="edit-sf-${d.id}" class="tbl-edit-input" type="number" value="${d.sf||''}"></div>
+      <div>${lbl('Rent per sq ft / mo')}<input id="edit-rent-${d.id}" class="tbl-edit-input" type="number" step="0.01" value="${d.rent||''}"></div>
+      <div>${lbl('Chance of closing %')}<input id="edit-prob-${d.id}" class="tbl-edit-input" type="number" min="0" max="100" value="${d.prob!=null?d.prob:''}"></div>
+      <div>${lbl('Target date')}<input id="edit-close-${d.id}" class="tbl-edit-input" type="text" placeholder="YYYY-MM" value="${escAttr(d.closeDate)}"></div>
+    </div>`;
+    const actions = editing
+      ? `<button class="btn-save" onclick="saveEditDeal(${d.id})">✓ Save</button><button class="btn-cancel" onclick="cancelEditDeal(${d.id})">Cancel</button>`
+      : `<button class="btn-edit" onclick="startEditDeal(${d.id})">✎ Edit</button><button class="btn-del" title="Delete deal" onclick="if(confirm('Delete this deal? Everyone with access to this dashboard will stop seeing it.'))deletePipelineDeal(${d.id})">✕</button>`;
+
+    // Detail panel (stage history, lease notes, comments, relocation options)
+    let detail = '';
+    if(expanded){
+      const key = dealKey(d);
+      const jsKey = escAttr(key.replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
+      const dealNotes = _leaseNotes.filter(n=>n.loc===key||n.loc===d.name);
+      const relocBlock = d.dealType==='Relocation' ? `
+        <div style="margin-bottom:10px">
+          <div class="pc-dh" style="color:#1a4f80">Relocation Options</div>
+          <div class="reloc-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+            ${['a','b','c'].map(k=>`<div>
+              <label style="font-size:9px;color:#888;display:block;margin-bottom:2px">Option ${k.toUpperCase()}</label>
+              <div style="display:flex;gap:4px">
+                <input id="reloc-${d.id}-${k}" type="text" value="${escAttr((d.relocOptions&&d.relocOptions[k])||'')}" placeholder="Address / notes — Enter to log" onkeydown="if(event.key==='Enter'){event.preventDefault();submitRelocOption(${d.id},'${k}')}" style="flex:1;min-width:0;font-size:11px;padding:3px 6px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
+                <button class="btn-sec" style="padding:3px 8px;font-size:10px;flex-shrink:0" title="Add to Lease Notes" onclick="submitRelocOption(${d.id},'${k}')">Add</button>
+              </div>
+            </div>`).join('')}
+          </div>
+        </div>` : '';
+      const dealComments = d.comments || [];
+      const dealStages   = d.stageHistory || [];
+      const stageBlock = `
+        <div class="pc-dh">Stage History</div>
+        ${dealStages.length ? dealStages.slice().reverse().map(h=>`
+          <div class="note-row" style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
+            <span style="white-space:nowrap;color:#888;min-width:70px">${escHtml(h.date)}</span>
+            <span class="stage ${stageClass(h.from)}" style="opacity:.55">${stageLabel(h.from)}</span>
+            <span style="color:#888">→</span>
+            <span class="stage ${stageClass(h.to)}">${stageLabel(h.to)}</span>
+          </div>`).join('')
+          : `<div style="font-size:11px;color:#888;padding:5px 0">No stage changes logged yet — still at <span class="stage ${stageClass(d.stage)}">${stageLabel(d.stage)}</span> since the deal was added.</div>`}`;
+      detail = `
+        ${relocBlock}
+        ${stageBlock}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:6px">
+          <div class="pc-dh" style="margin:0">Lease Notes / Updates</div>
+          <button class="btn-sec" style="background:#1a6b8a;font-size:10px;padding:3px 9px" onclick="openLeaseNote('${jsKey}')">✎ Add Note</button>
         </div>
-      </div>` : '';
-    const dealComments = d.comments || [];
-    const dealStages   = d.stageHistory || [];
-    const stageBlock = `
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040;margin-bottom:6px">Stage History — ${d.name}</div>
-      ${dealStages.length ? dealStages.slice().reverse().map(h=>`
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
-          <span style="white-space:nowrap;color:#888;min-width:70px">${h.date}</span>
-          <span class="stage ${stageClass(h.from)}" style="opacity:.55">${h.from}</span>
-          <span style="color:#888">→</span>
-          <span class="stage ${stageClass(h.to)}">${h.to}</span>
-        </div>`).join('')
-        : `<div style="font-size:11px;color:#888;padding:5px 0">No stage changes logged yet — still at <span class="stage ${stageClass(d.stage)}">${d.stage}</span> since the deal was added.</div>`}`;
-    detailTr.innerHTML = `<td colspan="7" style="background:#f7f8fa;padding:12px 16px 14px 58px;text-align:left;white-space:normal"><div class="detail-inner">
-      ${relocBlock}
-      ${stageBlock}
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;margin-bottom:6px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040">Lease Notes / Updates — ${d.name}</div>
-        <button class="btn-sec" style="background:#1a6b8a;font-size:10px;padding:3px 9px" onclick="openLeaseNote('${d.name.replace(/'/g,"\\'")}')">✎ Add Note</button>
+        ${dealNotes.length ? dealNotes.slice().reverse().map(n=>{
+          const bg = noteTypeColors[n.type]||'#0d2040';
+          return `<div class="note-row" style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
+            <span style="white-space:nowrap;color:#888;min-width:70px">${escHtml(n.date)}</span>
+            <span class="note-type" style="background:${bg};flex-shrink:0">${escHtml(n.type)}</span>
+            <span class="note-text" style="flex:1">${escHtml(n.note)}</span>
+            <button class="btn-del" style="flex-shrink:0" onclick="deleteNote(${Number(n.id)})">✕</button>
+          </div>`;
+        }).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No notes logged yet.</div>'}
+        <div class="pc-dh" style="margin-top:14px">Comments</div>
+        <div class="cmt-form" style="display:flex;gap:6px;max-width:680px;margin-bottom:4px">
+          <input id="cmt-${d.id}" type="text" placeholder="Add a comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="flex:1;min-width:0;font-size:11px;padding:5px 8px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
+          <button class="btn-sec" style="background:#1a6b8a;font-size:10px;padding:3px 12px;flex-shrink:0" onclick="addDealComment(${d.id},document.getElementById('cmt-${d.id}'))">Post</button>
+        </div>
+        ${dealComments.length ? dealComments.slice().reverse().map(c=>`
+          <div class="note-row" style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
+            <span style="white-space:nowrap;color:#888;min-width:70px">${escHtml(c.date)}</span>
+            <span class="note-text" style="flex:1">${escHtml(c.text)}</span>
+          </div>`).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No comments yet.</div>'}`;
+    }
+
+    const tr = document.createElement('tr');
+    tr.className = 'pc-row';
+    tr.innerHTML = `<td colspan="7"><div class="pcard${d.holdover?' pc-holdover':''}${editing?' pc-editing':''}" style="border-left-color:${col}">
+      <div class="pc-grid">
+        <div class="pc-id"${editAttr}>${editing?editIdentity:viewIdentity}</div>
+        <div class="pc-mid"${editAttr}>${editing?editMiddle:viewMiddle}</div>
+        <div class="pc-right"><div${editAttr}>${editing?editStats:viewStats}</div><div class="pc-act">${actions}</div></div>
       </div>
-      ${dealNotes.length ? dealNotes.slice().reverse().map(n=>{
-        const bg = noteTypeColors[n.type]||'#0d2040';
-        return `<div class="note-row" style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
-          <span style="white-space:nowrap;color:#888;min-width:70px">${n.date}</span>
-          <span class="note-type" style="background:${bg};flex-shrink:0">${n.type}</span>
-          <span class="note-text" style="flex:1">${n.note}</span>
-          <button class="btn-del" style="flex-shrink:0" onclick="deleteNote(${n.id})">✕</button>
-        </div>`;
-      }).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No notes logged yet.</div>'}
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#0d2040;margin-top:14px;margin-bottom:6px">Comments — ${d.name}</div>
-      <div class="cmt-form" style="display:flex;gap:6px;max-width:680px;margin-bottom:4px">
-        <input id="cmt-${d.id}" type="text" placeholder="Add a comment… (press Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addDealComment(${d.id},this)}" style="flex:1;min-width:0;font-size:11px;padding:5px 8px;border:1px solid #d0d4da;border-radius:4px;box-sizing:border-box">
-        <button class="btn-sec" style="background:#1a6b8a;font-size:10px;padding:3px 12px;flex-shrink:0" onclick="addDealComment(${d.id},document.getElementById('cmt-${d.id}'))">Post</button>
+      <div class="pc-foot"><span class="pc-num">${i+1}</span>
+        <button class="pc-tog" onclick="toggleDealDetail(${d.id})">${expanded?'▾ Hide':'▸ Show'} stage history, notes &amp; comments${cCount?` · 💬 ${cCount}`:''}</button>
+        ${d.updatedAt?`<span class="pc-upd">updated ${escHtml(d.updatedAt)}</span>`:''}
       </div>
-      ${dealComments.length ? dealComments.slice().reverse().map(c=>`
-        <div class="note-row" style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-top:1px solid #e6e8ec;font-size:11px">
-          <span style="white-space:nowrap;color:#888;min-width:70px">${c.date}</span>
-          <span class="note-text" style="flex:1">${c.text}</span>
-        </div>`).join('') : '<div style="font-size:11px;color:#888;padding:5px 0">No comments yet.</div>'}
+      ${expanded?`<div class="pc-detail">${detail}</div>`:''}
     </div></td>`;
-    tb.appendChild(detailTr);
+    tb.appendChild(tr);
   });
 }
 
@@ -2848,12 +2979,11 @@ function toggleDealDetail(id){
 function escAttr(s){ return (s==null?'':String(s)).replace(/"/g,'&quot;'); }
 
 function dealTypeOptionsHtml(sel){
-  const opts = ['Extension','Relocation','Expansion','New Location','Blend & Extend','Build-to-Suit','Purchase'];
+  const opts = ['Extension','Renewal','Relocation','Expansion','New Location','Blend & Extend','Build-to-Suit','Purchase'];
   return `<option value=""${!sel?' selected':''}>Deal Type...</option>` + opts.map(o=>`<option${o===sel?' selected':''}>${o}</option>`).join('');
 }
 function stageOptionsHtml(sel){
-  const opts = ['Prospecting','Touring','LOI','Lease Negotiation','Lease Execution'];
-  return opts.map(o=>`<option${o===sel?' selected':''}>${o}</option>`).join('');
+  return PIPE_STAGES.map(o=>`<option value="${o}"${o===sel?' selected':''}>${stageLabel(o)}</option>`).join('');
 }
 
 function startEditDeal(id){
@@ -2877,6 +3007,7 @@ function changeDealStage(id, newStage){
   if(!d || d.stage===newStage) return;
   logStageChange(d, d.stage, newStage);
   d.stage = newStage;
+  d.updatedAt = pipeToday();
   savePipeline(); buildPipelineUI();
 }
 
@@ -2893,7 +3024,7 @@ function saveEditDeal(id){
   if(!d) return;
   const val  = fieldId => { const el = document.getElementById(fieldId+'-'+id); return el?el.value:null; };
   const name = (val('edit-name')||'').trim();
-  if(!name){ alert('Location / City Name is required.'); return; }
+  if(!name){ alert('Client name is required.'); return; }
 
   d.name       = name;
   d.dealType   = val('edit-dealtype') || null;
@@ -2903,6 +3034,9 @@ function saveEditDeal(id){
   d.addr       = (val('edit-addr')||'').trim() || null;
   d.city       = (val('edit-city')||'').trim() || null;
   d.state      = (val('edit-state')||'').trim() || null;
+  d.suite      = (val('edit-suite')||'').trim() || null;
+  d.zip        = (val('edit-zip')||'').trim() || null;
+  d.updatedAt  = pipeToday();
   const sf     = parseFloat(val('edit-sf'));
   d.sf         = isNaN(sf) ? null : sf;
   const rent   = parseFloat(val('edit-rent'));
@@ -2934,7 +3068,7 @@ function submitRelocOption(id,key){
   savePipeline();
 
   const action = prevVal ? 'updated' : 'added';
-  _leaseNotes.push({id:Date.now(), date:new Date().toLocaleDateString('en-US'), loc:d.name, type:'Touring Alternatives', note:`Relocation Option ${key.toUpperCase()} ${action}: ${val}`});
+  _leaseNotes.push({id:Date.now(), date:new Date().toLocaleDateString('en-US'), loc:dealKey(d), type:'Touring Alternatives', note:`Relocation Option ${key.toUpperCase()} ${action}: ${val}`});
   saveNotes();
 
   buildPipelineUI();
@@ -2956,7 +3090,7 @@ function openAddExpiring(){
 function openLeaseNote(prefillName){
   const sel = document.getElementById('ln-loc');
   sel.innerHTML = '<option value="">Select...</option>';
-  _pipelineData.forEach(d=>{ const o=document.createElement('option'); o.value=d.name; o.textContent=d.name; sel.appendChild(o); });
+  _pipelineData.forEach(d=>{ const o=document.createElement('option'); o.value=dealKey(d); o.textContent=dealKey(d); sel.appendChild(o); });
   if(prefillName) sel.value = prefillName;
   document.getElementById('modal-leasenote').classList.add('open');
 }
@@ -3056,7 +3190,7 @@ function addFromLease(){
   const loc = LOCATIONS.find(l=>l.name===name);
   const mo = monthsUntil(loc.expiry);
   const isExpired = mo !== null && mo < 0;
-  _pipelineData.push({id:Date.now(),name:loc.name,addr:loc.address,city:loc.city,state:loc.state,sf:loc.sqft,rent:loc.contractSF,stage,dealType:isExpired?'Extension':'Blend & Extend',holdover:isExpired,origExpiry:loc.expiry||null,prob:null,closeDate:null,termYears:null,competing:null,notes});
+  _pipelineData.push({id:Date.now(),name:PIPE_CLIENT_NAME||loc.name,addr:loc.address,suite:loc.suite||null,zip:loc.zip||null,updatedAt:pipeToday(),city:loc.city,state:loc.state,sf:loc.sqft,rent:loc.contractSF,stage,dealType:isExpired?'Extension':'Blend & Extend',holdover:isExpired,origExpiry:loc.expiry||null,prob:null,closeDate:null,termYears:null,competing:null,notes});
   savePipeline(); closeModal('modal-fromlease'); buildPipelineUI();
 }
 
@@ -3069,7 +3203,7 @@ function addExpiringToPipeline(){
     const loc = LOCATIONS.find(l=>l.name===c.value);
     const mo = monthsUntil(loc.expiry);
     const isExpired = mo !== null && mo < 0;
-    if(loc) _pipelineData.push({id:Date.now()+Math.random(),name:loc.name,addr:loc.address,city:loc.city,state:loc.state,sf:loc.sqft,rent:loc.contractSF,stage,dealType:isExpired?'Extension':'Blend & Extend',holdover:isExpired,origExpiry:loc.expiry||null,prob:null,closeDate:null,termYears:null,competing:null,notes});
+    if(loc) _pipelineData.push({id:Date.now()+Math.random(),name:PIPE_CLIENT_NAME||loc.name,addr:loc.address,suite:loc.suite||null,zip:loc.zip||null,updatedAt:pipeToday(),city:loc.city,state:loc.state,sf:loc.sqft,rent:loc.contractSF,stage,dealType:isExpired?'Extension':'Blend & Extend',holdover:isExpired,origExpiry:loc.expiry||null,prob:null,closeDate:null,termYears:null,competing:null,notes});
   });
   savePipeline(); closeModal('modal-expiring'); buildPipelineUI();
 }
@@ -3327,8 +3461,8 @@ function getDashboardTourSteps(){
     {
       element: tourGoTo('pipeline','#sec-pipeline .tbl-wrap'),
       popover:{
-        title:'Click any cell to edit',
-        description:"Click directly on a row's data to update it in place — no separate edit screen needed. Click the + button to open a deal's notes and comments, where you can log a comment anytime to track where things stand.",
+        title:'Click any deal to edit',
+        description:"Each deal leads with its street address, with the client name right under it. Click a deal to update it in place, change the stage from its colored tag, or click Show stage history, notes & comments to log an update. Changes save for everyone who opens this dashboard.",
         side:'top', align:'start'
       }
     },
