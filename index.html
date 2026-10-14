@@ -316,6 +316,10 @@ select option:active{background-color:#29374d!important;color:#fff!important}
 .contact-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:0.5px}
 .contact-avatar.client{background:linear-gradient(135deg,#d6ab5c,#fbb97a)}
 .contact-avatar.medwest{background:linear-gradient(135deg,#0d2040,#2e5294)}
+/* MedWest team: larger headshot circle with gold ring (faces pre-cropped to center) */
+.contact-avatar.medwest{width:64px;height:64px;font-size:20px;border:3px solid #d6ab5c;box-shadow:0 0 0 2px #fff,0 2px 6px rgba(0,0,0,.18);overflow:hidden}
+.contact-avatar img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:50%}
+.contact-avatar.medwest + .contact-info .cname{font-size:14px}
 .contact-info .cname{font-size:13px;font-weight:700;color:#0d2040;margin-bottom:2px}
 .contact-info .crole{font-size:10px;color:#d6ab5c;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
 .contact-info .cdetail{font-size:11px;color:#666;line-height:1.7}
@@ -924,7 +928,7 @@ a:hover{color:#DB3039}
             </div>
           </div>
           <div class="contact-person">
-            <div class="contact-avatar medwest">MM</div>
+            <div class="contact-avatar medwest"><img src="headshots/madi-mckenney-sq.jpg" alt="Madi McKenney" onerror="this.replaceWith('MM')"></div>
             <div class="contact-info">
               <div class="cname">Madi McKenney</div>
               <div class="crole">Air Traffic Controller</div>
@@ -932,7 +936,7 @@ a:hover{color:#DB3039}
             </div>
           </div>
           <div class="contact-person">
-            <div class="contact-avatar medwest">TS</div>
+            <div class="contact-avatar medwest"><img src="headshots/tori-smith-sq.jpg" alt="Tori Smith" onerror="this.replaceWith('TS')"></div>
             <div class="contact-info">
               <div class="cname">Tori Smith</div>
               <div class="crole">Data Guru</div>
