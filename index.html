@@ -87,6 +87,7 @@ table.dtbl td[data-editable]:hover{background:#eaf1fb}
 .badge-expired{background:#111}
 .badge-red{background:#c62828}
 .badge-orange{background:#e65100}
+.badge-amber{background:#f2a900;color:#29374D!important}
 .badge-yellow{background:#f9a825;color:#333}
 .badge-green{background:#2e7d32}
 .badge-dash{background:#aaa}
@@ -659,9 +660,10 @@ a:hover{color:#DB3039}
             </div>
             <div class="map-legend">
               <div class="map-legend-title">Months to Expiration</div>
-              <div class="map-legend-row"><span class="map-legend-dot" style="background:#111"></span>Expired</div>
+              <div class="map-legend-row"><span class="map-legend-dot" style="background:#111"></span>Expired/MTM</div>
               <div class="map-legend-row"><span class="map-legend-dot" style="background:#c62828"></span>0–6 Mo</div>
-              <div class="map-legend-row"><span class="map-legend-dot" style="background:#e65100"></span>6–18 Mo</div>
+              <div class="map-legend-row"><span class="map-legend-dot" style="background:#e65100"></span>6–12 Mo</div>
+              <div class="map-legend-row"><span class="map-legend-dot" style="background:#f2a900"></span>12–18 Mo</div>
               <div class="map-legend-row"><span class="map-legend-dot" style="background:#2e7d32"></span>18+ Mo</div>
             </div>
           </div>
@@ -695,9 +697,10 @@ a:hover{color:#DB3039}
           </table>
         </div>
         <div class="legend" style="margin-top:10px">
-          <div class="leg"><div class="leg-box" style="background:#111"></div>Expired</div>
+          <div class="leg"><div class="leg-box" style="background:#111"></div>Expired/MTM</div>
           <div class="leg"><div class="leg-box" style="background:#c62828"></div>0–6 Months</div>
-          <div class="leg"><div class="leg-box" style="background:#e65100"></div>6–18 Months</div>
+          <div class="leg"><div class="leg-box" style="background:#e65100"></div>6–12 Months</div>
+          <div class="leg"><div class="leg-box" style="background:#f2a900"></div>12–18 Months</div>
           <div class="leg"><div class="leg-box" style="background:#2e7d32"></div>18+ Months</div>
         </div>
       </div>
@@ -819,9 +822,10 @@ a:hover{color:#DB3039}
           <div class="card-title">Remaining Term vs. Monthly Cost — bubble size = sqft</div>
           <div style="position:relative;height:200px"><canvas id="chart-bubble"></canvas></div>
           <div class="legend" style="margin-top:6px">
-            <div class="leg"><div class="leg-box" style="background:#111"></div>Expired</div>
+            <div class="leg"><div class="leg-box" style="background:#111"></div>Expired/MTM</div>
             <div class="leg"><div class="leg-box" style="background:#c62828"></div>0–6 mo</div>
-            <div class="leg"><div class="leg-box" style="background:#e65100"></div>6–18 mo</div>
+            <div class="leg"><div class="leg-box" style="background:#e65100"></div>6–12 mo</div>
+            <div class="leg"><div class="leg-box" style="background:#f2a900"></div>12–18 mo</div>
             <div class="leg"><div class="leg-box" style="background:#2e7d32"></div>18+ mo</div>
           </div>
         </div>
@@ -1205,9 +1209,10 @@ function monthsUntil(dateStr){
 function expiryBadge(dateStr){
   if(!dateStr) return '<span class="badge badge-dash">—</span>';
   const m = monthsUntil(dateStr);
-  if(m < 0)  return '<span class="badge badge-expired">Expired</span>';
+  if(m < 0)  return '<span class="badge badge-expired">Expired/MTM</span>';
   if(m < 6)  return '<span class="badge badge-red">0–6 Mo</span>';
-  if(m < 18) return '<span class="badge badge-orange">6–18 Mo</span>';
+  if(m < 12) return '<span class="badge badge-orange">6–12 Mo</span>';
+  if(m < 18) return '<span class="badge badge-amber">12–18 Mo</span>';
   return '<span class="badge badge-green">18+ Mo</span>';
 }
 
@@ -1312,7 +1317,7 @@ function initMap(which){
     const tl_exec = L.tileLayer(TILE_STD,{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);
     _mapTileLayers[which] = tl_exec; _mapTileMode[which] = 'std';
     validLocs.forEach(loc=>{
-      const col = monthsUntil(loc.expiry)<0?'#111':monthsUntil(loc.expiry)<6?'#c62828':monthsUntil(loc.expiry)<18?'#e65100':'#2e7d32';
+      const col = monthsUntil(loc.expiry)<0?'#111':monthsUntil(loc.expiry)<6?'#c62828':monthsUntil(loc.expiry)<12?'#e65100':monthsUntil(loc.expiry)<18?'#f2a900':'#2e7d32';
       L.circleMarker([loc.lat,loc.lng],{radius:8,fillColor:col,color:'#fff',weight:1.5,fillOpacity:1})
         .addTo(m).bindPopup(`<b>${loc.name}</b><br>${loc.city}, ${loc.state}<br>Exp: ${loc.expiry||'—'}`);
     });
@@ -1325,7 +1330,7 @@ function initMap(which){
     _mapTileLayers[which] = tl_expir; _mapTileMode[which] = 'std';
     validLocs.forEach(loc=>{
       const mo = monthsUntil(loc.expiry);
-      const col = mo<0?'#111':mo<6?'#c62828':mo<18?'#e65100':'#2e7d32';
+      const col = mo<0?'#111':mo<6?'#c62828':mo<12?'#e65100':mo<18?'#f2a900':'#2e7d32';
       L.circleMarker([loc.lat,loc.lng],{radius:9,fillColor:col,color:'#fff',weight:1.5,fillOpacity:1})
         .addTo(m).bindPopup(`<b>${loc.name}</b><br>${loc.city}, ${loc.state}<br>Exp: ${loc.expiry||'—'}<br>${mo!==null?mo+' months':''}`);
     });
@@ -1446,7 +1451,7 @@ function buildGanttChart(){
   const locs = LOCATIONS.filter(l=>l.expiry);
   const urgencyColor = locs.map(loc=>{
     const mo = monthsUntil(loc.expiry);
-    return mo===null?'#888':mo<0?'#222':mo<6?'#c62828':mo<18?'#e65100':'#2e7d32';
+    return mo===null?'#888':mo<0?'#222':mo<6?'#c62828':mo<12?'#e65100':mo<18?'#f2a900':'#2e7d32';
   });
 
   const fixedStartMs = new Date('2025-01-01').getTime();
@@ -1579,7 +1584,8 @@ function buildAlertCards(elId, locs, keyPrefix, filterName){
   const now = new Date();
   const expired = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)<0);
   const lt6     = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=0&&monthsUntil(l.expiry)<6);
-  const lt18    = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=6&&monthsUntil(l.expiry)<18);
+  const lt12    = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=6&&monthsUntil(l.expiry)<12);
+  const lt18    = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=12&&monthsUntil(l.expiry)<18);
   const ge18    = locs.filter(l=>l.expiry&&monthsUntil(l.expiry)>=18);
   const optOpen = locs.filter(l=>l.opt1NotifBegins&&l.opt1NoticeEnd&&new Date(l.opt1NotifBegins)<=now&&new Date(l.opt1NoticeEnd)>=now);
   const filterSub = filterName ? `<div style="font-size:10px;opacity:.6;margin-top:2px">Selected: ${filterName}</div>` : '';
@@ -1592,15 +1598,18 @@ function buildAlertCards(elId, locs, keyPrefix, filterName){
   };
 
   const cards=[
-    {n:expired.length,lbl:'Expired Lease'+(expired.length!==1?'s':''),
-      sub2:fmtList(expired,l=>l.name+' · '+Math.abs(monthsUntil(l.expiry))+' mo overdue',keyPrefix+'-expired','Expired Leases'),
+    {n:expired.length,lbl:'Expired/MTM',
+      sub2:fmtList(expired,l=>l.name+' · '+Math.abs(monthsUntil(l.expiry))+' mo overdue',keyPrefix+'-expired','Expired/MTM'),
       bg:'#1a1a1a',bl:'#555'},
     {n:lt6.length,lbl:'Expiring 0–6 Months',
       sub2:fmtList(lt6,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-lt6','Expiring 0–6 Months'),
       bg:'#c62828',bl:'#8b0000'},
-    {n:lt18.length,lbl:'Expiring 6–18 Months',
-      sub2:fmtList(lt18,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-lt18','Expiring 6–18 Months'),
+    {n:lt12.length,lbl:'Expiring 6–12 Months',
+      sub2:fmtList(lt12,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-lt12','Expiring 6–12 Months'),
       bg:'#e65100',bl:'#bf360c'},
+    {n:lt18.length,lbl:'Expiring 12–18 Months',
+      sub2:fmtList(lt18,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-lt18','Expiring 12–18 Months'),
+      bg:'#f2a900',bl:'#b37d00',tc:'#29374D'},
     {n:ge18.length,lbl:'Expiring 18+ Months',
       sub2:fmtList(ge18,l=>l.name+' · '+monthsUntil(l.expiry)+' mo left',keyPrefix+'-ge18','Expiring 18+ Months'),
       bg:'#2e7d32',bl:'#1b5e20'},
@@ -1608,8 +1617,8 @@ function buildAlertCards(elId, locs, keyPrefix, filterName){
       sub2:fmtList(optOpen,l=>l.name+' · Notify by '+l.opt1NoticeEnd,keyPrefix+'-opt','Option Windows Open'),
       bg:'#d6ab5c',bl:'#8f6420'}
   ];
-  el.innerHTML=`<div class="alert-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">${
-    cards.map(c=>`<div style="background:${c.bg};color:#fff;border-radius:8px;padding:14px 16px;border-left:4px solid ${c.bl}">
+  el.innerHTML=`<div class="alert-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">${
+    cards.map(c=>`<div style="background:${c.bg};color:${c.tc||'#fff'};border-radius:8px;padding:14px 16px;border-left:4px solid ${c.bl}">
       <div style="font-size:26px;font-weight:700;line-height:1;margin-bottom:4px">${c.n}</div>
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${c.lbl}</div>
       <div style="font-size:10px;opacity:.72;line-height:1.4">${c.sub2}</div>
@@ -1658,9 +1667,10 @@ function buildExpirTimelineRows(filterName){
   const endMs   = new Date(now.getFullYear(), now.getMonth()+18, now.getDate()).getTime();
   const total   = endMs - startMs;
   const pct = d=>{ const ms=new Date(d).getTime(); return Math.max(1,Math.min(100,((ms-startMs)/total)*100)); };
-  const bucketCfg = mo => mo<0 ? {color:'#111',   tc:'#fff', tag:'Expired'}
+  const bucketCfg = mo => mo<0 ? {color:'#111',   tc:'#fff', tag:'Exp/MTM'}
     : mo<6  ? {color:'#c62828', tc:'#fff', tag:'0–6 Mo'}
-    : mo<18 ? {color:'#e65100', tc:'#fff', tag:'6–18 Mo'}
+    : mo<12 ? {color:'#e65100', tc:'#fff', tag:'6–12 Mo'}
+    : mo<18 ? {color:'#f2a900', tc:'#29374D', tag:'12–18 Mo'}
     :         {color:'#2e7d32', tc:'#fff', tag:'18+ Mo'};
   const months=[];
   for(let i=0;i<7;i++){const d=new Date(now);d.setMonth(d.getMonth()+i*3);months.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));}
@@ -1798,9 +1808,10 @@ function buildExpirActionCenter(){
         </div>
         <div class="map-legend">
           <div class="map-legend-title">Months to Expiration</div>
-          <div class="map-legend-row"><span class="map-legend-dot" style="background:#111"></span>Expired</div>
+          <div class="map-legend-row"><span class="map-legend-dot" style="background:#111"></span>Expired/MTM</div>
           <div class="map-legend-row"><span class="map-legend-dot" style="background:#c62828"></span>0–6 Mo</div>
-          <div class="map-legend-row"><span class="map-legend-dot" style="background:#e65100"></span>6–18 Mo</div>
+          <div class="map-legend-row"><span class="map-legend-dot" style="background:#e65100"></span>6–12 Mo</div>
+          <div class="map-legend-row"><span class="map-legend-dot" style="background:#f2a900"></span>12–18 Mo</div>
           <div class="map-legend-row"><span class="map-legend-dot" style="background:#2e7d32"></span>18+ Mo</div>
         </div>
       </div>
@@ -1852,7 +1863,7 @@ function renderExpirTableRows(){
   });
   sorted.forEach((loc,i)=>{
     const mo = monthsUntil(loc.expiry);
-    const borderColor = mo===null?'transparent':mo<0?'#111':mo<6?'#c62828':mo<18?'#e65100':'transparent';
+    const borderColor = mo===null?'transparent':mo<0?'#111':mo<6?'#c62828':mo<12?'#e65100':mo<18?'#f2a900':'transparent';
     const tr = document.createElement('tr');
     tr.style.borderLeft = `3px solid ${borderColor}`;
     tr.style.cursor = 'pointer';
@@ -1957,16 +1968,17 @@ async function downloadExpirPdf(){
       return va-vb;
     }).map(l=>{
       const mo=monthsUntil(l.expiry);
-      let status='Not listed', fill=[158,158,158];
+      let status='Not listed', fill=[158,158,158], tc=[255,255,255];
       if(mo!==null){
-        if(mo<0){ status='Expired'; fill=[17,17,17]; }
+        if(mo<0){ status='Expired/MTM'; fill=[17,17,17]; }
         else if(mo<6){ status='0–6 months'; fill=[198,40,40]; }
-        else if(mo<18){ status='6–18 months'; fill=[230,81,0]; }
+        else if(mo<12){ status='6–12 months'; fill=[230,81,0]; }
+        else if(mo<18){ status='12–18 months'; fill=[242,169,0]; tc=[41,55,77]; }
         else { status='18+ months'; fill=[46,125,50]; }
       }
       const street=(l.address||'—')+(l.suite?(/^[A-Za-z]?\d+[A-Za-z]?$/.test(String(l.suite).trim())?', Suite '+l.suite:', '+l.suite):'');
       const cityLine=[l.city,[l.state,l.zip].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-      return {cells:[l.name, street+'\n'+cityLine, _pdfLongDate(l.expiry), (mo===null||mo<0)?'—':String(mo), status, _pdfOptionsText(l.options)], fill};
+      return {cells:[l.name, street+'\n'+cityLine, _pdfLongDate(l.expiry), (mo===null||mo<0)?'—':String(mo), status, _pdfOptionsText(l.options)], fill, tc};
     });
     const HEADER_H=80, FOOTER_H=64;
     const header=()=>{
@@ -2014,7 +2026,7 @@ async function downloadExpirPdf(){
         if(d.section==='head' && d.column.index===3) d.cell.styles.halign='center';
         if(d.section==='body' && d.column.index===4){
           d.cell.styles.fillColor=fillOf(rows[d.row.index]);
-          d.cell.styles.textColor=[255,255,255];
+          d.cell.styles.textColor=rows[d.row.index].tc||[255,255,255];
           d.cell.styles.fontStyle='bold';
         }
       },
@@ -2338,9 +2350,10 @@ function buildAddrTable(){
     const exp = loc.expiry ? new Date(loc.expiry) : null;
     const mo = exp ? Math.round((exp-now)/(1000*60*60*24*30.4)) : null;
     let badge;
-    if(!exp||mo<0) badge=`<span style="background:#111;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">Expired</span>`;
+    if(!exp||mo<0) badge=`<span style="background:#111;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">Expired/MTM</span>`;
     else if(mo<6) badge=`<span style="background:#c62828;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">0–6 Mo</span>`;
-    else if(mo<18) badge=`<span style="background:#e65100;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">6–18 Mo</span>`;
+    else if(mo<12) badge=`<span style="background:#e65100;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">6–12 Mo</span>`;
+    else if(mo<18) badge=`<span style="background:#f2a900;color:#29374D;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">12–18 Mo</span>`;
     else badge=`<span style="background:#2e7d32;color:#fff;font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;white-space:nowrap">18+ Mo</span>`;
     const card = document.createElement('div');
     card.className = 'addr-card';
@@ -2413,7 +2426,7 @@ function initAnalyticsCharts(){
     data:{ datasets: bLocs.map((loc,i)=>({
       label:loc.name,
       data:[{x:monthsUntil(loc.expiry)||0,y:loc.monthly,sqft:loc.sqft,r:Math.max(4,Math.sqrt(loc.sqft/40))}],
-      backgroundColor: (()=>{ const mo=monthsUntil(loc.expiry); return mo<0?'rgba(17,17,17,0.85)':mo<6?'rgba(198,40,40,0.85)':mo<18?'rgba(230,81,0,0.85)':'rgba(46,125,50,0.85)'; })()
+      backgroundColor: (()=>{ const mo=monthsUntil(loc.expiry); return mo<0?'rgba(17,17,17,0.85)':mo<6?'rgba(198,40,40,0.85)':mo<12?'rgba(230,81,0,0.85)':mo<18?'rgba(242,169,0,0.85)':'rgba(46,125,50,0.85)'; })()
     }))},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{callbacks:{title:()=>'',label:c=>{ const d=c.raw; return c.dataset.label+': '+d.x+' mo remaining, $'+Math.round(d.y).toLocaleString()+'/mo, '+Math.round(d.sqft).toLocaleString()+' SF'; }}}},
