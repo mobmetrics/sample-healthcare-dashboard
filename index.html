@@ -3691,8 +3691,13 @@ function initSiteSelect(){
 
   const map=L.map('ss-map',{zoomControl:true,preferCanvas:true,zoomSnap:0.25});
   window._ssMap=map;
-  const TSTD=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19});
+  // Same free Esri light-gray base + labels the Camino Market Map uses (no API key needed)
+  const TSTD=L.layerGroup([
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri',maxZoom:16}),
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',{maxZoom:16})
+  ]);
   const TSAT=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+  map.setMaxZoom(16);
   TSTD.addTo(map); let sat=false;
   g('ss-sat').onclick=()=>{ sat=!sat; map.removeLayer(sat?TSTD:TSAT); (sat?TSAT:TSTD).addTo(map); g('ss-sat').textContent=sat?'STREET MAP':'SATELLITE'; };
   const counties=L.layerGroup([
