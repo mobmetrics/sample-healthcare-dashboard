@@ -2064,6 +2064,21 @@ function _pdfBrokers(){
     return {name,role,email,phone};
   }).filter(b=>b.name && /broker/i.test(b.role)).slice(0,3);
 }
+function _pdfKey(doc,y){
+  const items=[['Expired or MTM',[17,17,17]],['0–6 months',[198,40,40]],['6–12 months',[230,81,0]],['12–18 months',[242,169,0]],['18+ months',[46,125,50]],['Renewal option',[41,55,77]]];
+  let x=36;
+  doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(90,102,120);
+  doc.text('COLOR KEY',x,y+6.5); x+=doc.getTextWidth('COLOR KEY')+12;
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(41,55,77);
+  items.forEach(([t,c])=>{ doc.setFillColor(...c); doc.roundedRect(x,y,14,9,1.5,1.5,'F'); x+=18; doc.text(t,x,y+6.8); x+=doc.getTextWidth(t)+14; });
+}
+function _pdfIsOption(t){ return !!t && !/^(none listed|not applicable|n\/a|—|-)$/i.test(String(t).trim()); }
+function _pdfOptionBadges(doc,d){
+  const parts=String(d.cell.raw||'').split(';').map(t=>t.trim()).filter(Boolean);
+  let x=d.cell.x+5; const h=11, y=d.cell.y+(d.cell.height-h)/2;
+  doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+  parts.forEach(t=>{ const w=doc.getTextWidth(t)+10; doc.setFillColor(41,55,77); doc.roundedRect(x,y,w,h,2,2,'F'); doc.setTextColor(255,255,255); doc.text(t,x+5,y+7.8); x+=w+4; });
+}
 async function downloadExpirPdf(){
   const btn=document.getElementById('btn-expir-pdf');
   const label=btn?btn.innerHTML:'';
@@ -2114,6 +2129,7 @@ async function downloadExpirPdf(){
     const footer=()=>{
       doc.setFont('helvetica','italic'); doc.setFontSize(7); doc.setTextColor(...GRAY);
       doc.text('Disclaimer. Information from sources deemed reliable but MedWest Realty does not guarantee the accuracy. Please perform your own due diligence and consult with all appropriate advisors.',36,H-FOOTER_H-10);
+      _pdfKey(doc,H-FOOTER_H-36);
       doc.setFillColor(...NAVY); doc.rect(0,H-FOOTER_H,W,FOOTER_H,'F');
       let x=36;
       if(mwPng){ doc.addImage(mwPng,'PNG',x,H-FOOTER_H+10,72,44); x+=72+18; }
@@ -2132,7 +2148,7 @@ async function downloadExpirPdf(){
 
     doc.autoTable({
       startY:HEADER_H+14,
-      margin:{left:36,right:36,top:HEADER_H+14,bottom:FOOTER_H+24},
+      margin:{left:36,right:36,top:HEADER_H+14,bottom:FOOTER_H+44},
       head:[['Location','Address','Lease Expiration','Months\nRemaining','Status','Renewal Options']],
       body:rows.map(r=>r.cells),
       theme:'plain',
@@ -2142,6 +2158,7 @@ async function downloadExpirPdf(){
       alternateRowStyles:{fillColor:[246,247,249]},
       columnStyles:{0:{cellWidth:150,fontStyle:'bold'},1:{cellWidth:190},2:{cellWidth:105},3:{cellWidth:62,halign:'center'},4:{cellWidth:80},5:{cellWidth:'auto'}},
       didParseCell:(d)=>{
+        if(d.section==='body' && d.column.index===5 && !_pdfIsOption(d.cell.raw)) d.cell.styles.textColor=[140,148,160];
         if(d.section==='head') d.cell.text=d.cell.text.map(t=>t.toUpperCase());
         if(d.section==='head' && d.column.index===3) d.cell.styles.halign='center';
         if(d.section==='body' && d.column.index===4){
@@ -2150,11 +2167,15 @@ async function downloadExpirPdf(){
           d.cell.styles.fontStyle='bold';
         }
       },
+      willDrawCell:(d)=>{
+        if(d.section==='body' && d.column.index===5 && _pdfIsOption(d.cell.raw)){ d.cell.text=[]; }
+      },
       didDrawCell:(d)=>{
         // Overlap the Status color 1pt into the next cell so no white seam shows at its right edge
         if(d.section==='body' && d.column.index===5){
           doc.setFillColor(...fillOf(rows[d.row.index]));
           doc.rect(d.cell.x-0.75,d.cell.y,1.5,d.cell.height,'F');
+          if(_pdfIsOption(d.cell.raw)) _pdfOptionBadges(doc,d);
         }
       },
       willDrawPage:()=>header(),
