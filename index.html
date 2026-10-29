@@ -1593,8 +1593,8 @@ function buildGanttChart(){
         if(!loc.opt1NotifBegins||!loc.opt1NoticeEnd) return null;
         return [pct(new Date(loc.opt1NotifBegins).getTime()), pct(new Date(loc.opt1NoticeEnd).getTime())];
       }),
-      backgroundColor:'#d6ab5c',
-      borderColor:'#0d2040',
+      backgroundColor:'#29374d',
+      borderColor:'#ffffff',
       borderWidth:1.5,
       borderSkipped:false,
       borderRadius:2,
@@ -1608,8 +1608,8 @@ function buildGanttChart(){
         if(!loc.opt2NotifBegins||!loc.opt2NoticeEnd) return null;
         return [pct(new Date(loc.opt2NotifBegins).getTime()), pct(new Date(loc.opt2NoticeEnd).getTime())];
       }),
-      backgroundColor:'#d6ab5c',
-      borderColor:'#0d2040',
+      backgroundColor:'#8a97ad',
+      borderColor:'#ffffff',
       borderWidth:1.5,
       borderSkipped:false,
       borderRadius:2,
@@ -1733,10 +1733,10 @@ function buildAlertCards(elId, locs, keyPrefix, filterName){
       bg:'#2e7d32',bl:'#1b5e20'},
     {n:optOpen.length,lbl:'Option Window'+(optOpen.length!==1?'s':'')+' Open',
       sub2:fmtList(optOpen,l=>l.name+' · Notify by '+l.opt1NoticeEnd,keyPrefix+'-opt','Option Windows Open'),
-      bg:'#d6ab5c',bl:'#8f6420'}
+      bg:'#e4e9f1',bl:'#29374d',tc:'#29374d'}
   ];
   el.innerHTML=`<div class="alert-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px">${
-    cards.map(c=>`<div style="background:${c.bg};color:${c.tc||'#fff'};border-radius:8px;padding:14px 16px;border-left:4px solid ${c.bl}">
+    cards.map(c=>`<div style="background:${c.bg};color:${c.tc||'#fff'};border-radius:8px;padding:14px 16px;border-left:4px solid ${c.bl};${c.bx||''}">
       <div style="font-size:26px;font-weight:700;line-height:1;margin-bottom:4px">${c.n}</div>
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">${c.lbl}</div>
       <div style="font-size:10px;opacity:.72;line-height:1.4">${c.sub2}</div>
@@ -1793,8 +1793,10 @@ function buildExpirTimelineRows(filterName){
   const months=[];
   for(let i=0;i<7;i++){const d=new Date(now);d.setMonth(d.getMonth()+i*3);months.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));}
   let html=(_keyDeadlinesShowOptions ? `<div style="display:flex;align-items:center;gap:5px;padding-left:148px;margin-bottom:4px">
-    <span style="display:inline-block;width:12px;height:8px;background:#d6ab5c;border:2px solid #0d2040;box-sizing:border-box;border-radius:2px;flex-shrink:0"></span>
-    <span style="font-size:9px;color:#888">Option Window</span>
+    <span style="display:inline-block;width:12px;height:8px;background:#29374d;border:1px solid #fff;outline:1px solid #29374d;box-sizing:border-box;border-radius:2px;flex-shrink:0"></span>
+    <span style="font-size:9px;color:#888">Option 1 Window</span>
+    <span style="display:inline-block;width:12px;height:8px;background:#8a97ad;border:1px solid #fff;outline:1px solid #8a97ad;box-sizing:border-box;border-radius:2px;flex-shrink:0;margin-left:8px"></span>
+    <span style="font-size:9px;color:#888">Option 2 Window</span>
   </div>` : '')+
   `<div style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
   const items = [...LOCATIONS].filter(l=>l.expiry).sort((a,b)=>monthsUntil(a.expiry)-monthsUntil(b.expiry));
@@ -1808,13 +1810,13 @@ function buildExpirTimelineRows(filterName){
     const optWindows = [];
     if(loc.opt1NotifBegins && loc.opt1NoticeEnd){
       const beginMs = new Date(loc.opt1NotifBegins).getTime(), noticeEndMs = new Date(loc.opt1NoticeEnd).getTime();
-      if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt1NotifBegins), r:pct(loc.opt1NoticeEnd)});
+      if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt1NotifBegins), r:pct(loc.opt1NoticeEnd), c:'#29374d'});
     }
     if(loc.opt2NotifBegins && loc.opt2NoticeEnd){
       const beginMs = new Date(loc.opt2NotifBegins).getTime(), noticeEndMs = new Date(loc.opt2NoticeEnd).getTime();
-      if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt2NotifBegins), r:pct(loc.opt2NoticeEnd)});
+      if(noticeEndMs >= startMs && beginMs <= endMs) optWindows.push({l:pct(loc.opt2NotifBegins), r:pct(loc.opt2NoticeEnd), c:'#8a97ad'});
     }
-    const optBars = _keyDeadlinesShowOptions ? optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:#d6ab5c;border:2px solid #0d2040;box-sizing:border-box;border-radius:2px"></div>`).join('') : '';
+    const optBars = _keyDeadlinesShowOptions ? optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:${w.c};border:2px solid #fff;box-sizing:border-box;border-radius:2px"></div>`).join('') : '';
     html+=`<div onclick="selectExpirProperty('${loc.name}')" style="display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;margin-bottom:5px;cursor:pointer;background:${sel?'rgba(13,32,64,.07)':'transparent'};border:1px solid ${sel?'#0d2040':'transparent'};transition:background .15s">
       <div style="font-size:10px;font-weight:${sel?700:500};color:#0d2040;width:78px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
       <span style="font-size:8px;font-weight:700;background:${cfg.color};color:${cfg.tc};padding:1px 5px;border-radius:3px;flex-shrink:0;width:74px;box-sizing:border-box;white-space:nowrap;text-align:center">${cfg.tag}</span>
@@ -1989,7 +1991,7 @@ function renderExpirTableRows(){
     tr.onclick = () => selectExpirProperty(loc.name);
     if(loc.name===_selectedExpirLoc) tr.style.background = 'rgba(13,32,64,.07)';
     tr.innerHTML = `<td>${i+1}</td><td style="color:#0d2040;font-weight:600;white-space:nowrap">${loc.name}</td>
-      <td>${loc.options ? `<span class="badge" style="background:#d6ab5c;border:2px solid #000;box-sizing:border-box;color:#000">${loc.options}</span>` : '<span class="badge badge-dash">—</span>'}</td>
+      <td>${loc.options ? `<span class="badge" style="background:#29374d;border:none;color:#fff">${loc.options}</span>` : '<span class="badge badge-dash">—</span>'}</td>
       <td>${loc.opt1NotifBegins||'—'}</td><td>${loc.opt1MonthsUntil??'—'}</td><td>${loc.opt1NoticeEnd||'—'}</td>
       <td>${loc.opt2NotifBegins||'—'}</td><td>${loc.opt2MonthsUntil??'—'}</td><td>${loc.opt2NoticeEnd||'—'}</td>
       <td>${mo!==null?mo:'—'}</td>
