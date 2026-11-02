@@ -1432,7 +1432,7 @@ function initMap(which){
 
   if(which==='exec'){
     const m = L.map('map-exec',{zoomControl:true}).setView(center,zoom);
-    const tl_exec = L.tileLayer(TILE_STD,{attribution:'© OpenStreetMap',maxZoom:19}).addTo(m);
+    const tl_exec = L.tileLayer(TILE_STD,{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(m);
     _mapTileLayers[which] = tl_exec; _mapTileMode[which] = 'std';
     validLocs.forEach(loc=>{
       const col = monthsUntil(loc.expiry)<0?'#111':monthsUntil(loc.expiry)<6?'#c62828':monthsUntil(loc.expiry)<12?'#e65100':monthsUntil(loc.expiry)<18?'#f2a900':'#2e7d32';
@@ -1539,7 +1539,7 @@ function initExecCharts(){
     data:{ labels, datasets:[{label:'Monthly Gross',data:locs.map(l=>l.monthly),backgroundColor:colors,borderRadius:4}] },
     options:{ responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt$(c.raw)}}},
-      scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()}},x:{ticks:{maxRotation:45,font:{size:9}}}},
+      scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{display:true,color:'rgba(0,0,0,0.1)'}},x:{ticks:{maxRotation:45,font:{size:9}},grid:{display:true,color:'rgba(0,0,0,0.1)'}}},
       onClick:(_,el)=>{ if(el[0]) selectLocation(locs[el[0].index].name); }
     }
   });
@@ -1549,7 +1549,7 @@ function initExecCharts(){
     data:{ labels, datasets:[{label:'Total Monthly Cost',data:locs.map(l=>(l.monthly||0)+(l.opexMonthly||0)),backgroundColor:colors,borderRadius:4}] },
     options:{ responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt$(c.raw)}}},
-      scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()}},x:{ticks:{maxRotation:45,font:{size:9}}}},
+      scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()},grid:{display:true,color:'rgba(0,0,0,0.1)'}},x:{ticks:{maxRotation:45,font:{size:9}},grid:{display:true,color:'rgba(0,0,0,0.1)'}}},
       onClick:(_,el)=>{ if(el[0]) selectLocation(locs[el[0].index].name); }
     }
   });
@@ -1569,7 +1569,7 @@ function buildGanttChart(){
   const locs = LOCATIONS.filter(l=>l.expiry);
   const urgencyColor = locs.map(loc=>{
     const mo = monthsUntil(loc.expiry);
-    return mo===null?'#888':mo<0?'#222':mo<6?'#c62828':mo<12?'#e65100':mo<18?'#f2a900':'#2e7d32';
+    return mo===null?'#888':mo<0?'#1a1a1a':mo<6?'#c62828':mo<12?'#e65100':mo<18?'#f2a900':'#2e7d32';
   });
 
   const fixedStartMs = new Date('2025-01-01').getTime();
@@ -1628,7 +1628,18 @@ function buildGanttChart(){
       grouped:false,
       indexAxis:'y', responsive:true, maintainAspectRatio:false,
       plugins:{
-        legend:{ display:_ganttShowOptions, labels:{boxWidth:11,font:{size:9}} },
+        legend:{ display:_ganttShowOptions, labels:{boxWidth:11,font:{size:9},
+          // Swatches mirror the lease-status cards and the map legend instead of
+          // Chart.js' per-dataset default (which showed one arbitrary bar colour).
+          generateLabels:()=>[
+            {text:'Expired or MTM',fillStyle:'#1a1a1a',strokeStyle:'#1a1a1a',lineWidth:0,datasetIndex:0},
+            {text:'0–6 Mo',        fillStyle:'#c62828',strokeStyle:'#c62828',lineWidth:0,datasetIndex:0},
+            {text:'6–12 Mo',       fillStyle:'#e65100',strokeStyle:'#e65100',lineWidth:0,datasetIndex:0},
+            {text:'12–18 Mo',      fillStyle:'#f2a900',strokeStyle:'#f2a900',lineWidth:0,datasetIndex:0},
+            {text:'18+ Mo',        fillStyle:'#2e7d32',strokeStyle:'#2e7d32',lineWidth:0,datasetIndex:0},
+            {text:'Option 1 Window',fillStyle:'#29374d',strokeStyle:'#ffffff',lineWidth:1.5,datasetIndex:1},
+            {text:'Option 2 Window',fillStyle:'#8a97ad',strokeStyle:'#ffffff',lineWidth:1.5,datasetIndex:2}
+          ]} },
         tooltip:{ callbacks:{ label:c=>{ const loc=locs[c.dataIndex]; return loc.name+' | Exp: '+loc.expiry+(loc.options?' | Opt: '+loc.options:''); } } }
       },
       scales:{
