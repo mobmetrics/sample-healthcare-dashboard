@@ -463,7 +463,7 @@ class Component extends DCLogic {
     this.cluster = L.markerClusterGroup({ maxClusterRadius: 44, disableClusteringAtZoom: 15, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
       iconCreateFunction: cl => { const k = cl.getChildCount(), d = k < 10 ? 32 : k < 100 ? 38 : 46; return L.divIcon({ className: '', iconSize: [d, d], html: '<div style="width:' + d + 'px;height:' + d + 'px;border-radius:50%;background:rgba(41,55,77,.88);color:#fff;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font:700 13px \'Roboto Condensed\',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.35)">' + k + '</div>' }); } });
     this.markers = {};
-    const ms = this.calc().map(b => { const mk = L.marker([b.la, b.lo], { icon: this.icon(b.n, false) }); mk.bindPopup(() => this.popupHtml(b.n), { maxWidth: 300, minWidth: 290, autoPanPadding: [20, 20] }); mk.on('popupopen', () => { this.openN = b.n; }); mk.on('popupclose', () => { if (this.openN === b.n) this.openN = 0; }); this.markers[b.n] = mk; return mk; });
+    const ms = this.calc().map(b => { const mk = L.marker([b.la, b.lo], { icon: this.icon(b.n, false) }); mk.bindPopup(() => this.popupHtml(b.n), { maxWidth: 300, minWidth: 290, autoPanPadding: [20, 20] }); mk.on('popupopen', e => { const pp = e.popup, mh = Math.max(220, this.map.getSize().y - 70); if (pp.options.maxHeight !== mh) { pp.options.maxHeight = mh; pp.update(); } this.openN = b.n; }); mk.on('popupclose', () => { if (this.openN === b.n) this.openN = 0; }); this.markers[b.n] = mk; return mk; });
     this.cluster.addLayers(ms); this.map.addLayer(this.cluster); this.applySfToMap();
     el.addEventListener('click', e => {
       const r = e.target.closest('[data-act="ring"]'); if (r) { const n = +r.dataset.n; this.openN = n; this.setRing(this.state.ringN === n ? 0 : n); return; }
@@ -621,7 +621,7 @@ class Component extends DCLogic {
       tabs: [['Shade map', 'Shade'], ['Check address', 'Address'], ['Your patients', 'Patients']].map(([label, short], i) => ({ label, short, w: s.tab === i ? 600 : 400, fg: s.tab === i ? '#29374d' : '#5a6b82', line: s.tab === i ? '#dc2f3a' : 'transparent', go: () => this.setState({ tab: i }) })),
       tabShade: s.tab === 0, tabCheck: s.tab === 1, tabPat: s.tab === 2,
       shadeOff: () => { this.setState({ shade: -1 }); this.drawShade(-1); },
-      mapH: mob ? 340 : s.fs ? 620 : 540, ctlDir: mob ? 'column' : 'row', ctlH: mob ? 44 : 36,
+      mapH: mob ? 340 : s.fs ? 660 : 660, ctlDir: mob ? 'column' : 'row', ctlH: mob ? 44 : 36,
       mapLoading: !s.mapReady, loadingLbl: s.loadErr || (loaded ? 'Placing ' + bs.length.toLocaleString() + ' buildings on the map…' : 'Loading buildings…'),
       resetView: () => { if (!this.map) return; this.map.closePopup(); this.fitRing(); },
       toggleAll: () => { if (!this.map) return; const on = !s.all; this.setState({ all: on }); if (on) { this.otherLayer.addTo(this.map); this.map.fitBounds([[cur.lat, cur.lng], ...C.otherLocations.map(o => [o.lat, o.lng])], { padding: [40, 40] }); } else { this.map.removeLayer(this.otherLayer); this.fitRing(); } },
