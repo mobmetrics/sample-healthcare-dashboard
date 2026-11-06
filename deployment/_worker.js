@@ -53,6 +53,58 @@ async function handlePost(request, env) {
   }
 }
 
+
+// ─── Shared Pipeline Deals storage ──────────────────────────────────────
+// Stored in the same KV namespace as the login log (or a "PIPELINE" binding
+// if one is added later) under the key "pipeline":
+// { version, updatedAt, updatedBy, pipeline:[...deals], notes:[...lease notes] }
+// Every save sends the version it started from; if someone else saved in
+// between, the save is refused (409) and the page reloads the latest list.
+function pipelineKV(env){ return env.PIPELINE || env.LOGIN_LOG; }
+
+async function handlePipelineGet(env){
+  try {
+    const kv = pipelineKV(env);
+    if (!kv) throw new Error('No KV binding for pipeline');
+    const raw = await kv.get('pipeline');
+    return new Response(raw || '{}', { headers: { ...JSON_HEADERS, 'Cache-Control': 'no-store' } });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'Failed to read pipeline', detail: String(err && err.message || err) }),
+      { status: 500, headers: JSON_HEADERS });
+  }
+}
+
+async function handlePipelinePut(request, env){
+  try {
+    const kv = pipelineKV(env);
+    if (!kv) throw new Error('No KV binding for pipeline');
+    const text = await request.text();
+    if (text.length > 2000000) return new Response(JSON.stringify({ error: 'Too large' }), { status: 413, headers: JSON_HEADERS });
+    const body = JSON.parse(text);
+    if (!body || !Array.isArray(body.pipeline) || !Array.isArray(body.notes)) {
+      return new Response(JSON.stringify({ error: 'pipeline and notes must be lists' }), { status: 400, headers: JSON_HEADERS });
+    }
+    const raw = await kv.get('pipeline');
+    const cur = raw ? JSON.parse(raw) : {};
+    const curVersion = cur.version || 0;
+    if ((body.baseVersion || 0) !== curVersion) {
+      return new Response(JSON.stringify({ error: 'conflict', version: curVersion }), { status: 409, headers: JSON_HEADERS });
+    }
+    const next = {
+      version: curVersion + 1,
+      updatedAt: new Date().toISOString(),
+      updatedBy: String(body.by || '').slice(0, 120),
+      pipeline: body.pipeline,
+      notes: body.notes,
+    };
+    await kv.put('pipeline', JSON.stringify(next));
+    return new Response(JSON.stringify({ ok: true, version: next.version, updatedAt: next.updatedAt }), { headers: JSON_HEADERS });
+  } catch (err) {
+    return new Response(JSON.stringify({ error: 'Failed to save pipeline', detail: String(err && err.message || err) }),
+      { status: 500, headers: JSON_HEADERS });
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -62,6 +114,13 @@ export default {
       if (request.method === 'POST') return handlePost(request, env);
       return new Response(JSON.stringify({ error: 'Method not allowed' }),
         { status: 405, headers: { ...JSON_HEADERS, Allow: 'GET, POST' } });
+    }
+
+    if (url.pathname === '/api/pipeline') {
+      if (request.method === 'GET') return handlePipelineGet(env);
+      if (request.method === 'PUT') return handlePipelinePut(request, env);
+      return new Response(JSON.stringify({ error: 'Method not allowed' }),
+        { status: 405, headers: { ...JSON_HEADERS, Allow: 'GET, PUT' } });
     }
 
     // Everything else is a static asset. env.ASSETS applies _headers and

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<title>Site Selection</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;500;700&amp;family=Archivo:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#f4f6f9;font-family:'Archivo',system-ui,sans-serif;color:#1b2533;overflow-x:hidden}a{color:#dc2f3a;text-decoration:none}a:hover{color:#b5262e;text-decoration:underline}*{box-sizing:border-box}button{font-family:inherit}.leaflet-popup-content{margin:0 !important;width:290px !important}.leaflet-popup-content-wrapper{border-radius:8px !important;overflow:hidden;padding:0 !important}</style>
+</helmet>
+<div ref="{{ rootRef }}" style="display:flex;flex-direction:{{ rootDir }};min-height:100vh;background:#f4f6f9">
+
+<sc-if value="{{ showSidebar }}" hint-placeholder-val="{{ true }}">
+<aside style="width:232px;flex-shrink:0;background:#29374d;color:#fff;display:flex;flex-direction:column;padding:22px 0;position:sticky;top:0;height:100vh">
+<div style="padding:0 22px 22px;border-bottom:1px solid rgba(255,255,255,.14)"><div style="font-family:'Roboto Condensed';font-weight:700;font-size:26px">{{ c.clientShort }}</div><div style="font-family:'Roboto Condensed';font-weight:700;font-size:12px;letter-spacing:.3em;color:#aebacb">{{ c.clientTag }}</div></div>
+<nav style="display:flex;flex-direction:column;padding:14px 0;font-size:14px">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="8"><button onClick="{{ m.go }}" style="text-align:left;background:none;border:none;padding:10px 22px;color:#dfe5ee;font-size:14px;cursor:pointer" style-hover="background:rgba(255,255,255,.06)">{{ m.label }}</button></sc-for>
+<div style="padding:10px 22px 10px 34px;background:#dc2f3a;color:#fff;font-weight:600">└ Site Selection</div>
+</nav>
+<div style="margin-top:auto;padding:0 22px;font-family:'Roboto Condensed';font-size:14px;color:#aebacb;display:flex;flex-direction:column;gap:6px"><div>Lease with Confidence, Choose MedWest</div><div style="font-size:12px">MedWest Realty © 2026</div></div>
+</aside>
+</sc-if>
+
+<sc-if value="{{ showTopBar }}" hint-placeholder-val="{{ false }}">
+<div style="background:#29374d;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:1500">
+<button onClick="{{ toggleMenu }}" aria-label="Menu" style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;background:none;color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:6px;cursor:pointer">☰</button>
+<span style="font-family:'Roboto Condensed';font-weight:700;font-size:20px">{{ c.clientShort }} <span style="font-size:11px;letter-spacing:.25em;color:#aebacb">{{ c.clientTag }}</span></span>
+</div>
+</sc-if>
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ toggleMenu }}" style="position:fixed;inset:0;background:rgba(27,37,51,.5);z-index:1600"><div style="width:270px;height:100%;background:#29374d;padding:18px 0;display:flex;flex-direction:column">
+<sc-for list="{{ menu }}" as="m" hint-placeholder-count="8"><button onClick="{{ m.go }}" style="text-align:left;background:none;border:none;padding:13px 22px;color:#dfe5ee;font-size:15px">{{ m.label }}</button></sc-for>
+<div style="padding:13px 22px 13px 34px;background:#dc2f3a;color:#fff;font-weight:600;font-size:15px">└ Site Selection</div>
+</div></div>
+</sc-if>
+
+<main ref="{{ mainRef }}" style="flex:1;min-width:0;display:flex;flex-direction:column;background:#f4f6f9;position:{{ fsPos }};inset:0;z-index:{{ fsZ }};overflow-y:{{ fsOverflow }}">
+<sc-if value="{{ fs }}" hint-placeholder-val="{{ false }}">
+<div style="background:#29374d;border-bottom:3px solid #dc2f3a;padding:10px {{ pad }}px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:1200">
+<span style="font-family:'Roboto Condensed';font-weight:500;font-size:20px;color:#fff">Site Selection — full screen</span>
+<button onClick="{{ toggleFs }}" style="background:#dc2f3a;color:#fff;border:none;font-weight:600;font-size:14px;height:44px;padding:0 16px;border-radius:6px;cursor:pointer" style-hover="background:#b5262e">✕ Exit full screen</button>
+</div>
+</sc-if>
+<div style="padding:{{ pad }}px;display:flex;flex-direction:column;gap:18px;width:100%">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px 16px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 420px"><div style="font-family:'Roboto Condensed';font-weight:500;font-size:{{ titleSize }}px;line-height:1.15;color:#29374d">Site Selection — {{ c.searchName }}</div><div style="font-size:14px;color:#5a6b82;line-height:1.45">{{ c.searchSummary }} · within {{ c.ringMiles }} miles of {{ c.current.name }}</div></div>
+<sc-if value="{{ notFs }}" hint-placeholder-val="{{ true }}"><a href="#" onClick="{{ toggleFs }}" style="font-weight:600;font-size:14px;white-space:nowrap">Open full screen ↗</a></sc-if>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font-size:{{ answerTxt }}px;line-height:1.4;color:#29374d"><span style="color:#dc2f3a;font-weight:700">The short answer:</span> {{ answer.head }}</div>
+<div style="display:grid;grid-template-columns:{{ tileCols }};gap:{{ tileGap }}px">
+<sc-for list="{{ facts }}" as="f" hint-placeholder-count="4"><div style="background:#fff;border-radius:6px;border-top:4px solid #29374d;box-shadow:0 1px 3px rgba(41,55,77,.12);padding:12px 16px;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:11px;letter-spacing:.1em;color:#5a6b82;text-transform:uppercase">{{ f.k }}</span><span style="font-family:'Roboto Condensed';font-weight:500;font-size:24px;color:#29374d;white-space:nowrap">{{ f.v }}</span><span style="font-size:12px;color:#5a6b82">{{ f.s }}</span></div></sc-for>
+</div>
+</div>
+
+<div style="display:{{ mainDisplay }};grid-template-columns:{{ mapCols }};gap:18px;align-items:start">
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+<div style="position:relative;height:{{ mapH }}px;border-radius:8px;overflow:hidden;background:#dfe7d8;box-shadow:0 1px 3px rgba(41,55,77,.12)">
+<div ref="{{ mapRef }}" style="position:absolute;inset:0"></div>
+<div style="position:absolute;right:10px;top:10px;z-index:900;display:flex;flex-direction:{{ ctlDir }};align-items:flex-end;gap:6px">
+<button onClick="{{ resetView }}" style="background:#fff;color:#29374d;border:none;font-size:13px;font-weight:600;height:{{ ctlH }}px;padding:0 12px;border-radius:6px;box-shadow:0 2px 6px rgba(41,55,77,.25);cursor:pointer">Reset view</button>
+<button onClick="{{ toggleAll }}" style="background:{{ allBg }};color:{{ allFg }};border:none;font-size:13px;font-weight:600;height:{{ ctlH }}px;padding:0 12px;border-radius:6px;box-shadow:0 2px 6px rgba(41,55,77,.25);cursor:pointer">{{ allLabel }}</button>
+</div>
+<button onClick="{{ toggleSat }}" style="position:absolute;left:10px;bottom:22px;z-index:900;background:{{ satBg }};color:{{ satFg }};border:none;font-size:13px;font-weight:600;height:{{ ctlH }}px;padding:0 12px;border-radius:6px;box-shadow:0 2px 6px rgba(41,55,77,.25);cursor:pointer">{{ satLabel }}</button>
+<sc-if value="{{ shadeOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;right:10px;bottom:22px;z-index:900;background:#fff;border-radius:6px;padding:8px 10px;box-shadow:0 2px 6px rgba(41,55,77,.25);display:flex;flex-direction:column;gap:5px;font-size:12px;color:#29374d;max-width:200px">
+<b>{{ shadeName }}</b>
+<div style="display:flex;height:10px;border-radius:2px;overflow:hidden"><span style="flex:1;background:#f6ecd8"></span><span style="flex:1;background:#e1c58d"></span><span style="flex:1;background:#d6ab5c"></span><span style="flex:1;background:#6c89b2"></span><span style="flex:1;background:#29374d"></span></div>
+<div style="display:flex;justify-content:space-between;color:#5a6b82"><span>{{ shadeLo }}</span><span>{{ shadeHi }}</span></div>
+<sc-if value="{{ shadeMsg }}" hint-placeholder-val="{{ false }}"><span style="color:#dc2f3a;font-weight:600">{{ shadeMsg }}</span></sc-if>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="color:#5a6b82">U.S. Census by ZIP</span><button onClick="{{ shadeOff }}" style="border:none;background:#eef1f5;color:#29374d;border-radius:4px;height:26px;padding:0 8px;font-size:12px;font-weight:600;cursor:pointer">✕ Off</button></div>
+</div>
+</sc-if>
+<sc-if value="{{ mapLoading }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5a6b82;font-size:14px;z-index:950;background:#eef1f5">{{ loadingLbl }}</div></sc-if>
+</div>
+<div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13px;color:#29374d;align-items:center">
+<span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:18px;display:inline-block"><svg width="14" height="18" viewBox="0 0 34 44" style="display:block"><path d="M17 43 C17 43 2 27 2 17 A15 15 0 0 1 32 17 C32 27 17 43 17 43Z" fill="#dc2f3a" stroke="#fff" stroke-width="2"/><circle cx="17" cy="17" r="11" fill="#29374d"/><path d="M11 17 Q11 12 14.5 12 Q18 12 16.5 17 Q15 22 18.5 22 Q22 22 22 17" stroke="#d6ab5c" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="22" cy="18.5" r="1.8" fill="#d6ab5c"/></svg></span>Current clinic</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;background:#29374d"></span>Building with space</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;background:#e1c58d;border:2px solid #29374d"></span>In your comparison</span>
+<span style="display:flex;align-items:center;gap:6px"><span style="width:22px;border-top:2px dashed #29374d"></span>{{ c.ringMiles }} miles from current clinic</span>
+<span style="display:flex;align-items:center;gap:6px;color:#5a6b82">* Estimated expenses — typical for the area, not actual</span>
+<sc-if value="{{ allOn }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:3px;background:#fff;border:2px solid #dc2f3a"></span>Other {{ c.clientName }} locations</span></sc-if>
+<sc-if value="{{ hasPatients }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:rgba(220,47,58,.35);border:1px solid #dc2f3a"></span>Your patients (by ZIP)</span></sc-if>
+<sc-if value="{{ ringOn }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:6px"><span style="width:22px;border-top:2px dashed #dc2f3a"></span>{{ ringLbl }} (estimate)<button onClick="{{ clearRing }}" style="border:none;background:#eef1f5;color:#29374d;border-radius:4px;height:26px;padding:0 8px;font-size:12px;font-weight:600;cursor:pointer">✕ Hide</button></span></sc-if>
+</div>
+<sc-if value="{{ mobAdvBtn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toggleAdv }}" style="height:46px;border:1px solid #29374d;border-radius:6px;background:#29374d;color:#fff;font-weight:600;font-size:15px">Show advanced details ▴</button></sc-if>
+</div>
+
+<sc-if value="{{ panelDesk }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(41,55,77,.12);display:flex;flex-direction:column;height:{{ mapH }}px;overflow:hidden;min-width:0">
+<div style="padding:12px 16px;border-bottom:1px solid #dde3ec;display:flex;align-items:center;justify-content:space-between"><span style="font-family:'Roboto Condensed';font-weight:500;font-size:20px;color:#29374d">Advanced details</span><button onClick="{{ toggleAdv }}" style="border:none;background:none;font-size:14px;font-weight:600;color:#dc2f3a;height:36px;cursor:pointer;white-space:nowrap">✕ Close</button></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #dde3ec"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.go }}" style="padding:11px 4px;border:none;background:none;font-size:13px;font-weight:{{ t.w }};color:{{ t.fg }};border-bottom:3px solid {{ t.line }};cursor:pointer">{{ t.label }}</button></sc-for></div>
+<div style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+<sc-if value="{{ tabShade }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ shades }}" as="r" hint-placeholder-count="7"><button onClick="{{ r.go }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:{{ r.rowBg }};border:1px solid {{ r.rowBd }};text-align:left;cursor:pointer"><span style="width:16px;height:16px;flex-shrink:0;border-radius:50%;border:2px solid #29374d;display:flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }}"></span></span><span style="font-size:14px;color:#29374d;font-weight:{{ r.rw }}">{{ r.label }}</span></button></sc-for>
+<sc-if value="{{ womenOn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 8px;margin-left:20px;background:#f6ecd8;border-radius:6px"><sc-for list="{{ womenAges }}" as="a" hint-placeholder-count="5"><button onClick="{{ a.go }}" style="padding:6px 9px;border-radius:5px;font-size:12px;border:1px solid {{ a.bd }};background:{{ a.bg }};color:{{ a.fg }};cursor:pointer">{{ a.label }}</button></sc-for></div></sc-if>
+<span style="font-size:12px;color:#5a6b82;margin-top:6px">U.S. Census data by ZIP code. Darker = more. Hover a ZIP for its number.</span>
+</sc-if>
+<sc-if value="{{ tabCheck }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:#5a6b82;line-height:1.5">Type a street address, city or ZIP. A red dot marks it on the map with the distance from your clinic.</span>
+<div style="display:flex;gap:8px;margin-top:4px"><input value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Address, city or ZIP" style="flex:1;min-width:0;height:40px;padding:0 12px;border:1px solid #c9d2de;border-radius:6px;font-size:14px;font-family:inherit"><button onClick="{{ runCheck }}" style="height:40px;padding:0 14px;border-radius:6px;border:none;background:#29374d;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Check</button></div>
+<sc-if value="{{ checkMsg }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:#29374d;background:#e7ecf3;border-radius:6px;padding:10px 12px;line-height:1.45;margin-top:6px">{{ checkMsg }}</div></sc-if>
+</sc-if>
+<sc-if value="{{ tabPat }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:#5a6b82;line-height:1.5">Pick an Excel or CSV file with one patient per row and a ZIP code column. It stays on this computer — nothing is uploaded or saved.</span>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px"><button onClick="{{ pickFile }}" style="height:40px;padding:0 14px;border-radius:6px;border:none;background:#29374d;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Choose file</button><sc-if value="{{ hasPatients }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearPatients }}" style="height:40px;padding:0 10px;border:none;background:none;color:#dc2f3a;font-size:14px;font-weight:600;cursor:pointer">Clear</button></sc-if></div>
+<a href="#" onClick="{{ downloadTemplate }}" style="font-size:13px;margin-top:4px">Download a blank template</a>
+<sc-if value="{{ patientMsg }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:#29374d;background:#e7ecf3;border-radius:6px;padding:10px 12px;line-height:1.45;margin-top:6px">{{ patientMsg }}</div></sc-if>
+</sc-if>
+</div>
+<div style="border-top:1px solid #dde3ec;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:12px;color:#5a6b82">Full building details are below the list.</span><button onClick="{{ toggleFs }}" style="height:34px;padding:0 12px;border-radius:6px;border:1px solid #29374d;background:#fff;color:#29374d;font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0">{{ fsLabel }}</button></div>
+</div>
+</sc-if>
+<sc-if value="{{ showPicks }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+<div style="font-family:'Roboto Condensed';font-weight:500;font-size:20px;color:#29374d">Our top 3 picks for you</div>
+<sc-for list="{{ picks }}" as="p" hint-placeholder-count="3"><div onClick="{{ p.b.onFocus }}" style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(41,55,77,.12);display:grid;grid-template-columns:{{ pickCols }};overflow:hidden;cursor:pointer" style-hover="box-shadow:0 4px 14px rgba(41,55,77,.18)">
+<div style="position:relative"><img src="{{ p.b.photo }}" alt="" style="width:100%;height:100%;min-height:128px;object-fit:cover;display:block"><span style="position:absolute;left:8px;top:8px;width:26px;height:26px;border-radius:50%;background:{{ p.b.pinBg }};color:{{ p.b.pinFg }};border:2px solid {{ p.b.pinBd }};display:flex;align-items:center;justify-content:center;font-family:'Roboto Condensed';font-weight:700;font-size:13px">{{ p.b.n }}</span></div>
+<div style="padding:11px 13px;display:flex;flex-direction:column;gap:4px;min-width:0">
+<span style="font-family:'Roboto Condensed';font-weight:700;font-size:12px;letter-spacing:.1em;color:#dc2f3a">{{ p.tag }}</span>
+<span style="font-weight:600;color:#29374d;font-size:15px">{{ p.b.name }} · {{ p.b.city }}</span>
+<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap"><span style="font-family:'Roboto Condensed';font-weight:500;font-size:24px;color:#29374d">{{ p.b.monthlyLbl }}</span><span style="font-size:13px;color:#5a6b82">a month for {{ p.b.fitLbl }}</span></div>
+<span style="font-size:13px;color:{{ p.b.diffColor }};font-weight:600">{{ p.b.monthDiffLbl }}</span>
+<span style="font-size:13px;color:#5a6b82">About {{ p.b.drive }} min from your clinic</span>
+</div>
+</div></sc-for>
+<button onClick="{{ comparePicks }}" style="height:46px;border:none;border-radius:6px;background:#29374d;color:#fff;font-weight:600;font-size:15px;cursor:pointer" style-hover="background:#223044">Compare these 3 side by side</button>
+<sc-if value="{{ showMyCompare }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openCompare }}" style="height:44px;border:1px solid #29374d;border-radius:6px;background:#e1c58d;color:#29374d;font-weight:600;font-size:14px;cursor:pointer">View your comparison ({{ cmpCount }} of 3)</button></sc-if>
+<sc-if value="{{ deskAdvBtn }}" hint-placeholder-val="{{ true }}"><button onClick="{{ toggleAdv }}" style="height:44px;border:1px solid #29374d;border-radius:6px;background:#fff;color:#29374d;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#e7ecf3">Show advanced details ▸</button></sc-if>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{ inCompare }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap">
+<button onClick="{{ closeCompare }}" style="height:44px;padding:0 14px;border-radius:6px;border:1px solid #29374d;background:#fff;color:#29374d;font-weight:600;font-size:14px;cursor:pointer">← Back to map and top picks</button>
+<span style="font-family:'Roboto Condensed';font-weight:500;font-size:24px;color:#29374d">{{ cmpTitle }}</span>
+<span style="font-size:13px;color:#5a6b82;flex:1 1 220px;text-align:right">Add or swap buildings with + Compare below · up to 3 · a 4th replaces the first</span>
+</div>
+<sc-if value="{{ cmpEmpty }}" hint-placeholder-val="{{ false }}"><div style="background:#fff;border-radius:8px;padding:28px;text-align:center;color:#5a6b82;font-size:15px">No buildings in your comparison yet. Tap + Compare on any building below.</div></sc-if>
+<sc-if value="{{ cmpDesk }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(41,55,77,.12);overflow:hidden;display:grid;grid-template-columns:{{ cmpCols }}">
+<span style="background:#f4f6f9"></span>
+<sc-for list="{{ cmpHead }}" as="h" hint-placeholder-count="4"><div style="background:{{ h.bg }};border-left:1px solid #dde3ec;display:flex;flex-direction:column;min-width:0">
+<sc-if value="{{ h.cur }}" hint-placeholder-val="{{ false }}"><div style="height:100px;background:#29374d;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Roboto Condensed';font-size:16px">Where you are now</div></sc-if>
+<sc-if value="{{ h.photo }}" hint-placeholder-val="{{ false }}"><img src="{{ h.photo }}" alt="" style="width:100%;height:100px;object-fit:cover;display:block"></sc-if>
+<div style="padding:10px 12px;display:flex;align-items:center;gap:8px"><span style="width:24px;height:24px;flex-shrink:0;border-radius:{{ h.radius }};background:{{ h.badgeBg }};color:{{ h.badgeFg }};border:1.5px solid #29374d;display:flex;align-items:center;justify-content:center;font-family:'Roboto Condensed';font-weight:700;font-size:11px">{{ h.n }}</span><span style="display:flex;flex-direction:column;min-width:0"><b style="color:#29374d;font-size:14px">{{ h.name }}</b><span style="font-size:12px;color:#5a6b82">{{ h.city }}</span></span></div>
+</div></sc-for>
+<sc-for list="{{ cmpMain }}" as="r" hint-placeholder-count="7"><div style="display:contents">
+<span style="padding:12px 14px;border-top:1px solid #dde3ec;background:#f9fafc;display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;color:#29374d;font-size:14px">{{ r.label }}</span><span style="font-size:12px;color:#5a6b82">{{ r.sub }}</span></span>
+<sc-for list="{{ r.cells }}" as="x" hint-placeholder-count="4"><span style="padding:12px 14px;border-top:1px solid #dde3ec;border-left:1px solid #dde3ec;display:flex;flex-direction:column;gap:4px;align-items:flex-start;min-width:0"><span style="font-family:{{ x.font }};font-size:{{ x.size }};font-weight:{{ x.w }};color:{{ x.color }}">{{ x.v }}</span><sc-if value="{{ x.best }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Roboto Condensed';font-weight:700;font-size:11px;letter-spacing:.08em;background:#29374d;color:#fff;padding:2px 6px;border-radius:3px">{{ bestLabel }}</span></sc-if></span></sc-for>
+</div></sc-for>
+<button onClick="{{ toggleMore }}" style="grid-column:1 / -1;border:none;border-top:1px solid #dde3ec;padding:12px 14px;background:#f4f6f9;text-align:left;font-weight:600;color:#29374d;font-size:14px;cursor:pointer">{{ moreLabel }}</button>
+<sc-if value="{{ more }}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{ cmpMore }}" as="r" hint-placeholder-count="5"><div style="display:contents">
+<span style="padding:10px 14px;border-top:1px solid #eef1f5;background:#f9fafc;font-size:13px;color:#5a6b82">{{ r.label }}</span>
+<sc-for list="{{ r.cells }}" as="x" hint-placeholder-count="4"><span style="padding:10px 14px;border-top:1px solid #eef1f5;border-left:1px solid #dde3ec;font-size:13px;color:{{ x.color }}">{{ x.v }}</span></sc-for>
+</div></sc-for>
+</sc-if>
+<span style="border-top:1px solid #dde3ec;background:#f9fafc"></span>
+<span style="border-top:1px solid #dde3ec;border-left:1px solid #dde3ec"></span>
+<sc-for list="{{ cmpList }}" as="b" hint-placeholder-count="3"><span style="border-top:1px solid #dde3ec;border-left:1px solid #dde3ec;padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap"><a href="{{ b.dirUrl }}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:8px;border-radius:6px;border:1px solid #29374d;color:#29374d;font-size:13px;font-weight:600;text-decoration:none">Directions</a><button onClick="{{ b.onCompare }}" style="padding:8px 10px;border-radius:6px;border:none;background:none;color:#dc2f3a;font-size:13px;font-weight:600;cursor:pointer">Remove</button></span></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ cmpMob }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat({{ cmpN }},minmax(0,1fr));gap:6px"><sc-for list="{{ cmpHead }}" as="h" hint-placeholder-count="4"><div style="background:#fff;border-radius:6px;padding:8px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;box-shadow:0 1px 3px rgba(41,55,77,.12);min-width:0"><span style="width:24px;height:24px;border-radius:{{ h.radius }};background:{{ h.badgeBg }};color:{{ h.badgeFg }};border:1.5px solid #29374d;display:flex;align-items:center;justify-content:center;font-family:'Roboto Condensed';font-weight:700;font-size:11px">{{ h.n }}</span><span style="font-size:11px;color:#29374d;line-height:1.25">{{ h.name }}</span></div></sc-for></div>
+<sc-for list="{{ cmpPhone }}" as="g" hint-placeholder-count="5"><div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(41,55,77,.12);padding:12px;display:flex;flex-direction:column;gap:9px">
+<span style="font-family:'Roboto Condensed';font-weight:700;font-size:12px;letter-spacing:.1em;color:#5a6b82">{{ g.label }}</span>
+<sc-for list="{{ g.items }}" as="i" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:8px;align-items:center">
+<span style="width:24px;height:24px;border-radius:{{ i.r }};background:{{ i.bg }};color:{{ i.fg }};border:1.5px solid #29374d;display:flex;align-items:center;justify-content:center;font-family:'Roboto Condensed';font-weight:700;font-size:11px">{{ i.n }}</span>
+<span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="font-size:14px;font-weight:600">{{ i.lbl }}</span><sc-if value="{{ i.hasBar }}" hint-placeholder-val="{{ true }}"><span style="height:6px;background:#eef1f5;border-radius:3px;overflow:hidden"><span style="display:block;height:100%;width:{{ i.pct }}%;background:{{ i.color }}"></span></span></sc-if></span>
+<span style="font-family:'Roboto Condensed';font-weight:700;font-size:11px;letter-spacing:.06em;color:#29374d">{{ i.tag }}</span>
+</div></sc-for>
+</div></sc-for>
+<sc-for list="{{ cmpList }}" as="b" hint-placeholder-count="3"><div style="display:flex;gap:8px;align-items:center;background:#fff;border-radius:8px;padding:8px 12px;box-shadow:0 1px 3px rgba(41,55,77,.12)"><span style="flex:1;font-size:14px;font-weight:600;color:#29374d">{{ b.n }} · {{ b.name }}</span><a href="{{ b.dirUrl }}" target="_blank" rel="noopener" style="height:44px;padding:0 12px;display:flex;align-items:center;border-radius:6px;border:1px solid #29374d;color:#29374d;font-size:13px;font-weight:600;text-decoration:none">Directions</a><button onClick="{{ b.onCompare }}" style="height:44px;padding:0 10px;border:none;background:none;color:#dc2f3a;font-size:13px;font-weight:600">Remove</button></div></sc-for>
+</sc-if>
+<div style="font-size:12px;color:#5a6b82;line-height:1.5">All-in rent = asking rent, plus building expenses (and electric and janitorial if not included) when triple net. * = estimated expenses, typical for the area, not actual. Full service and gross = asking rent only. Monthly cost = all-in rent × space that fits.</div>
+</div>
+</sc-if>
+
+<div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(41,55,77,.12);overflow:hidden">
+<div style="padding:14px 16px;border-bottom:1px solid #dde3ec;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-family:'Roboto Condensed';font-weight:500;font-size:20px;color:#29374d;margin-right:auto">{{ listTitle }}</span>
+<div style="display:flex;gap:6px;overflow-x:auto;max-width:100%"><span style="font-size:13px;color:#5a6b82;align-self:center;flex-shrink:0">Sort by:</span><sc-for list="{{ sorts }}" as="s" hint-placeholder-count="4"><button onClick="{{ s.go }}" style="flex-shrink:0;height:{{ sortH }}px;padding:0 11px;border-radius:6px;font-size:13px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};cursor:pointer">{{ s.label }}</button></sc-for></div>
+</div>
+<div style="padding:10px 16px;border-bottom:1px solid #eef1f5;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center"><div style="display:flex;gap:6px;overflow-x:auto;align-items:center;max-width:100%"><span style="font-size:13px;color:#5a6b82;flex-shrink:0">Show:</span><sc-for list="{{ scopes }}" as="s" hint-placeholder-count="3"><button onClick="{{ s.go }}" style="flex-shrink:0;height:{{ sortH }}px;padding:0 11px;border-radius:6px;font-size:13px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:{{ s.fg }};cursor:pointer">{{ s.label }}</button></sc-for></div><label style="display:flex;gap:6px;align-items:center;max-width:100%"><span style="font-size:13px;color:#5a6b82;flex-shrink:0">Space:</span><select value="{{ sfRange }}" onChange="{{ onSfRange }}" aria-label="Space available" style="min-width:0;height:{{ sortH }}px;padding:0 10px;border:1px solid #c9d2de;border-radius:6px;font-size:13px;font-family:inherit;color:#29374d;background:#fff;cursor:pointer"><sc-for list="{{ sfOpts }}" as="o" hint-placeholder-count="8"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label></div>
+<sc-if value="{{ sfEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:18px 16px;text-align:center;color:#5a6b82;font-size:14px">No buildings with that much space here. Try another size or distance.</div></sc-if>
+<sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:52px 92px minmax(0,1.7fr) minmax(0,1fr) minmax(0,1.1fr) minmax(0,.8fr) minmax(0,.7fr) minmax(0,.9fr) 124px;font-size:14px;align-items:center">
+<sc-for list="{{ listHead }}" as="h" hint-placeholder-count="9"><span style="padding:9px 10px;background:#f4f6f9;font-family:'Roboto Condensed';font-weight:700;font-size:12px;letter-spacing:.06em;color:#5a6b82">{{ h }}</span></sc-for>
+<sc-for list="{{ rows }}" as="b" hint-placeholder-count="10"><div style="display:contents">
+<button onClick="{{ b.onFocus }}" title="Show on map" style="padding:10px;border:none;border-top:1px solid #eef1f5;background:none;cursor:pointer;height:100%"><span style="width:26px;height:26px;border-radius:50%;background:{{ b.pinBg }};color:{{ b.pinFg }};border:2px solid {{ b.pinBd }};display:flex;align-items:center;justify-content:center;font-family:'Roboto Condensed';font-weight:700;font-size:13px">{{ b.n }}</span></button>
+<span style="padding:7px 8px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center"><img src="{{ b.photo }}" alt="" style="width:76px;height:50px;object-fit:cover;border-radius:4px;display:block"></span>
+<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px"><b style="color:#29374d;font-weight:600">{{ b.name }}</b><span style="color:#5a6b82;font-size:12px">{{ b.addr }}, {{ b.city }}</span></span>
+<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px"><b style="color:#29374d">{{ b.monthlyLbl }}</b><span style="color:#5a6b82;font-size:12px">{{ b.fitLbl }}</span></span>
+<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center;color:{{ b.diffColor }};font-weight:600">{{ b.monthDiffShort }}</span>
+<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px"><span>{{ b.allInLbl }}</span><span style="font-size:11px;color:#dc2f3a">{{ b.flag }}</span></span>
+<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center;color:#5a6b82">{{ b.drive }} min</span>
+<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center;font-size:13px">{{ b.spaceShort }}</span>
+<span style="padding:8px 10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center"><button onClick="{{ b.onCompare }}" style="width:100%;padding:8px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid #29374d;background:{{ b.btnBg }};color:#29374d;cursor:pointer">{{ b.btn }}</button></span>
+</div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ mob }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:12px">
+<sc-for list="{{ rows }}" as="b" hint-placeholder-count="10"><div style="border:1px solid #dde3ec;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
+<div onClick="{{ b.onFocus }}" style="display:grid;grid-template-columns:96px minmax(0,1fr)"><div style="position:relative"><img src="{{ b.photo }}" alt="" style="width:96px;height:100%;min-height:108px;object-fit:cover;display:block"><span style="position:absolute;left:6px;top:6px;width:24px;height:24px;border-radius:50%;background:{{ b.pinBg }};color:{{ b.pinFg }};border:2px solid {{ b.pinBd }};display:flex;align-items:center;justify-content:center;font-family:'Roboto Condensed';font-weight:700;font-size:12px">{{ b.n }}</span></div>
+<div style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0"><b style="color:#29374d;font-size:14px;font-weight:600">{{ b.name }}</b><span style="color:#5a6b82;font-size:12px">{{ b.addr }}, {{ b.city }}</span><span><b style="color:#29374d">{{ b.monthlyLbl }}</b>{{ b.monthSuffix }} · {{ b.fitLbl }}</span><span style="color:{{ b.diffColor }};font-weight:600">{{ b.monthDiffShort }}</span><span style="color:#5a6b82;font-size:12px">About {{ b.drive }} min drive · {{ b.allInTxt }} <span style="color:#dc2f3a">{{ b.flagShort }}</span></span></div></div>
+<button onClick="{{ b.onCompare }}" style="margin:0 12px 12px;height:44px;border-radius:6px;font-size:14px;font-weight:600;border:1px solid #29374d;background:{{ b.btnBg }};color:#29374d">{{ b.btn }}</button>
+</div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ listMore }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 16px;border-top:1px solid #dde3ec;display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:13px;color:#5a6b82">{{ listShownLbl }}</span><button onClick="{{ showMoreList }}" style="height:40px;padding:0 16px;border-radius:6px;border:1px solid #29374d;background:#fff;color:#29374d;font-weight:600;font-size:14px;cursor:pointer">Show 25 more</button></div></sc-if>
+</div>
+
+<sc-if value="{{ adv }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(41,55,77,.12);overflow:hidden">
+<div style="padding:12px 16px;border-bottom:1px solid #dde3ec;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-family:'Roboto Condensed';font-weight:500;font-size:18px;color:#29374d">Full building details</span><span style="font-size:13px;color:#5a6b82">{{ advCountLbl }}</span></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<input value="{{ fq }}" onChange="{{ onFq }}" placeholder="Filter by building address" style="flex:1 1 220px;min-width:0;height:{{ sortH }}px;padding:0 12px;border:1px solid #c9d2de;border-radius:6px;font-size:14px;font-family:inherit">
+<select value="{{ fDist }}" onChange="{{ onFDist }}" aria-label="Distance from your clinic" style="flex:0 1 auto;height:{{ sortH }}px;padding:0 10px;border:1px solid #c9d2de;border-radius:6px;font-size:14px;font-family:inherit;color:#29374d;background:#fff"><sc-for list="{{ distOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<select value="{{ fSize }}" onChange="{{ onFSize }}" aria-label="Building size" style="flex:0 1 auto;height:{{ sortH }}px;padding:0 10px;border:1px solid #c9d2de;border-radius:6px;font-size:14px;font-family:inherit;color:#29374d;background:#fff"><sc-for list="{{ sizeOpts }}" as="o" hint-placeholder-count="4"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+<sc-if value="{{ filtersOn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearFilters }}" style="height:{{ sortH }}px;padding:0 10px;border:none;background:none;color:#dc2f3a;font-size:14px;font-weight:600;cursor:pointer">Clear filters</button></sc-if>
+</div>
+</div>
+<sc-if value="{{ advEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:22px 16px;text-align:center;color:#5a6b82;font-size:14px">No buildings match these filters. Try a wider distance or size.</div></sc-if>
+<sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
+<div style="display:grid;grid-template-columns:44px minmax(0,1.1fr) minmax(0,1.4fr) minmax(0,.7fr) minmax(0,1.4fr) minmax(0,1fr) minmax(0,.6fr) minmax(0,1.1fr) minmax(0,1fr);font-size:12px;align-items:center">
+<sc-for list="{{ advHead }}" as="h" hint-placeholder-count="9"><span style="padding:9px 8px;background:#f4f6f9;font-family:'Roboto Condensed';font-weight:700;font-size:11px;letter-spacing:.06em;color:#5a6b82">{{ h }}</span></sc-for>
+<sc-for list="{{ advRows }}" as="b" hint-placeholder-count="10"><div style="display:contents">
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%;font-weight:700;color:#29374d">{{ b.n }}</span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column"><b style="color:#29374d;font-weight:600">{{ b.name }}</b><span style="color:#5a6b82">{{ b.addr }}</span></span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%">{{ b.ask }} <span style="color:#dc2f3a">{{ b.flag }}</span></span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%;font-weight:600;color:#29374d">{{ b.allInLbl }}</span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%">{{ b.spaceLbl }}</span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%">{{ b.bsfLbl }} · {{ b.leasedLbl }}</span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%">{{ b.yearLbl }}</span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%">{{ b.brokerLbl }}</span>
+<span style="padding:9px 8px;border-top:1px solid #eef1f5;height:100%">{{ b.parking }}</span>
+</div></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ mob }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:12px">
+<sc-for list="{{ advRows }}" as="b" hint-placeholder-count="10"><div style="border:1px solid #dde3ec;border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;font-size:13px">
+<b style="color:#29374d;font-size:14px">{{ b.n }} · {{ b.name }}</b>
+<div style="display:grid;grid-template-columns:108px minmax(0,1fr);gap:4px 8px">
+<span style="color:#5a6b82">Asking rent</span><span>{{ b.ask }} <span style="color:#dc2f3a">{{ b.flag }}</span></span>
+<span style="color:#5a6b82">All-in rent</span><b style="color:#29374d">{{ b.allInLbl }}</b>
+<span style="color:#5a6b82">Space available</span><span>{{ b.spaceLbl }}</span>
+<span style="color:#5a6b82">Building</span><span>{{ b.bsfLbl }} · {{ b.leasedLbl }} · built {{ b.yearLbl }}</span>
+<span style="color:#5a6b82">Leasing company</span><span>{{ b.brokerLbl }}</span>
+<span style="color:#5a6b82">Parking</span><span>{{ b.parking }}</span>
+</div>
+</div></sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ advMore }}" hint-placeholder-val="{{ false }}"><div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap"><span style="font-size:13px;color:#5a6b82">{{ advShownLbl }}</span><button onClick="{{ showMoreAdv }}" style="height:40px;padding:0 16px;border-radius:6px;border:1px solid #29374d;background:#fff;color:#29374d;font-weight:600;font-size:14px;cursor:pointer">Show 50 more</button></div></sc-if>
+<sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}"><div style="height:{{ sheetH }}px"></div></sc-if>
+<div style="font-size:12px;color:#5a6b82;line-height:1.6;display:flex;flex-direction:column;gap:4px;max-width:1000px"><div><b style="color:#29374d">Sources:</b> {{ c.sources }}</div><div>{{ c.disclaimer }}</div></div>
+</div>
+</main>
+
+<input type="file" accept=".csv,.xlsx,.xls" ref="{{ fileRef }}" onChange="{{ onFile }}" style="display:none">
+<sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;left:0;right:0;bottom:0;height:{{ sheetH }}px;z-index:2500;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgba(41,55,77,.25);display:flex;flex-direction:column">
+<div style="display:flex;justify-content:center;padding:8px 0 0"><span style="width:40px;height:5px;border-radius:3px;background:#c9d2de"></span></div>
+<div style="padding:2px 16px 4px;display:flex;align-items:center;justify-content:space-between"><span style="font-family:'Roboto Condensed';font-weight:500;font-size:19px;color:#29374d">Advanced details</span><button onClick="{{ toggleAdv }}" style="height:44px;border:none;background:none;font-size:14px;font-weight:600;color:#dc2f3a;white-space:nowrap">✕ Close</button></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid #dde3ec"><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.go }}" style="height:44px;border:none;background:none;font-size:14px;font-weight:{{ t.w }};color:{{ t.fg }};border-bottom:3px solid {{ t.line }}">{{ t.short }}</button></sc-for></div>
+<div style="flex:1;overflow-y:auto;padding:12px 16px 18px;display:flex;flex-direction:column;gap:10px">
+<sc-if value="{{ tabShade }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px"><sc-for list="{{ shades }}" as="r" hint-placeholder-count="7"><button onClick="{{ r.go }}" style="flex-shrink:0;height:44px;padding:0 12px;border-radius:6px;font-size:14px;border:1px solid {{ r.bd }};background:{{ r.bg }};color:{{ r.fg }}">{{ r.label }}</button></sc-for></div>
+<sc-if value="{{ womenOn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px;overflow-x:auto;padding:8px;background:#f6ecd8;border-radius:6px"><sc-for list="{{ womenAges }}" as="a" hint-placeholder-count="5"><button onClick="{{ a.go }}" style="flex-shrink:0;height:44px;padding:0 10px;border-radius:6px;font-size:14px;border:1px solid {{ a.bd }};background:{{ a.bg }};color:{{ a.fg }}">{{ a.label }}</button></sc-for></div></sc-if>
+<span style="font-size:13px;color:#5a6b82">U.S. Census data by ZIP code. Darker = more. Tap a ZIP for its number.</span>
+</sc-if>
+<sc-if value="{{ tabCheck }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;gap:8px"><input value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Address, city or ZIP" style="flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #c9d2de;border-radius:6px;font-size:16px;font-family:inherit"><button onClick="{{ runCheck }}" style="height:44px;padding:0 16px;border-radius:6px;border:none;background:#29374d;color:#fff;font-size:14px;font-weight:600">Check</button></div>
+<sc-if value="{{ checkMsg }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:#29374d;background:#e7ecf3;border-radius:6px;padding:10px 12px;line-height:1.45">{{ checkMsg }}</div></sc-if>
+</sc-if>
+<sc-if value="{{ tabPat }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:14px;color:#5a6b82;line-height:1.45">Excel or CSV with a ZIP code column. Stays on this phone — nothing is uploaded.</span>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button onClick="{{ pickFile }}" style="height:44px;padding:0 16px;border-radius:6px;border:none;background:#29374d;color:#fff;font-size:14px;font-weight:600">Choose file</button><sc-if value="{{ hasPatients }}" hint-placeholder-val="{{ false }}"><button onClick="{{ clearPatients }}" style="height:44px;padding:0 10px;border:none;background:none;color:#dc2f3a;font-size:14px;font-weight:600">Clear</button></sc-if><a href="#" onClick="{{ downloadTemplate }}" style="font-size:14px">Blank template</a></div>
+<sc-if value="{{ patientMsg }}" hint-placeholder-val="{{ false }}"><div style="font-size:14px;color:#29374d;background:#e7ecf3;border-radius:6px;padding:10px 12px;line-height:1.45">{{ patientMsg }}</div></sc-if>
+</sc-if>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ showSuggest }}" hint-placeholder-val="{{ true }}"><button onClick="{{ suggest }}" style="position:fixed;right:18px;bottom:18px;z-index:1000;height:46px;padding:0 16px;border-radius:999px;border:none;background:#29374d;color:#fff;font-weight:600;font-size:14px;box-shadow:0 4px 14px rgba(41,55,77,.3);cursor:pointer">Got a suggestion?</button></sc-if>
+<sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}"><div style="position:fixed;left:50%;bottom:76px;transform:translateX(-50%);z-index:3000;background:#1b2533;color:#fff;font-size:14px;padding:10px 16px;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:90vw;text-align:center">{{ toast }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  /* ======================================================================
+     CLIENT DATA BLOCK — the only part to change for the next client.
+     Buildings load from dataFile (built from the client's CoStar exports +
+     property reports). Swap these values and the data file for a new client.
+     ====================================================================== */
+  static CLIENT = {
+    clientName: 'PulsePath Health', clientShort: 'PulsePath', clientTag: 'HEALTH', initials: 'PP',
+    searchName: 'Irvine Relocation',
+    searchSummary: 'Medical office space with room available in Orange County, San Diego and Phoenix',
+    ringMiles: 5, targetSf: 4500,
+    current: { name: 'PulsePath Health – Sample Clinic', addr: '100 Sample Medical Plaza, Suite 200', city: 'Irvine, CA', lat: 33.6846, lng: -117.8265,
+      sf: 4500, typeLbl: 'triple net', rent: 3.50, opex: 0.85, leaseEnd: '2027-12-31', suite: 'Suite 200', parking: '4 per 1,000 sq ft', year: 1999 },
+    demographic: { label: 'People 65 and older', value: 21840, note: 'within 3 miles · sample figure' },
+    otherLocations: [
+      { name: 'PulsePath Health – Sample Clinic 2', city: 'Mission Viejo', lat: 33.6000, lng: -117.6720 },
+      { name: 'PulsePath Health – Sample Clinic 3', city: 'Huntington Beach', lat: 33.6603, lng: -117.9992 },
+      { name: 'PulsePath Health – Sample Clinic 4', city: 'Anaheim', lat: 33.8366, lng: -117.9143 }
+    ],
+    dataFile: 'data/sites.json', zipFile: 'data/zipgeo.json', photoPlaceholder: 'assets/photo-placeholder.png',
+    estExpenses: { AZ: 0.70, NM: 0.60, CA: 1.00 }, estElecJan: 0.20,
+    sources: 'Available space, asking rents and building details — CoStar exports and property reports, October–November 2026. Building photos — CoStar property reports. Triple net all-in rents add MedWest’s estimated building expenses (about $0.70 per sq ft a month in Arizona, $1.00 in Orange County — typical for the area, not each building’s actual figure) when the listing doesn’t show them. These all-in rents are marked *. Distances are straight-line; drive times are estimates. Map shading — U.S. Census Bureau, American Community Survey 2019–2023 5-year estimates, by ZIP code. The 65-and-older figure in the summary is sample data. Map © Esri and its data partners.',
+    disclaimer: 'Information is from sources believed reliable but has not been verified by MedWest Realty. Rents, availability and terms change often and should be confirmed with the landlord.'
+  };
+  /* ===================== END CLIENT DATA BLOCK ===================== */
+
+  static EMBED = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+  static SF_RANGES = [{ v: 'any', l: 'Any size', min: 0, max: 1e12 }, { v: 'u2', l: 'Under 2,000 sq ft', min: 1, max: 2000 }, { v: '2-4', l: '2,000 – 4,000 sq ft', min: 2000, max: 4000 }, { v: '4-6', l: '4,000 – 6,000 sq ft', min: 4000, max: 6000 }, { v: '6-10', l: '6,000 – 10,000 sq ft', min: 6000, max: 10000 }, { v: '10-20', l: '10,000 – 20,000 sq ft', min: 10000, max: 20000 }, { v: '20-30', l: '20,000 – 30,000 sq ft', min: 20000, max: 30000 }, { v: '30p', l: '30,000+ sq ft', min: 30000, max: 1e12 }];
+  static SHADES = ['People 65 and older', 'Household income', 'Families with children', 'People with health insurance'];
+  /* Real U.S. Census data by ZIP code (ACS 2019–2023 5-year). Colors split the ZIP codes in view into fifths; b = U.S. fallback. */
+  static CENSUS_KEY = 'cf3c22d2a287cfb61b9ac8af7384767316588b34';
+  static SHADE_META = [
+    { v: 'DP05_0024PE', b: [13.8, 17.2, 20.2, 24.4], unit: '%', tip: 'age 65 and older' },
+    { v: 'DP03_0062E', b: [53750, 65071, 77270, 96964], unit: '$', tip: 'median household income' },
+    { v: 'DP02_0014PE', b: [21.8, 26.7, 30.7, 36], unit: '%', tip: 'of households have kids under 18' },
+    { v: 'DP03_0096PE', b: [87.8, 92.1, 94.7, 96.8], unit: '%', tip: 'have health insurance' }
+  ];
+  static WOMEN_AGES = ['18 to 34', '35 to 44', '45 to 54', '55 to 64', '65 and older'];
+  static WOMEN = 99;
+
+  state = { sites: null, loadErr: '', fq: '', fDist: 'any', fSize: 'any', ringN: 0, tab: 0, womenAge: 0, w: 1200, compare: [], view: 'main', adv: false, more: false, sort: 'closest', scope: 'ring', sfRange: 'any', limit: 25, advLimit: 50, fs: false, shade: -1, sat: false, all: false, menuOpen: false, q: '', checkMsg: '', patientMsg: '', patients: false, toast: '', mapReady: false };
+  rootRef = React.createRef(); mapRef = React.createRef(); mainRef = React.createRef(); fileRef = React.createRef();
+
+  componentDidMount() {
+    const el = this.rootRef.current, C = Component.CLIENT;
+    if (el && window.ResizeObserver) { this.ro = new ResizeObserver(() => { const w = el.clientWidth; if (Math.abs(w - this.state.w) > 2) this.setState({ w }); }); this.ro.observe(el); this.setState({ w: el.clientWidth }); }
+    this.onKey = e => { if (e.key === 'Escape' && this.state.fs) this.setState({ fs: false }); };
+    window.addEventListener('keydown', this.onKey);
+    Promise.all([fetch(C.dataFile).then(r => r.json()), fetch(C.zipFile).then(r => r.json()).catch(() => ({}))])
+      .then(([sites, zips]) => { this.zips = {}; Object.keys(zips).forEach(k => { if (zips[k]) this.zips[k.split('|')[0]] = zips[k]; }); this.setState({ sites }); })
+      .catch(() => this.setState({ loadErr: 'Building data could not be loaded.' }));
+    this.waitL = setInterval(() => { if (window.L && window.L.markerClusterGroup && this.mapRef.current && this.state.sites) { clearInterval(this.waitL); this.initMap(); } }, 120);
+  }
+  componentWillUnmount() { this.ro && this.ro.disconnect(); window.removeEventListener('keydown', this.onKey); clearInterval(this.waitL); this.map && this.map.remove(); }
+  componentDidUpdate() {
+    const ps = this._prevS || this.state; this._prevS = this.state;
+    if (Component.EMBED && this._fsSeen !== this.state.fs) { this._fsSeen = this.state.fs; try { window.parent.postMessage({ ssFull: this.state.fs }, location.origin); } catch (e) {} }
+    if (this._sfSeen !== this.state.sfRange) { this._sfSeen = this.state.sfRange; this.applySfToMap(); }
+    if (!this.map) return;
+    if (ps.compare !== this.state.compare) this.refreshPins(ps.compare);
+    if (ps.adv !== this.state.adv || ps.view !== this.state.view || ps.fs !== this.state.fs || (ps.w < 760) !== (this.state.w < 760)) setTimeout(() => this.map && this.map.invalidateSize(), 60);
+  }
+
+  money(v, d) { return '$' + v.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  miles(a, b, c, d) { const R = 3958.8, r = x => x * Math.PI / 180, dl = r(c - a), dg = r(d - b); const h = Math.sin(dl / 2) ** 2 + Math.cos(r(a)) * Math.cos(r(c)) * Math.sin(dg / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); }
+  driveMin(mi) { return Math.round(mi * 1.3 / 28 * 60 + 2); }
+  cur() { const c = Component.CLIENT.current; const allIn = c.rent + c.opex; return { ...c, allIn, monthly: Math.round(allIn * c.sf) }; }
+
+  calc() {
+    const s = this.state; if (!s.sites) return [];
+    if (this._c && this._c.sites === s.sites && this._c.cmp === s.compare) return this._c.out;
+    const C = Component.CLIENT, cur = this.cur(), cmp = s.compare, T = C.targetSf;
+    const tn = { nnn: 'triple net', fs: 'full service', mg: 'modified gross', dn: 'double net' };
+    const out = s.sites.map(b => {
+      const est = C.estExpenses[b.s];
+      const allIn = b.r == null ? null : b.t === 'nnn' ? (est == null ? null : b.r + est) : b.t === 'plus' ? b.r + C.estElecJan : (b.t === 'fs' || b.t === 'mg') ? b.r : null;
+      const dist = this.miles(cur.lat, cur.lng, b.la, b.lo), drive = this.driveMin(dist), inCmp = cmp.includes(b.n);
+      const mc = b.mc || b.av || 0, fit = mc ? Math.min(mc, T) : 0;
+      const monthly = allIn == null || !fit ? null : Math.round(allIn * fit), rd = allIn == null ? null : allIn - cur.allIn;
+      const typeName = b.t === 'plus' ? b.tr.toLowerCase() : tn[b.t] || 'lease type not listed';
+      const ask = b.r == null ? 'Not listed' : this.money(b.r, 2) + (b.rh ? '–' + this.money(b.rh, 2) : '') + ' ' + typeName;
+      const odd = b.r != null && (b.r > 6 || b.r < 0.9);
+      const name = b.nm || b.a;
+      return { ...b, name, addr: b.a, city: b.c, zip: b.z, allIn, dist, drive, monthly, inCmp, fit, ask,
+        flag: b.e ? '(estimate, per CoStar)' : b.rh ? '(range, per CoStar)' : odd ? '(per CoStar)' : '',
+        monthSuffix: monthly == null ? '' : ' a month', allInTxt: allIn == null ? 'all-in not listed' : this.money(allIn, 2) + (b.t === 'nnn' ? '*' : '') + ' all-in', flagShort: allIn == null ? '' : (b.e ? '(estimate, per CoStar)' : b.rh ? '(range, per CoStar)' : ''),
+        allInLbl: allIn == null ? 'Not listed' : this.money(allIn, 2) + (b.t === 'nnn' ? '*' : ''),
+        allInNote: b.t === 'nnn' && est != null ? 'includes about ' + this.money(est, 2) + ' estimated expenses' : b.t === 'plus' ? 'includes about ' + this.money(C.estElecJan, 2) + ' estimated electric and cleaning' : '',
+        monthlyLbl: monthly == null ? 'Not listed' : this.money(monthly, 0) + (b.t === 'nnn' ? '*' : ''),
+        monthDiffLbl: rd == null ? 'All-in rent not listed — we can ask the landlord for you' : (rd < 0 ? this.money(-rd, 2) + ' less per sq ft than today' : rd === 0 ? 'Same per sq ft as today' : this.money(rd, 2) + ' more per sq ft than today'),
+        monthDiffShort: rd == null ? 'Not listed' : (rd <= 0 ? this.money(-rd, 2) + ' less per sq ft' : this.money(rd, 2) + ' more per sq ft'),
+        diffColor: rd == null ? '#5a6b82' : rd <= 0 ? '#29374d' : '#dc2f3a',
+        fitLbl: !fit ? 'Size not listed' : mc > T ? T.toLocaleString() + ' sq ft (of ' + mc.toLocaleString() + ')' : fit.toLocaleString() + ' sq ft',
+        spaceShort: mc ? 'Largest ' + mc.toLocaleString() + ' sq ft' : 'Not listed',
+        spaceLbl: (b.av ? b.av.toLocaleString() + ' sq ft available' : 'Space not listed') + (mc ? ' · largest ' + mc.toLocaleString() : ''),
+        distLbl: dist.toFixed(1) + ' mi', bsfLbl: b.ba ? b.ba.toLocaleString() + ' sq ft' : 'Size not listed',
+        leasedLbl: b.pl != null ? Math.round(b.pl) + '% leased' : '% leased not listed',
+        yearLbl: b.y ? (b.rn ? b.y + ', renovated ' + b.rn : String(b.y)) : 'not listed',
+        parking: b.pk ? b.pk.toFixed(1) + ' per 1,000 sq ft' : 'Not listed',
+        brokerLbl: b.br ? b.br + (b.ct ? ' · ' + b.ct : '') : 'Not listed',
+        photo: b.ph || C.photoPlaceholder, avail: 'Ask landlord', availLc: 'ask landlord',
+        pinBg: inCmp ? '#e1c58d' : '#29374d', pinFg: inCmp ? '#29374d' : '#fff', pinBd: inCmp ? '#29374d' : '#fff',
+        btn: inCmp ? '✓ Comparing' : '+ Compare', btnBg: inCmp ? '#e1c58d' : '#fff',
+        dirUrl: 'https://www.google.com/maps/dir/?api=1&origin=' + cur.lat + ',' + cur.lng + '&destination=' + encodeURIComponent(b.a + ', ' + b.c + ', ' + b.s + ' ' + b.z),
+        onFocus: () => this.focus(b.n), onCompare: () => this.toggleCompare(b.n) };
+    });
+    this._c = { sites: s.sites, cmp: s.compare, out, byN: new Map(out.map(b => [b.n, b])) };
+    return out;
+  }
+  byN(n) { this.calc(); return this._c && this._c.byN.get(n); }
+
+  flash(t) { clearTimeout(this.tt); this.setState({ toast: t }); this.tt = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  toggleCompare(n) {
+    const c = this.state.compare;
+    if (c.includes(n)) { this.setState({ compare: c.filter(x => x !== n) }); return; }
+    if (c.length >= 3) { this.flash(this.byN(c[0]).name + ' was replaced — up to 3 buildings at a time'); this.setState({ compare: [...c.slice(1), n] }); }
+    else this.setState({ compare: [...c, n] });
+  }
+  scrollTop() { const m = this.mainRef.current; if (this.state.fs && m) m.scrollTo({ top: 0, behavior: 'smooth' }); else window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  scrollToMap() {
+    const el = this.mapRef.current; if (!el) return; const m = this.mainRef.current, r = el.getBoundingClientRect();
+    if (r.top >= 0 && r.bottom <= window.innerHeight) return;
+    if (this.state.fs && m) m.scrollTo({ top: m.scrollTop + r.top - 80, behavior: 'smooth' }); else window.scrollTo({ top: window.scrollY + r.top - 80, behavior: 'smooth' });
+  }
+  focus(n) {
+    if (this.state.view !== 'main') this.setState({ view: 'main' });
+    setTimeout(() => { if (!this.map) return; const mk = this.markers[n]; if (!mk) return; if (!this.cluster.hasLayer(mk)) this.cluster.addLayer(mk); this.scrollToMap(); this.map.invalidateSize(); this.cluster.zoomToShowLayer(mk, () => mk.openPopup()); }, 80);
+  }
+
+  pinHtml(n, on) { const w = n > 99 ? 34 : 28; return '<div style="width:' + w + 'px;height:28px;border-radius:14px;background:' + (on ? '#e1c58d' : '#29374d') + ';color:' + (on ? '#29374d' : '#fff') + ';border:2px solid ' + (on ? '#29374d' : '#fff') + ';display:flex;align-items:center;justify-content:center;font:700 12px \'Roboto Condensed\',sans-serif;box-shadow:0 2px 5px rgba(0,0,0,.35);cursor:pointer">' + n + '</div>'; }
+  icon(n, on) { return window.L.divIcon({ className: '', iconSize: [n > 99 ? 34 : 28, 28], iconAnchor: [n > 99 ? 17 : 14, 14], html: this.pinHtml(n, on) }); }
+  popupHtml(n) {
+    const b = this.byN(n), row = (k, v) => '<div style="display:grid;grid-template-columns:104px 1fr;gap:6px;border-top:1px solid #eef1f5;padding:5px 0"><span style="color:#5a6b82">' + k + '</span><span style="color:#1b2533;font-weight:500">' + v + '</span></div>';
+    return '<div style="font:12px Archivo,sans-serif;width:290px"><img src="' + b.photo + '" style="width:100%;height:120px;object-fit:cover;display:block"><div style="padding:10px 12px 12px">' +
+      '<div style="font:700 16px \'Roboto Condensed\',sans-serif;color:#29374d">' + b.n + ' · ' + b.name + '</div><div style="color:#5a6b82;margin-bottom:6px">' + b.a + ', ' + b.c + ', ' + b.s + ' ' + b.z + '</div>' +
+      (b.x ? '' : '<div style="color:#dc2f3a;margin-bottom:4px">Pin placed by ZIP code — exact spot not confirmed</div>') +
+      row('Asking rent', b.ask + (b.flag ? ' <span style="color:#dc2f3a">' + b.flag + '</span>' : '')) + row('All-in rent', b.allInLbl + (b.allIn != null ? ' per sq ft a month' : '') + (b.allInNote ? '<br><span style="color:#5a6b82">' + b.allInNote + '</span>' : '')) +
+      row('Space that fits', b.fitLbl) + row('Space available', b.spaceLbl) +
+      row('Building', b.bsfLbl + ' · ' + b.leasedLbl + ' · built ' + b.yearLbl + (b.cl ? ' · class ' + b.cl : '')) + row('Parking', b.parking) +
+      row('From your clinic', b.distLbl + ' · about ' + b.drive + ' min drive') + row('Leasing company', b.brokerLbl) +
+      '<div style="display:flex;gap:6px;margin-top:8px"><button data-act="cmp" data-n="' + b.n + '" style="flex:1;height:40px;border:1px solid #29374d;border-radius:6px;background:' + (b.inCmp ? '#e1c58d' : '#29374d') + ';color:' + (b.inCmp ? '#29374d' : '#fff') + ';font:600 13px Archivo,sans-serif;cursor:pointer">' + (b.inCmp ? '✓ In comparison · remove' : '+ Add to comparison') + '</button>' +
+      '<a href="' + b.dirUrl + '" target="_blank" rel="noopener" style="height:40px;padding:0 12px;display:flex;align-items:center;border:1px solid #29374d;border-radius:6px;color:#29374d;font:600 13px Archivo,sans-serif;text-decoration:none">Directions</a></div>' +
+      '<button data-act="ring" data-n="' + b.n + '" style="margin-top:6px;width:100%;height:38px;border:1px dashed #dc2f3a;border-radius:6px;background:' + (this.state.ringN === b.n ? '#fdf1f1' : '#fff') + ';color:#dc2f3a;font:600 13px Archivo,sans-serif;cursor:pointer">' + (this.state.ringN === b.n ? '✕ Hide 15-minute drive ring' : 'Show 15-minute drive ring') + '</button></div></div>';
+  }
+  initMap() {
+    const L = window.L, C = Component.CLIENT, cur = this.cur(), el = this.mapRef.current;
+    const esri = s => 'https://server.arcgisonline.com/ArcGIS/rest/services/' + s + '/MapServer/tile/{z}/{y}/{x}';
+    this.map = L.map(el, { zoomControl: true, scrollWheelZoom: true }).setView([cur.lat, cur.lng], 12);
+    this.base = L.tileLayer(esri('World_Topo_Map'), { maxZoom: 18, attribution: 'Map © Esri and its data partners' }).addTo(this.map);
+    this.satLayer = L.layerGroup([L.tileLayer(esri('World_Imagery'), { maxZoom: 18, attribution: 'Imagery © Esri' }), L.tileLayer(esri('Reference/World_Boundaries_and_Places'), { maxZoom: 18 })]);
+    this.ring = L.circle([cur.lat, cur.lng], { radius: C.ringMiles * 1609.34, color: '#29374d', weight: 2, dashArray: '7 7', fillColor: '#29374d', fillOpacity: 0.04, interactive: false }).addTo(this.map);
+    this.shadeLayer = L.layerGroup().addTo(this.map); this.map.on('moveend', () => { if (this.state.shade >= 0) { this._shadeSeq = (this._shadeSeq || 0) + 1; this.loadZips(this.state.shade, this._shadeSeq); } }); this.patientLayer = L.layerGroup().addTo(this.map); this.otherLayer = L.layerGroup(); this.checkLayer = L.layerGroup().addTo(this.map);
+    L.marker([cur.lat, cur.lng], { zIndexOffset: 2000, icon: L.divIcon({ className: '', iconSize: [34, 44], iconAnchor: [17, 43], popupAnchor: [0, -40], html: '<div style="filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))"><svg width="34" height="44" viewBox="0 0 34 44" style="display:block"><path d="M17 43 C17 43 2 27 2 17 A15 15 0 0 1 32 17 C32 27 17 43 17 43Z" fill="#dc2f3a" stroke="#fff" stroke-width="2"/><circle cx="17" cy="17" r="11" fill="#29374d"/><path d="M11 17 Q11 12 14.5 12 Q18 12 16.5 17 Q15 22 18.5 22 Q22 22 22 17" stroke="#d6ab5c" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="22" cy="18.5" r="1.8" fill="#d6ab5c"/></svg></div>' }) })
+      .bindPopup('<div style="padding:12px;font:13px Archivo,sans-serif;width:260px"><b style="font:700 16px \'Roboto Condensed\',sans-serif;color:#29374d">' + cur.name + '</b><br>' + cur.addr + ', ' + cur.city + '<br>' + cur.sf.toLocaleString() + ' sq ft · ' + cur.typeLbl + '<br>' + this.money(cur.allIn, 2) + ' all-in per sq ft a month<br>Lease ends ' + this.endLbl() + '</div>').addTo(this.map);
+    C.otherLocations.forEach(o => L.marker([o.lat, o.lng], { icon: L.divIcon({ className: '', iconSize: [24, 24], iconAnchor: [12, 12], html: '<div style="width:24px;height:24px;border-radius:4px;background:#fff;border:2px solid #dc2f3a;color:#dc2f3a;display:flex;align-items:center;justify-content:center;font:700 10px \'Roboto Condensed\',sans-serif">' + C.initials + '</div>' }) }).bindPopup('<div style="padding:12px;font:13px Archivo,sans-serif"><b style="color:#29374d">' + o.name + '</b><br>' + o.city + '</div>').addTo(this.otherLayer));
+    this.cluster = L.markerClusterGroup({ maxClusterRadius: 44, disableClusteringAtZoom: 15, showCoverageOnHover: false, spiderfyOnMaxZoom: true,
+      iconCreateFunction: cl => { const k = cl.getChildCount(), d = k < 10 ? 32 : k < 100 ? 38 : 46; return L.divIcon({ className: '', iconSize: [d, d], html: '<div style="width:' + d + 'px;height:' + d + 'px;border-radius:50%;background:rgba(41,55,77,.88);color:#fff;border:3px solid #fff;display:flex;align-items:center;justify-content:center;font:700 13px \'Roboto Condensed\',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.35)">' + k + '</div>' }); } });
+    this.markers = {};
+    const ms = this.calc().map(b => { const mk = L.marker([b.la, b.lo], { icon: this.icon(b.n, false) }); mk.bindPopup(() => this.popupHtml(b.n), { maxWidth: 300, minWidth: 290, autoPanPadding: [20, 20] }); mk.on('popupopen', () => { this.openN = b.n; }); mk.on('popupclose', () => { if (this.openN === b.n) this.openN = 0; }); this.markers[b.n] = mk; return mk; });
+    this.cluster.addLayers(ms); this.map.addLayer(this.cluster); this.applySfToMap();
+    el.addEventListener('click', e => {
+      const r = e.target.closest('[data-act="ring"]'); if (r) { const n = +r.dataset.n; this.openN = n; this.setRing(this.state.ringN === n ? 0 : n); return; }
+      const t = e.target.closest('[data-act="cmp"]'); if (!t) return; const n = +t.dataset.n; this.openN = n; this.toggleCompare(n);
+      setTimeout(() => this.refreshOpenPopup(), 40);
+    });
+    this.fitRing(); this.setState({ mapReady: true });
+  }
+  setRing(n) {
+    if (!this.map) return;
+    if (this.driveRing) { this.map.removeLayer(this.driveRing); this.driveRing = null; }
+    this.setState({ ringN: n }, () => this.refreshOpenPopup());
+    if (!n) return; const b = this.byN(n), mi = (15 - 2) / 60 * 28 / 1.3;
+    this.driveRing = window.L.circle([b.la, b.lo], { radius: mi * 1609.34, color: '#dc2f3a', weight: 2, dashArray: '4 6', fillColor: '#dc2f3a', fillOpacity: 0.06, interactive: false }).addTo(this.map);
+  }
+  refreshOpenPopup() { const n = this.openN; if (!n) return; const mk = this.markers[n], p = mk && mk.getPopup(); if (p && mk.isPopupOpen()) p.setContent(this.popupHtml(n)); }
+  fitRing() { this.map.fitBounds(this.ring.getBounds(), { padding: [10, 10] }); }
+  inSf(b) { const r = Component.SF_RANGES.find(x => x.v === this.state.sfRange); if (!r || r.v === 'any') return true; return !!b.mc && b.mc >= r.min && b.mc < r.max; }
+  applySfToMap() { if (!this.cluster || !this.markers) return; const keep = [], drop = []; this.calc().forEach(b => { const mk = this.markers[b.n]; if (!mk) return; const on = this.cluster.hasLayer(mk); if (this.inSf(b)) { if (!on) keep.push(mk); } else if (on) drop.push(mk); }); if (drop.length) this.cluster.removeLayers(drop); if (keep.length) this.cluster.addLayers(keep); }
+  refreshPins(prev) { const now = this.state.compare, ch = new Set([...(prev || []), ...now]); ch.forEach(n => { const mk = this.markers[n]; if (mk) mk.setIcon(this.icon(n, now.includes(n))); }); this.refreshOpenPopup(); }
+  fmtShade(m, x) { return m.unit === '$' ? '$' + Math.round(x / 1000) + 'K' : (Math.round(x * 10) / 10) + '%'; }
+  drawShade(i0) {
+    this._shadeI = i0; this._shadeSeq = (this._shadeSeq || 0) + 1;
+    if (!this.shadeLayer) return; this.shadeLayer.clearLayers();
+    if (i0 < 0 || !this.map) { this.setState({ shadeMsg: '' }); return; }
+    this.loadZips(i0, this._shadeSeq);
+  }
+  async loadZips(i0, seq) {
+    const L = window.L, map = this.map, m = Component.SHADE_META[i0], z = map.getZoom();
+    if (z < 7) { this.shadeLayer.clearLayers(); this.setState({ shadeMsg: 'Zoom in to see ZIP codes' }); return; }
+    this.setState({ shadeMsg: 'Loading ZIP codes…' });
+    try {
+      const b = map.getBounds().pad(0.15), off = (360 / (256 * Math.pow(2, z))) * 1.2;
+      const q = { geometry: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map(v => v.toFixed(4)).join(','), geometryType: 'esriGeometryEnvelope', inSR: 4326, outSR: 4326, spatialRel: 'esriSpatialRelIntersects', returnGeometry: true, maxAllowableOffset: off.toFixed(5), geometryPrecision: 4, outFields: 'ZCTA5', where: '1=1', f: 'geojson' };
+      const gj = await fetch('https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/11/query?' + Object.entries(q).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&')).then(r => r.json());
+      if (seq !== this._shadeSeq) return;
+      const cache = (this._zv = this._zv || {})[m.v] = (this._zv || {})[m.v] || {};
+      const need = gj.features.map(f => f.properties.ZCTA5).filter(k => !(k in cache));
+      const chunks = []; for (let i = 0; i < need.length; i += 150) chunks.push(need.slice(i, i + 150));
+      await Promise.all(chunks.map(c => fetch('https://api.census.gov/data/2023/acs/acs5/profile?get=' + m.v + '&for=zip%20code%20tabulation%20area:' + c.join(',') + '&key=' + Component.CENSUS_KEY).then(r => r.ok ? r.json() : []).then(rows => { c.forEach(k => { cache[k] = null; }); rows.slice(1).forEach(r => { const v = +r[0]; cache[r[1]] = isFinite(v) && v >= 0 ? v : null; }); }).catch(() => {})));
+      if (seq !== this._shadeSeq) return;
+      const ramp = ['#f6ecd8', '#e1c58d', '#d6ab5c', '#6c89b2', '#29374d'];
+      const vis = gj.features.map(f => cache[f.properties.ZCTA5]).filter(v => v != null).sort((a, b) => a - b);
+      const brk = vis.length >= 10 ? [0.2, 0.4, 0.6, 0.8].map(p => vis[Math.floor(p * vis.length)]) : m.b;
+      this.shadeLayer.clearLayers();
+      L.geoJSON(gj, { style: f => { const v = cache[f.properties.ZCTA5]; const k = v == null ? -1 : brk.filter(x => v >= x).length; return { color: '#ffffff', weight: 0.8, fillColor: k < 0 ? '#c9d2de' : ramp[k], fillOpacity: k < 0 ? 0.25 : 0.55 }; },
+        onEachFeature: (f, lyr) => { const zc = f.properties.ZCTA5, v = cache[zc]; lyr.bindTooltip('<b>ZIP ' + zc + '</b><br>' + (v == null ? 'Not reported' : this.fmtShade(m, v) + ' ' + m.tip), { sticky: true, direction: 'top' }); } }).addTo(this.shadeLayer);
+      this.setState({ shadeMsg: '', shadeBrk: brk });
+    } catch (e) { if (seq === this._shadeSeq) this.setState({ shadeMsg: 'ZIP data could not load — try again' }); }
+  }
+  sheetH() { return Math.min(400, Math.round((window.innerHeight || 844) * 0.45)); }
+  endLbl() { const d = new Date(Component.CLIENT.current.leaseEnd + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  monthsLeft() { const d = new Date(Component.CLIENT.current.leaseEnd + 'T12:00:00'), now = new Date(); return Math.max(0, Math.round((d - now) / (30.44 * 864e5))); }
+
+  async runCheck() {
+    const q = this.state.q.trim(); if (!q || !this.map) return;
+    const cur = this.cur(); let pt = null, label = q;
+    if (/^\d{5}$/.test(q) && this.zips && this.zips[q]) { pt = this.zips[q]; label = 'ZIP ' + q; }
+    if (!pt) { try { this.setState({ checkMsg: 'Looking up “' + q + '”…' }); const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q=' + encodeURIComponent(q)); const j = await r.json(); if (j[0]) { pt = [+j[0].lat, +j[0].lon]; label = j[0].display_name.split(',').slice(0, 2).join(','); } } catch (e) {} }
+    if (!pt) { this.setState({ checkMsg: 'We couldn’t find “' + q + '”. Try a street address with the city, or a 5-digit ZIP code.' }); return; }
+    const mi = this.miles(cur.lat, cur.lng, pt[0], pt[1]), R = Component.CLIENT.ringMiles;
+    const nearby = this.calc().filter(b => this.miles(pt[0], pt[1], b.la, b.lo) <= 1).length;
+    this.checkLayer.clearLayers();
+    window.L.circleMarker(pt, { radius: 9, color: '#fff', weight: 2, fillColor: '#dc2f3a', fillOpacity: 1 }).bindPopup('<div style="padding:10px;font:13px Archivo,sans-serif">' + label + '</div>').addTo(this.checkLayer);
+    this.map.fitBounds(window.L.latLngBounds([pt, [cur.lat, cur.lng]]).pad(0.4)); this.scrollToMap();
+    this.setState({ checkMsg: label + ' is ' + mi.toFixed(1) + ' miles from your clinic (about ' + this.driveMin(mi) + ' min drive) — ' + (mi <= R ? 'inside' : 'outside') + ' the ' + R + '-mile ring. ' + nearby + ' building' + (nearby === 1 ? '' : 's') + ' with space within 1 mile of it.' });
+  }
+
+  loadXLSX() { return new Promise((res, rej) => { if (window.XLSX) return res(window.XLSX); const s = document.createElement('script'); s.src = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js'; s.onload = () => res(window.XLSX); s.onerror = rej; document.head.appendChild(s); }); }
+  parseCSV(t) { return t.split(/\r?\n/).filter(l => l.trim()).map(l => l.split(',').map(x => x.replace(/^"|"$/g, '').trim())); }
+  async onFile(e) {
+    const f = e.target.files && e.target.files[0]; if (!f) return; let rows = [];
+    try { if (/\.csv$/i.test(f.name)) rows = this.parseCSV(await f.text()); else { const X = await this.loadXLSX(); const wb = X.read(await f.arrayBuffer()); rows = X.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false }); } }
+    catch (err) { this.setState({ patientMsg: 'That file couldn’t be read. Try saving it as CSV.' }); return; }
+    e.target.value = '';
+    if (rows.length < 2) { this.setState({ patientMsg: 'No patient rows found in that file.' }); return; }
+    const head = rows[0].map(h => String(h || '').toLowerCase()), zi = head.findIndex(h => /zip|postal/.test(h));
+    const counts = {}; let total = 0, miss = 0;
+    rows.slice(1).forEach(r => { const cell = String((zi >= 0 ? r[zi] : r.join(' ')) || ''); const m = cell.match(/\b\d{5}\b/); if (!m) { miss++; return; } total++; counts[m[0]] = (counts[m[0]] || 0) + 1; });
+    const L = window.L, Z = this.zips || {}; this.patientLayer.clearLayers(); let off = 0;
+    Object.keys(counts).forEach(z => { if (!Z[z]) { off += counts[z]; return; } L.circleMarker(Z[z], { radius: 6 + Math.sqrt(counts[z]) * 3, color: '#dc2f3a', weight: 1, fillColor: '#dc2f3a', fillOpacity: 0.3 }).bindPopup('<div style="padding:10px;font:13px Archivo,sans-serif"><b>ZIP ' + z + '</b><br>' + counts[z] + ' patients</div>').addTo(this.patientLayer); });
+    this.setState({ patients: true, patientMsg: total.toLocaleString() + ' patients in ' + Object.keys(counts).length + ' ZIP codes added to the map' + (off ? ' · ' + off + ' in ZIP codes we couldn’t place' : '') + (miss ? ' · ' + miss + ' rows had no ZIP code' : '') + '.' });
+  }
+  downloadTemplate(e) { e.preventDefault(); const blob = new Blob(['Patient ID,ZIP code\n1,85016\n2,85012\n'], { type: 'text/csv' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'patient-zip-template.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); }
+
+  renderVals() {
+    const C = Component.CLIENT, s = this.state, cur = this.cur(), mob = s.w < 760, bs = this.calc(), R = C.ringMiles, T = C.targetSf;
+    const ring = bs.filter(b => b.dist <= R), listedRing = ring.filter(b => b.allIn != null), lower = listedRing.filter(b => b.allIn < cur.allIn).length, months = this.monthsLeft();
+    const pool = listedRing.filter(b => b.mc >= T * 0.67);
+    const lowest = [...pool].sort((a, b) => a.allIn - b.allIn)[0];
+    const closest = [...pool].filter(b => b !== lowest).sort((a, b) => a.dist - b.dist)[0];
+    const room = [...pool].filter(b => b !== lowest && b !== closest && b.mc <= T * 2).sort((a, b) => b.mc - a.mc)[0];
+    const picks = [{ tag: 'LOWEST ALL-IN RENT', b: lowest }, { tag: 'CLOSEST TO YOUR CLINIC', b: closest }, { tag: 'MOST ROOM', b: room }].filter(p => p.b);
+    const sortFns = { closest: (a, b) => a.dist - b.dist, cost: (a, b) => (a.allIn ?? 1e9) - (b.allIn ?? 1e9), space: (a, b) => (b.mc || 0) - (a.mc || 0), number: (a, b) => a.n - b.n };
+    const bsF = bs.filter(b => this.inSf(b)), ringF = bsF.filter(b => b.dist <= R);
+    const scoped = s.scope === 'ring' ? ringF : s.scope === '10' ? bsF.filter(b => b.dist <= 10) : bsF;
+    const sorted = [...scoped].sort(sortFns[s.sort]), rows = sorted.slice(0, s.limit);
+    const btnS = on => ({ bg: on ? '#29374d' : '#fff', fg: on ? '#fff' : '#29374d', bd: on ? '#29374d' : '#c9d2de' });
+    const sorts = [['closest', 'Closest'], ['cost', 'Lowest rent'], ['space', 'Most space'], ['number', 'Map number']].map(([k, label]) => ({ label, ...btnS(s.sort === k), go: () => this.setState({ sort: k, limit: 25 }) }));
+    const n10 = bsF.filter(b => b.dist <= 10).length;
+    const scopes = [['ring', 'Within ' + R + ' miles (' + ringF.length + ')'], ['10', 'Within 10 miles (' + n10 + ')'], ['all', 'All markets (' + bsF.length.toLocaleString() + ')']].map(([k, label]) => ({ label, ...btnS(s.scope === k), go: () => this.setState({ scope: k, limit: 25 }) }));
+    const row = on => ({ rowBg: on ? '#e7ecf3' : '#fff', rowBd: on ? '#29374d' : '#eef1f5', dot: on ? '#29374d' : 'transparent', rw: on ? 600 : 400 });
+    const shades = [...Component.SHADES.map((label, i) => ({ label, ...btnS(s.shade === i), ...row(s.shade === i), go: () => { this.setState({ shade: i }); this.drawShade(i); } })), { label: 'Off', ...btnS(s.shade < 0), ...row(s.shade < 0), go: () => { this.setState({ shade: -1 }); this.drawShade(-1); } }];
+    const advOpen = s.adv && s.view !== 'compare';
+
+    const SIZE = { any: [0, 1e12], s: [0, 30000], m: [30000, 60000], l: [60000, 1e12] }, fq = s.fq.trim().toLowerCase();
+    const advAll = [...bs].sort(sortFns[s.sort]).filter(b => (!fq || (b.a + ' ' + b.c + ' ' + b.z + ' ' + b.name).toLowerCase().includes(fq)) && (s.fDist === 'any' || b.dist <= +s.fDist) && (s.fSize === 'any' || (b.ba && b.ba >= SIZE[s.fSize][0] && b.ba < SIZE[s.fSize][1])));
+    const advRows = advAll.slice(0, s.advLimit), filtersOn = !!fq || s.fDist !== 'any' || s.fSize !== 'any';
+
+    const cl = s.compare.map(n => this.byN(n)).filter(Boolean), many = cl.length >= 2;
+    const vals = k => cl.map(b => b[k]).filter(v => v != null);
+    const mins = { a: Math.min(...vals('allIn')), d: Math.min(...cl.map(b => b.drive)), f: Math.max(...cl.map(b => b.mc || 0)) };
+    const cell = (v, best, color, big) => ({ v, best: !!(best && many), color: color || '#1b2533', size: big ? '22px' : '14px', font: big ? "'Roboto Condensed'" : "'Archivo'", w: big ? 500 : 400 });
+    const cmpHead = [{ n: C.initials, name: 'Current clinic', city: C.current.city.replace(/, [A-Z]{2}$/, ''), photo: '', cur: true, bg: '#fdf1f1', badgeBg: '#dc2f3a', badgeFg: '#fff', radius: '4px' },
+      ...cl.map(b => ({ n: String(b.n), name: b.name, city: b.c, photo: b.photo, cur: false, bg: '#fff', badgeBg: '#e1c58d', badgeFg: '#29374d', radius: '50%' }))];
+    const cmpMain = [
+      { label: 'All-in rent', sub: 'per sq ft each month', cells: [cell(this.money(cur.allIn, 2), 0, '#29374d', 1), ...cl.map(b => cell(b.allInLbl, b.allIn === mins.a, '#29374d', 1))] },
+      { label: 'Compared to today', sub: '', cells: [cell('—', 0, '#5a6b82'), ...cl.map(b => cell(b.monthDiffLbl.replace(' than today', ''), 0, b.diffColor))] },
+      { label: 'Est. monthly cost', sub: 'all-in × space that fits', cells: [cell(this.money(cur.monthly, 0), 0, '#29374d'), ...cl.map(b => cell(b.monthlyLbl + (b.monthly != null ? ' for ' + b.fitLbl : '')))] },
+      { label: 'Asking rent', sub: '', cells: [cell(this.money(cur.rent, 2) + ' ' + cur.typeLbl + ' + ' + this.money(cur.opex, 2) + ' expenses'), ...cl.map(b => cell(b.ask + (b.flag ? ' ' + b.flag : '')))] },
+      { label: 'Space available', sub: 'largest space in one piece', cells: [cell(cur.sf.toLocaleString() + ' sq ft'), ...cl.map(b => cell(b.spaceLbl, b.mc === mins.f))] },
+      { label: 'Drive from your clinic', sub: 'estimate', cells: [cell('—', 0, '#5a6b82'), ...cl.map(b => cell('About ' + b.drive + ' min · ' + b.distLbl, b.drive === mins.d))] },
+      { label: 'Available', sub: '', cells: [cell('Lease ends ' + this.endLbl()), ...cl.map(() => cell('Ask landlord'))] }
+    ];
+    const cmpMore = [
+      { label: 'Building', cells: [cell('—', 0, '#5a6b82'), ...cl.map(b => cell(b.bsfLbl + ' · ' + b.leasedLbl + (b.cl ? ' · class ' + b.cl : '')))] },
+      { label: 'Year built', cells: [cell(String(cur.year)), ...cl.map(b => cell(b.yearLbl))] },
+      { label: 'Parking', cells: [cell(cur.parking), ...cl.map(b => cell(b.parking))] },
+      { label: 'Leasing company', cells: [cell('—', 0, '#5a6b82'), ...cl.map(b => cell(b.brokerLbl))] }
+    ];
+    const W = { n: C.initials, bg: '#dc2f3a', fg: '#fff', r: '3px' }, Wb = b => ({ n: String(b.n), bg: '#e1c58d', fg: '#29374d', r: '50%' });
+    const it = (who, lbl, pct, color, tag, hasBar) => ({ ...who, lbl, pct: Math.max(2, Math.min(100, Math.round(pct))), color, tag: many ? (tag || '') : '', hasBar: hasBar !== false });
+    const maxA = Math.max(cur.allIn, ...cl.map(b => b.allIn || 0));
+    const cmpPhone = cl.length ? [
+      { label: 'ALL-IN RENT PER SQ FT', items: [it(W, this.money(cur.allIn, 2), cur.allIn / maxA * 100, '#dc2f3a'), ...cl.map(b => it(Wb(b), b.allInLbl, (b.allIn || 0) / maxA * 100, '#29374d', b.allIn === mins.a ? 'LOWEST' : ''))] },
+      { label: 'COMPARED TO TODAY', items: cl.map(b => it(Wb(b), b.monthDiffShort, 0, '#29374d', '', false)) },
+      { label: 'SPACE AVAILABLE', items: [it(W, cur.sf.toLocaleString() + ' sq ft', 50, '#dc2f3a'), ...cl.map(b => it(Wb(b), b.spaceShort, (b.mc || 0) / Math.max(cur.sf * 2, mins.f) * 100, '#6c89b2', b.mc === mins.f ? 'MOST ROOM' : ''))] },
+      { label: 'DRIVE FROM YOUR CLINIC', items: cl.map(b => it(Wb(b), 'About ' + b.drive + ' min', b.drive / 20 * 100, '#29374d', b.drive === mins.d ? 'CLOSEST' : '')) }
+    ] : [];
+    const inCompare = s.view === 'compare', loaded = !!s.sites;
+
+    return {
+      c: C, desk: !mob, mob, fs: s.fs, notFs: !s.fs, pad: mob ? 16 : 28, titleSize: mob ? 24 : 28,
+      rootDir: mob ? 'column' : 'row', answerTxt: mob ? 16 : 17, tileCols: mob ? 'repeat(2,minmax(0,1fr))' : 'repeat(4,minmax(0,1fr))', tileGap: mob ? 10 : 14, showSidebar: !Component.EMBED && !mob && !s.fs, showTopBar: !Component.EMBED && mob && !s.fs, menuOpen: !Component.EMBED && mob && s.menuOpen && !s.fs,
+      toggleMenu: () => this.setState({ menuOpen: !s.menuOpen }),
+      menu: ['Portfolio Summary', 'Expiration Overview', 'Operating Expenses', 'Rate Comparison', 'Property Address Key', 'Portfolio Analytics', 'Contact Us', '★ Pipeline Deals'].map(label => ({ label, go: e => { e && e.stopPropagation && e.stopPropagation(); this.setState({ fs: false, menuOpen: false }); this.flash('“' + label + '” is another tab in the full dashboard'); } })),
+      fsPos: s.fs ? 'fixed' : 'relative', fsZ: s.fs ? 2000 : 'auto', fsOverflow: s.fs ? 'auto' : 'visible',
+      toggleFs: e => { e && e.preventDefault && e.preventDefault(); this.setState({ fs: !s.fs, menuOpen: false }); }, fsLabel: s.fs ? '✕ Exit full screen' : '⛶ Full screen', fsBtnMargin: mob ? '0' : 'auto',
+      answer: loaded ? { head: lower + ' of ' + listedRing.length + ' buildings within ' + R + ' miles with a listed rent have a lower all-in rent than you pay today.', sub: 'Your lease ends in ' + months + ' months — a good time to start touring. ' + (ring.length - listedRing.length) + ' nearby buildings don’t list a full rent; we can ask the landlord for you.' } : { head: 'Loading buildings…', sub: '' },
+      answerCols: mob || s.w < 1180 ? '1fr' : 'minmax(0,1fr) auto', answerPad: mob ? '16px' : '22px 26px', answerSize: mob ? 22 : 28, factCols: mob ? '1fr 1fr' : 'repeat(4,auto)',
+      facts: [{ k: 'You pay now', v: this.money(cur.monthly, 0), s: 'a month · ' + cur.sf.toLocaleString() + ' sq ft' }, { k: 'Lease ends', v: months + ' months', s: this.endLbl() }, { k: 'Buildings with space', v: String(ring.length), s: 'within ' + R + ' miles' }, { k: C.demographic.label, v: C.demographic.value.toLocaleString(), s: C.demographic.note }],
+      mainDisplay: inCompare ? 'none' : 'grid',
+      mapCols: mob ? 'minmax(0,1fr)' : advOpen ? (s.w < 1000 ? 'minmax(0,1fr) 300px' : 'minmax(0,1fr) 360px') : s.w < 1100 ? 'minmax(0,1fr)' : 'minmax(0,1.45fr) minmax(0,1fr)',
+      panelDesk: advOpen && !mob, showPicks: !(advOpen && !mob), sheetOn: advOpen && mob, mobAdvBtn: mob && !s.adv, deskAdvBtn: !mob, sheetH: this.sheetH(),
+      tabs: [['Shade map', 'Shade'], ['Check address', 'Address'], ['Your patients', 'Patients']].map(([label, short], i) => ({ label, short, w: s.tab === i ? 600 : 400, fg: s.tab === i ? '#29374d' : '#5a6b82', line: s.tab === i ? '#dc2f3a' : 'transparent', go: () => this.setState({ tab: i }) })),
+      tabShade: s.tab === 0, tabCheck: s.tab === 1, tabPat: s.tab === 2,
+      shadeOff: () => { this.setState({ shade: -1 }); this.drawShade(-1); },
+      mapH: mob ? 340 : s.fs ? 620 : 540, ctlDir: mob ? 'column' : 'row', ctlH: mob ? 44 : 36,
+      mapLoading: !s.mapReady, loadingLbl: s.loadErr || (loaded ? 'Placing ' + bs.length.toLocaleString() + ' buildings on the map…' : 'Loading buildings…'),
+      resetView: () => { if (!this.map) return; this.map.closePopup(); this.fitRing(); },
+      toggleAll: () => { if (!this.map) return; const on = !s.all; this.setState({ all: on }); if (on) { this.otherLayer.addTo(this.map); this.map.fitBounds([[cur.lat, cur.lng], ...C.otherLocations.map(o => [o.lat, o.lng])], { padding: [40, 40] }); } else { this.map.removeLayer(this.otherLayer); this.fitRing(); } },
+      allOn: s.all, allLabel: s.all ? 'Hide other client locations' : (mob ? 'All client locations' : 'Show all client locations'), allBg: s.all ? '#29374d' : '#fff', allFg: s.all ? '#fff' : '#29374d',
+      toggleSat: () => { if (!this.map) return; const on = !s.sat; this.setState({ sat: on }); if (on) { this.map.removeLayer(this.base); this.satLayer.addTo(this.map); } else { this.map.removeLayer(this.satLayer); this.base.addTo(this.map); } },
+      satLabel: s.sat ? 'Map' : 'Satellite', satBg: s.sat ? '#29374d' : '#fff', satFg: s.sat ? '#fff' : '#29374d',
+      shadeOn: s.shade >= 0, shades, shadeMsg: s.shadeMsg || '', shadeLo: s.shade >= 0 ? 'Under ' + this.fmtShade(Component.SHADE_META[s.shade], (s.shadeBrk || Component.SHADE_META[s.shade].b)[0]) : '', shadeHi: s.shade >= 0 ? this.fmtShade(Component.SHADE_META[s.shade], (s.shadeBrk || Component.SHADE_META[s.shade].b)[3]) + '+' : '', shadeWrap: mob ? 'nowrap' : 'wrap',
+      shadeName: s.shade < 0 ? '' : s.shade === Component.WOMEN ? 'Women ages ' + Component.WOMEN_AGES[s.womenAge] : Component.SHADES[s.shade],
+      womenOn: s.shade === Component.WOMEN,
+      womenAges: Component.WOMEN_AGES.map((label, k) => ({ label, ...btnS(s.womenAge === k), go: () => { this.setState({ womenAge: k }); this.drawShade(Component.WOMEN, k); } })),
+      picks, pickCols: mob ? '96px minmax(0,1fr)' : '128px minmax(0,1fr)',
+      comparePicks: () => { this.setState({ compare: picks.map(p => p.b.n), view: 'compare' }); this.scrollTop(); },
+      showMyCompare: s.compare.length > 0, cmpCount: s.compare.length, openCompare: () => { this.setState({ view: 'compare' }); this.scrollTop(); },
+      inCompare, closeCompare: () => this.setState({ view: 'main' }), cmpEmpty: inCompare && !cl.length,
+      cmpDesk: s.w >= 1000 && cl.length > 0, cmpMob: s.w < 1000 && cl.length > 0, cmpN: cmpHead.length,
+      cmpTitle: cl.length ? 'Your ' + (cl.length === 1 ? 'pick' : cl.length + ' picks') + ' vs. your clinic today' : 'Your comparison',
+      cmpCols: '180px repeat(' + cmpHead.length + ',minmax(0,1fr))', cmpHead, cmpMain, cmpMore, cmpPhone, cmpList: cl, bestLabel: 'BEST OF THE ' + cl.length,
+      more: s.more, moreLabel: s.more ? 'Fewer details ▴' : 'More details ▾', toggleMore: () => this.setState({ more: !s.more }),
+      listTitle: s.scope === 'ring' ? 'Buildings with space within ' + R + ' miles' : s.scope === '10' ? 'Buildings with space within 10 miles' : 'All buildings with space · California and Arizona',
+      scopes, sorts, sortH: mob ? 44 : 34, rows, bCount: scoped.length,
+      sfRange: s.sfRange, sfOpts: Component.SF_RANGES.filter(r => r.v === 'any' || r.v === s.sfRange || bs.some(b => b.mc && b.mc >= r.min && b.mc < r.max)).map(r => ({ v: r.v, l: r.l })), onSfRange: e => this.setState({ sfRange: e.target.value, limit: 25 }),
+      sfEmpty: loaded && scoped.length === 0 && s.sfRange !== 'any',
+      listMore: sorted.length > rows.length, listShownLbl: 'Showing ' + rows.length + ' of ' + sorted.length.toLocaleString(), showMoreList: () => this.setState({ limit: s.limit + 25 }),
+      listHead: ['MAP #', 'PHOTO', 'BUILDING', 'MONTHLY COST', 'VS. TODAY', 'ALL-IN RENT', 'DRIVE', 'SPACE AVAILABLE', ''],
+      advRows, advEmpty: loaded && advAll.length === 0, filtersOn,
+      advCountLbl: (filtersOn ? 'Showing ' + advAll.length.toLocaleString() + ' of ' : 'All ') + bs.length.toLocaleString() + ' buildings',
+      advMore: s.adv && advAll.length > advRows.length, advShownLbl: 'Showing ' + advRows.length + ' of ' + advAll.length.toLocaleString(), showMoreAdv: () => this.setState({ advLimit: s.advLimit + 50 }),
+      fq: s.fq, onFq: e => this.setState({ fq: e.target.value, advLimit: 50 }),
+      fDist: s.fDist, onFDist: e => this.setState({ fDist: e.target.value, advLimit: 50 }),
+      fSize: s.fSize, onFSize: e => this.setState({ fSize: e.target.value, advLimit: 50 }),
+      clearFilters: () => this.setState({ fq: '', fDist: 'any', fSize: 'any', advLimit: 50 }),
+      distOpts: [{ v: 'any', l: 'Any distance' }, { v: '1', l: 'Within 1 mile of your clinic' }, { v: '3', l: 'Within 3 miles of your clinic' }, { v: '5', l: 'Within 5 miles of your clinic' }, { v: '10', l: 'Within 10 miles of your clinic' }],
+      sizeOpts: [{ v: 'any', l: 'Any building size' }, { v: 's', l: 'Under 30,000 sq ft' }, { v: 'm', l: '30,000–60,000 sq ft' }, { v: 'l', l: 'Over 60,000 sq ft' }],
+      ringOn: s.ringN > 0, ringLbl: s.ringN && this.byN(s.ringN) ? 'About 15-minute drive from ' + this.byN(s.ringN).name : '', clearRing: () => this.setRing(0),
+      adv: s.adv, advLabel: s.adv ? 'Hide advanced details ▴' : 'Show advanced details ▾',
+      toggleAdv: () => { const open = !s.adv; this.setState({ adv: open }); if (open && mob) setTimeout(() => { const el = this.mapRef.current; if (el) window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - 72, behavior: 'smooth' }); }, 60); },
+      q: s.q, onQ: e => this.setState({ q: e.target.value }), onQKey: e => { if (e.key === 'Enter') this.runCheck(); }, runCheck: () => this.runCheck(), checkMsg: s.checkMsg,
+      fileRef: this.fileRef, pickFile: () => this.fileRef.current && this.fileRef.current.click(), onFile: e => this.onFile(e),
+      hasPatients: s.patients, patientMsg: s.patientMsg, clearPatients: () => { this.patientLayer && this.patientLayer.clearLayers(); this.setState({ patients: false, patientMsg: '' }); },
+      downloadTemplate: e => this.downloadTemplate(e),
+      advHead: ['#', 'BUILDING', 'ASKING RENT', 'ALL-IN', 'SPACE AVAILABLE', 'BUILDING SIZE', 'BUILT', 'LEASING COMPANY', 'PARKING'],
+      showSuggest: !s.fs && !(s.adv && mob), suggest: () => this.flash('Opens the dashboard’s existing suggestion box'), toast: s.toast,
+      rootRef: this.rootRef, mapRef: this.mapRef, mainRef: this.mainRef
+    };
+  }
+}
+</script>
+</body>
+</html>
