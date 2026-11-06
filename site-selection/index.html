@@ -50,7 +50,7 @@
 <button onClick="{{ toggleFs }}" style="background:#dc2f3a;color:#fff;border:none;font-weight:600;font-size:14px;height:44px;padding:0 16px;border-radius:6px;cursor:pointer" style-hover="background:#b5262e">✕ Exit full screen</button>
 </div>
 </sc-if>
-<div style="padding:{{ pad }}px;display:flex;flex-direction:column;gap:18px;max-width:1400px;width:100%">
+<div style="padding:{{ pad }}px;display:flex;flex-direction:column;gap:18px;width:100%">
 
 <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:10px 16px;flex-wrap:wrap">
 <div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 420px"><div style="font-family:'Roboto Condensed';font-weight:500;font-size:{{ titleSize }}px;line-height:1.15;color:#29374d">Site Selection — {{ c.searchName }}</div><div style="font-size:14px;color:#5a6b82;line-height:1.45">{{ c.searchSummary }} · within {{ c.ringMiles }} miles of {{ c.current.name }}</div></div>
@@ -88,6 +88,7 @@
 <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;background:#29374d"></span>Building with space</span>
 <span style="display:flex;align-items:center;gap:6px"><span style="width:18px;height:18px;border-radius:50%;background:#e1c58d;border:2px solid #29374d"></span>In your comparison</span>
 <span style="display:flex;align-items:center;gap:6px"><span style="width:22px;border-top:2px dashed #29374d"></span>{{ c.ringMiles }} miles from current clinic</span>
+<span style="display:flex;align-items:center;gap:6px;color:#5a6b82">* Estimated expenses — typical for the area, not actual</span>
 <sc-if value="{{ allOn }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:3px;background:#fff;border:2px solid #dc2f3a"></span>Other {{ c.clientName }} locations</span></sc-if>
 <sc-if value="{{ hasPatients }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;border-radius:50%;background:rgba(220,47,58,.35);border:1px solid #dc2f3a"></span>Your patients (by ZIP)</span></sc-if>
 <sc-if value="{{ ringOn }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:6px"><span style="width:22px;border-top:2px dashed #dc2f3a"></span>{{ ringLbl }} (estimate)<button onClick="{{ clearRing }}" style="border:none;background:#eef1f5;color:#29374d;border-radius:4px;height:26px;padding:0 8px;font-size:12px;font-weight:600;cursor:pointer">✕ Hide</button></span></sc-if>
@@ -184,7 +185,7 @@
 </div></sc-for>
 <sc-for list="{{ cmpList }}" as="b" hint-placeholder-count="3"><div style="display:flex;gap:8px;align-items:center;background:#fff;border-radius:8px;padding:8px 12px;box-shadow:0 1px 3px rgba(41,55,77,.12)"><span style="flex:1;font-size:14px;font-weight:600;color:#29374d">{{ b.n }} · {{ b.name }}</span><a href="{{ b.dirUrl }}" target="_blank" rel="noopener" style="height:44px;padding:0 12px;display:flex;align-items:center;border-radius:6px;border:1px solid #29374d;color:#29374d;font-size:13px;font-weight:600;text-decoration:none">Directions</a><button onClick="{{ b.onCompare }}" style="height:44px;padding:0 10px;border:none;background:none;color:#dc2f3a;font-size:13px;font-weight:600">Remove</button></div></sc-for>
 </sc-if>
-<div style="font-size:12px;color:#5a6b82;line-height:1.5">All-in rent = asking rent, plus building expenses (and electric and janitorial if not included) when triple net. Full service and gross = asking rent only. Monthly cost = all-in rent × space that fits.</div>
+<div style="font-size:12px;color:#5a6b82;line-height:1.5">All-in rent = asking rent, plus building expenses (and electric and janitorial if not included) when triple net. * = estimated expenses, typical for the area, not actual. Full service and gross = asking rent only. Monthly cost = all-in rent × space that fits.</div>
 </div>
 </sc-if>
 
@@ -214,7 +215,7 @@
 <div style="display:flex;flex-direction:column;gap:10px;padding:12px">
 <sc-for list="{{ rows }}" as="b" hint-placeholder-count="10"><div style="border:1px solid #dde3ec;border-radius:8px;overflow:hidden;display:flex;flex-direction:column">
 <div onClick="{{ b.onFocus }}" style="display:grid;grid-template-columns:96px minmax(0,1fr)"><div style="position:relative"><img src="{{ b.photo }}" alt="" style="width:96px;height:100%;min-height:108px;object-fit:cover;display:block"><span style="position:absolute;left:6px;top:6px;width:24px;height:24px;border-radius:50%;background:{{ b.pinBg }};color:{{ b.pinFg }};border:2px solid {{ b.pinBd }};display:flex;align-items:center;justify-content:center;font-family:'Roboto Condensed';font-weight:700;font-size:12px">{{ b.n }}</span></div>
-<div style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0"><b style="color:#29374d;font-size:14px;font-weight:600">{{ b.name }}</b><span style="color:#5a6b82;font-size:12px">{{ b.addr }}, {{ b.city }}</span><span><b style="color:#29374d">{{ b.monthlyLbl }}</b> a month · {{ b.fitLbl }}</span><span style="color:{{ b.diffColor }};font-weight:600">{{ b.monthDiffShort }}</span><span style="color:#5a6b82;font-size:12px">About {{ b.drive }} min drive · {{ b.allInLbl }} all-in <span style="color:#dc2f3a">{{ b.flag }}</span></span></div></div>
+<div style="padding:10px 12px;display:flex;flex-direction:column;gap:3px;font-size:13px;min-width:0"><b style="color:#29374d;font-size:14px;font-weight:600">{{ b.name }}</b><span style="color:#5a6b82;font-size:12px">{{ b.addr }}, {{ b.city }}</span><span><b style="color:#29374d">{{ b.monthlyLbl }}</b>{{ b.monthSuffix }} · {{ b.fitLbl }}</span><span style="color:{{ b.diffColor }};font-weight:600">{{ b.monthDiffShort }}</span><span style="color:#5a6b82;font-size:12px">About {{ b.drive }} min drive · {{ b.allInTxt }} <span style="color:#dc2f3a">{{ b.flagShort }}</span></span></div></div>
 <button onClick="{{ b.onCompare }}" style="margin:0 12px 12px;height:44px;border-radius:6px;font-size:14px;font-weight:600;border:1px solid #29374d;background:{{ b.btnBg }};color:#29374d">{{ b.btn }}</button>
 </div></sc-for>
 </div>
@@ -311,21 +312,21 @@ class Component extends DCLogic {
      ====================================================================== */
   static CLIENT = {
     clientName: 'PulsePath Health', clientShort: 'PulsePath', clientTag: 'HEALTH', initials: 'PP',
-    searchName: 'Central Phoenix Relocation',
-    searchSummary: 'Medical office space with room available across Arizona and New Mexico',
+    searchName: 'Irvine Relocation',
+    searchSummary: 'Medical office space with room available in Orange County, San Diego and Phoenix',
     ringMiles: 5, targetSf: 4500,
-    current: { name: 'PulsePath Health – Sample Clinic', addr: '100 Sample Medical Plaza, Suite 200', city: 'Phoenix, AZ', lat: 33.5005, lng: -112.0440,
+    current: { name: 'PulsePath Health – Sample Clinic', addr: '100 Sample Medical Plaza, Suite 200', city: 'Irvine, CA', lat: 33.6846, lng: -117.8265,
       sf: 4500, typeLbl: 'triple net', rent: 3.50, opex: 0.85, leaseEnd: '2027-12-31', suite: 'Suite 200', parking: '4 per 1,000 sq ft', year: 1999 },
     demographic: { label: 'People 65 and older', value: 21840, note: 'within 3 miles · sample figure' },
     otherLocations: [
-      { name: 'PulsePath Health – Sample Clinic 2', city: 'Tucson', lat: 32.2319, lng: -110.9501 },
-      { name: 'PulsePath Health – Sample Clinic 3', city: 'Albuquerque', lat: 35.0844, lng: -106.6504 },
-      { name: 'PulsePath Health – Sample Clinic 4', city: 'Las Cruces', lat: 32.3199, lng: -106.7637 }
+      { name: 'PulsePath Health – Sample Clinic 2', city: 'Mission Viejo', lat: 33.6000, lng: -117.6720 },
+      { name: 'PulsePath Health – Sample Clinic 3', city: 'Huntington Beach', lat: 33.6603, lng: -117.9992 },
+      { name: 'PulsePath Health – Sample Clinic 4', city: 'Anaheim', lat: 33.8366, lng: -117.9143 }
     ],
     dataFile: 'data/sites.json', zipFile: 'data/zipgeo.json', photoPlaceholder: 'assets/photo-placeholder.png',
-    estExpenses: { AZ: 0.70, NM: 0.60 }, estElecJan: 0.20,
-    sources: 'SAMPLE DATA — every building, address, rent and contact on this page is made up for demonstration. Triple net all-in rents add MedWest’s estimated building expenses ($0.70 per sq ft in Arizona, $0.60 in New Mexico) when the listing doesn’t show them. Distances are straight-line; drive times are estimates. Map shading and the 65-and-older figure are sample data too. Map © Esri and its data partners.',
-    disclaimer: 'Sample data for demonstration only — not real listings. Information in a live client version comes from sources believed reliable but not verified by MedWest Realty; rents, availability and terms should be confirmed with the landlord.'
+    estExpenses: { AZ: 0.70, NM: 0.60, CA: 1.00 }, estElecJan: 0.20,
+    sources: 'Available space, asking rents and building details — CoStar exports and property reports, October–November 2026. Building photos — CoStar property reports. Triple net all-in rents add MedWest’s estimated building expenses (about $0.70 per sq ft a month in Arizona, $1.00 in Orange County — typical for the area, not each building’s actual figure) when the listing doesn’t show them. These all-in rents are marked *. Distances are straight-line; drive times are estimates. Map shading and the 65-and-older figure are sample data. Map © Esri and its data partners.',
+    disclaimer: 'Information is from sources believed reliable but has not been verified by MedWest Realty. Rents, availability and terms change often and should be confirmed with the landlord.'
   };
   /* ===================== END CLIENT DATA BLOCK ===================== */
 
@@ -367,10 +368,10 @@ class Component extends DCLogic {
     const s = this.state; if (!s.sites) return [];
     if (this._c && this._c.sites === s.sites && this._c.cmp === s.compare) return this._c.out;
     const C = Component.CLIENT, cur = this.cur(), cmp = s.compare, T = C.targetSf;
-    const tn = { nnn: 'triple net', fs: 'full service', mg: 'modified gross' };
+    const tn = { nnn: 'triple net', fs: 'full service', mg: 'modified gross', dn: 'double net' };
     const out = s.sites.map(b => {
-      const est = C.estExpenses[b.s] ?? 0.70;
-      const allIn = b.r == null ? null : b.t === 'nnn' ? b.r + est : b.t === 'plus' ? b.r + C.estElecJan : (b.t === 'fs' || b.t === 'mg') ? b.r : null;
+      const est = C.estExpenses[b.s];
+      const allIn = b.r == null ? null : b.t === 'nnn' ? (est == null ? null : b.r + est) : b.t === 'plus' ? b.r + C.estElecJan : (b.t === 'fs' || b.t === 'mg') ? b.r : null;
       const dist = this.miles(cur.lat, cur.lng, b.la, b.lo), drive = this.driveMin(dist), inCmp = cmp.includes(b.n);
       const mc = b.mc || b.av || 0, fit = mc ? Math.min(mc, T) : 0;
       const monthly = allIn == null || !fit ? null : Math.round(allIn * fit), rd = allIn == null ? null : allIn - cur.allIn;
@@ -380,11 +381,12 @@ class Component extends DCLogic {
       const name = b.nm || b.a;
       return { ...b, name, addr: b.a, city: b.c, zip: b.z, allIn, dist, drive, monthly, inCmp, fit, ask,
         flag: b.e ? '(estimate, per CoStar)' : b.rh ? '(range, per CoStar)' : odd ? '(per CoStar)' : '',
-        allInLbl: allIn == null ? (b.r == null ? 'Ask landlord' : 'Ask about expenses') : this.money(allIn, 2),
-        allInNote: b.t === 'nnn' ? 'includes about ' + this.money(est, 2) + ' estimated expenses' : b.t === 'plus' ? 'includes about ' + this.money(C.estElecJan, 2) + ' estimated electric and cleaning' : '',
-        monthlyLbl: monthly == null ? 'Ask landlord' : this.money(monthly, 0),
+        monthSuffix: monthly == null ? '' : ' a month', allInTxt: allIn == null ? 'all-in not listed' : this.money(allIn, 2) + (b.t === 'nnn' ? '*' : '') + ' all-in', flagShort: allIn == null ? '' : (b.e ? '(estimate, per CoStar)' : b.rh ? '(range, per CoStar)' : ''),
+        allInLbl: allIn == null ? 'Not listed' : this.money(allIn, 2) + (b.t === 'nnn' ? '*' : ''),
+        allInNote: b.t === 'nnn' && est != null ? 'includes about ' + this.money(est, 2) + ' estimated expenses' : b.t === 'plus' ? 'includes about ' + this.money(C.estElecJan, 2) + ' estimated electric and cleaning' : '',
+        monthlyLbl: monthly == null ? 'Not listed' : this.money(monthly, 0) + (b.t === 'nnn' ? '*' : ''),
         monthDiffLbl: rd == null ? 'All-in rent not listed — we can ask the landlord for you' : (rd < 0 ? this.money(-rd, 2) + ' less per sq ft than today' : rd === 0 ? 'Same per sq ft as today' : this.money(rd, 2) + ' more per sq ft than today'),
-        monthDiffShort: rd == null ? 'Ask landlord' : (rd <= 0 ? this.money(-rd, 2) + ' less per sq ft' : this.money(rd, 2) + ' more per sq ft'),
+        monthDiffShort: rd == null ? 'Not listed' : (rd <= 0 ? this.money(-rd, 2) + ' less per sq ft' : this.money(rd, 2) + ' more per sq ft'),
         diffColor: rd == null ? '#5a6b82' : rd <= 0 ? '#29374d' : '#dc2f3a',
         fitLbl: !fit ? 'Size not listed' : mc > T ? T.toLocaleString() + ' sq ft (of ' + mc.toLocaleString() + ')' : fit.toLocaleString() + ' sq ft',
         spaceShort: mc ? 'Largest ' + mc.toLocaleString() + ' sq ft' : 'Not listed',
@@ -609,9 +611,9 @@ class Component extends DCLogic {
       cmpTitle: cl.length ? 'Your ' + (cl.length === 1 ? 'pick' : cl.length + ' picks') + ' vs. your clinic today' : 'Your comparison',
       cmpCols: '180px repeat(' + cmpHead.length + ',minmax(0,1fr))', cmpHead, cmpMain, cmpMore, cmpPhone, cmpList: cl, bestLabel: 'BEST OF THE ' + cl.length,
       more: s.more, moreLabel: s.more ? 'Fewer details ▴' : 'More details ▾', toggleMore: () => this.setState({ more: !s.more }),
-      listTitle: s.scope === 'ring' ? 'Buildings with space within ' + R + ' miles' : s.scope === '10' ? 'Buildings with space within 10 miles' : 'All buildings with space · Arizona and New Mexico',
+      listTitle: s.scope === 'ring' ? 'Buildings with space within ' + R + ' miles' : s.scope === '10' ? 'Buildings with space within 10 miles' : 'All buildings with space · California and Arizona',
       scopes, sorts, sortH: mob ? 44 : 34, rows, bCount: scoped.length,
-      sfRange: s.sfRange, sfOpts: Component.SF_RANGES.map(r => ({ v: r.v, l: r.l })), onSfRange: e => this.setState({ sfRange: e.target.value, limit: 25 }),
+      sfRange: s.sfRange, sfOpts: Component.SF_RANGES.filter(r => r.v === 'any' || r.v === s.sfRange || bs.some(b => b.mc && b.mc >= r.min && b.mc < r.max)).map(r => ({ v: r.v, l: r.l })), onSfRange: e => this.setState({ sfRange: e.target.value, limit: 25 }),
       sfEmpty: loaded && scoped.length === 0 && s.sfRange !== 'any',
       listMore: sorted.length > rows.length, listShownLbl: 'Showing ' + rows.length + ' of ' + sorted.length.toLocaleString(), showMoreList: () => this.setState({ limit: s.limit + 25 }),
       listHead: ['MAP #', 'PHOTO', 'BUILDING', 'MONTHLY COST', 'VS. TODAY', 'ALL-IN RENT', 'DRIVE', 'SPACE AVAILABLE', ''],
