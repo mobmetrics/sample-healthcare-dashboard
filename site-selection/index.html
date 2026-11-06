@@ -57,10 +57,10 @@
 <sc-if value="{{ notFs }}" hint-placeholder-val="{{ true }}"><a href="#" onClick="{{ toggleFs }}" style="font-weight:600;font-size:14px;white-space:nowrap">Open full screen ↗</a></sc-if>
 </div>
 
-<div style="background:#29374d;border-radius:8px;padding:{{ answerPad }};display:grid;grid-template-columns:{{ answerCols }};gap:18px 24px;align-items:center">
-<div style="display:flex;flex-direction:column;gap:6px;min-width:0"><div style="font-family:'Roboto Condensed';font-weight:700;font-size:12px;letter-spacing:.12em;color:#e1c58d">THE SHORT ANSWER</div><div style="font-family:'Roboto Condensed';font-weight:500;font-size:{{ answerSize }}px;color:#fff;line-height:1.18">{{ answer.head }}</div><div style="font-size:14px;color:#dfe5ee;line-height:1.45">{{ answer.sub }}</div></div>
-<div style="display:grid;grid-template-columns:{{ factCols }};gap:14px 20px;color:#fff">
-<sc-for list="{{ facts }}" as="f" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:2px;border-left:1px solid rgba(255,255,255,.22);padding-left:12px;min-width:0"><span style="font-size:12px;color:#aebacb">{{ f.k }}</span><span style="font-family:'Roboto Condensed';font-weight:500;font-size:24px;white-space:nowrap">{{ f.v }}</span><span style="font-size:12px;color:#aebacb">{{ f.s }}</span></div></sc-for>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="font-size:{{ answerTxt }}px;line-height:1.4;color:#29374d"><span style="color:#dc2f3a;font-weight:700">The short answer:</span> {{ answer.head }}</div>
+<div style="display:grid;grid-template-columns:{{ tileCols }};gap:{{ tileGap }}px">
+<sc-for list="{{ facts }}" as="f" hint-placeholder-count="4"><div style="background:#fff;border-radius:6px;border-top:4px solid #29374d;box-shadow:0 1px 3px rgba(41,55,77,.12);padding:12px 16px;display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-size:11px;letter-spacing:.1em;color:#5a6b82;text-transform:uppercase">{{ f.k }}</span><span style="font-family:'Roboto Condensed';font-weight:500;font-size:24px;color:#29374d;white-space:nowrap">{{ f.v }}</span><span style="font-size:12px;color:#5a6b82">{{ f.s }}</span></div></sc-for>
 </div>
 </div>
 
@@ -452,7 +452,7 @@ class Component extends DCLogic {
   initMap() {
     const L = window.L, C = Component.CLIENT, cur = this.cur(), el = this.mapRef.current;
     const esri = s => 'https://server.arcgisonline.com/ArcGIS/rest/services/' + s + '/MapServer/tile/{z}/{y}/{x}';
-    this.map = L.map(el, { zoomControl: true, scrollWheelZoom: false }).setView([cur.lat, cur.lng], 12);
+    this.map = L.map(el, { zoomControl: true, scrollWheelZoom: true }).setView([cur.lat, cur.lng], 12);
     this.base = L.tileLayer(esri('World_Topo_Map'), { maxZoom: 18, attribution: 'Map © Esri and its data partners' }).addTo(this.map);
     this.satLayer = L.layerGroup([L.tileLayer(esri('World_Imagery'), { maxZoom: 18, attribution: 'Imagery © Esri' }), L.tileLayer(esri('Reference/World_Boundaries_and_Places'), { maxZoom: 18 })]);
     this.ring = L.circle([cur.lat, cur.lng], { radius: C.ringMiles * 1609.34, color: '#29374d', weight: 2, dashArray: '7 7', fillColor: '#29374d', fillOpacity: 0.04, interactive: false }).addTo(this.map);
@@ -607,7 +607,7 @@ class Component extends DCLogic {
 
     return {
       c: C, desk: !mob, mob, fs: s.fs, notFs: !s.fs, pad: mob ? 16 : 28, titleSize: mob ? 24 : 28,
-      rootDir: mob ? 'column' : 'row', showSidebar: !Component.EMBED && !mob && !s.fs, showTopBar: !Component.EMBED && mob && !s.fs, menuOpen: !Component.EMBED && mob && s.menuOpen && !s.fs,
+      rootDir: mob ? 'column' : 'row', answerTxt: mob ? 16 : 17, tileCols: mob ? 'repeat(2,minmax(0,1fr))' : 'repeat(4,minmax(0,1fr))', tileGap: mob ? 10 : 14, showSidebar: !Component.EMBED && !mob && !s.fs, showTopBar: !Component.EMBED && mob && !s.fs, menuOpen: !Component.EMBED && mob && s.menuOpen && !s.fs,
       toggleMenu: () => this.setState({ menuOpen: !s.menuOpen }),
       menu: ['Portfolio Summary', 'Expiration Overview', 'Operating Expenses', 'Rate Comparison', 'Property Address Key', 'Portfolio Analytics', 'Contact Us', '★ Pipeline Deals'].map(label => ({ label, go: e => { e && e.stopPropagation && e.stopPropagation(); this.setState({ fs: false, menuOpen: false }); this.flash('“' + label + '” is another tab in the full dashboard'); } })),
       fsPos: s.fs ? 'fixed' : 'relative', fsZ: s.fs ? 2000 : 'auto', fsOverflow: s.fs ? 'auto' : 'visible',
