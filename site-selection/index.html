@@ -77,8 +77,9 @@
 <div style="position:absolute;right:10px;bottom:22px;z-index:900;background:#fff;border-radius:6px;padding:8px 10px;box-shadow:0 2px 6px rgba(41,55,77,.25);display:flex;flex-direction:column;gap:5px;font-size:12px;color:#29374d;max-width:200px">
 <b>{{ shadeName }}</b>
 <div style="display:flex;height:10px;border-radius:2px;overflow:hidden"><span style="flex:1;background:#f6ecd8"></span><span style="flex:1;background:#e1c58d"></span><span style="flex:1;background:#d6ab5c"></span><span style="flex:1;background:#6c89b2"></span><span style="flex:1;background:#29374d"></span></div>
-<div style="display:flex;justify-content:space-between;color:#5a6b82"><span>Fewer</span><span>More</span></div>
-<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="color:#5a6b82">Sample data</span><button onClick="{{ shadeOff }}" style="border:none;background:#eef1f5;color:#29374d;border-radius:4px;height:26px;padding:0 8px;font-size:12px;font-weight:600;cursor:pointer">✕ Off</button></div>
+<div style="display:flex;justify-content:space-between;color:#5a6b82"><span>{{ shadeLo }}</span><span>{{ shadeHi }}</span></div>
+<sc-if value="{{ shadeMsg }}" hint-placeholder-val="{{ false }}"><span style="color:#dc2f3a;font-weight:600">{{ shadeMsg }}</span></sc-if>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="color:#5a6b82">U.S. Census by ZIP</span><button onClick="{{ shadeOff }}" style="border:none;background:#eef1f5;color:#29374d;border-radius:4px;height:26px;padding:0 8px;font-size:12px;font-weight:600;cursor:pointer">✕ Off</button></div>
 </div>
 </sc-if>
 <sc-if value="{{ mapLoading }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#5a6b82;font-size:14px;z-index:950;background:#eef1f5">{{ loadingLbl }}</div></sc-if>
@@ -104,7 +105,7 @@
 <sc-if value="{{ tabShade }}" hint-placeholder-val="{{ true }}">
 <sc-for list="{{ shades }}" as="r" hint-placeholder-count="7"><button onClick="{{ r.go }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;background:{{ r.rowBg }};border:1px solid {{ r.rowBd }};text-align:left;cursor:pointer"><span style="width:16px;height:16px;flex-shrink:0;border-radius:50%;border:2px solid #29374d;display:flex;align-items:center;justify-content:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.dot }}"></span></span><span style="font-size:14px;color:#29374d;font-weight:{{ r.rw }}">{{ r.label }}</span></button></sc-for>
 <sc-if value="{{ womenOn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-wrap:wrap;gap:5px;padding:6px 8px;margin-left:20px;background:#f6ecd8;border-radius:6px"><sc-for list="{{ womenAges }}" as="a" hint-placeholder-count="5"><button onClick="{{ a.go }}" style="padding:6px 9px;border-radius:5px;font-size:12px;border:1px solid {{ a.bd }};background:{{ a.bg }};color:{{ a.fg }};cursor:pointer">{{ a.label }}</button></sc-for></div></sc-if>
-<span style="font-size:12px;color:#5a6b82;margin-top:6px">Sample data. Darker areas on the map = more.</span>
+<span style="font-size:12px;color:#5a6b82;margin-top:6px">U.S. Census data by ZIP code. Darker = more. Hover a ZIP for its number.</span>
 </sc-if>
 <sc-if value="{{ tabCheck }}" hint-placeholder-val="{{ false }}">
 <span style="font-size:13px;color:#5a6b82;line-height:1.5">Type a street address, city or ZIP. A red dot marks it on the map with the distance from your clinic.</span>
@@ -285,7 +286,7 @@
 <sc-if value="{{ tabShade }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px"><sc-for list="{{ shades }}" as="r" hint-placeholder-count="7"><button onClick="{{ r.go }}" style="flex-shrink:0;height:44px;padding:0 12px;border-radius:6px;font-size:14px;border:1px solid {{ r.bd }};background:{{ r.bg }};color:{{ r.fg }}">{{ r.label }}</button></sc-for></div>
 <sc-if value="{{ womenOn }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:6px;overflow-x:auto;padding:8px;background:#f6ecd8;border-radius:6px"><sc-for list="{{ womenAges }}" as="a" hint-placeholder-count="5"><button onClick="{{ a.go }}" style="flex-shrink:0;height:44px;padding:0 10px;border-radius:6px;font-size:14px;border:1px solid {{ a.bd }};background:{{ a.bg }};color:{{ a.fg }}">{{ a.label }}</button></sc-for></div></sc-if>
-<span style="font-size:13px;color:#5a6b82">Sample data. Darker areas on the map = more.</span>
+<span style="font-size:13px;color:#5a6b82">U.S. Census data by ZIP code. Darker = more. Tap a ZIP for its number.</span>
 </sc-if>
 <sc-if value="{{ tabCheck }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;gap:8px"><input value="{{ q }}" onChange="{{ onQ }}" onKeyDown="{{ onQKey }}" placeholder="Address, city or ZIP" style="flex:1;min-width:0;height:44px;padding:0 12px;border:1px solid #c9d2de;border-radius:6px;font-size:16px;font-family:inherit"><button onClick="{{ runCheck }}" style="height:44px;padding:0 16px;border-radius:6px;border:none;background:#29374d;color:#fff;font-size:14px;font-weight:600">Check</button></div>
@@ -325,16 +326,24 @@ class Component extends DCLogic {
     ],
     dataFile: 'data/sites.json', zipFile: 'data/zipgeo.json', photoPlaceholder: 'assets/photo-placeholder.png',
     estExpenses: { AZ: 0.70, NM: 0.60, CA: 1.00 }, estElecJan: 0.20,
-    sources: 'Available space, asking rents and building details — CoStar exports and property reports, October–November 2026. Building photos — CoStar property reports. Triple net all-in rents add MedWest’s estimated building expenses (about $0.70 per sq ft a month in Arizona, $1.00 in Orange County — typical for the area, not each building’s actual figure) when the listing doesn’t show them. These all-in rents are marked *. Distances are straight-line; drive times are estimates. Map shading and the 65-and-older figure are sample data. Map © Esri and its data partners.',
+    sources: 'Available space, asking rents and building details — CoStar exports and property reports, October–November 2026. Building photos — CoStar property reports. Triple net all-in rents add MedWest’s estimated building expenses (about $0.70 per sq ft a month in Arizona, $1.00 in Orange County — typical for the area, not each building’s actual figure) when the listing doesn’t show them. These all-in rents are marked *. Distances are straight-line; drive times are estimates. Map shading — U.S. Census Bureau, American Community Survey 2019–2023 5-year estimates, by ZIP code. The 65-and-older figure in the summary is sample data. Map © Esri and its data partners.',
     disclaimer: 'Information is from sources believed reliable but has not been verified by MedWest Realty. Rents, availability and terms change often and should be confirmed with the landlord.'
   };
   /* ===================== END CLIENT DATA BLOCK ===================== */
 
   static EMBED = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
   static SF_RANGES = [{ v: 'any', l: 'Any size', min: 0, max: 1e12 }, { v: 'u2', l: 'Under 2,000 sq ft', min: 1, max: 2000 }, { v: '2-4', l: '2,000 – 4,000 sq ft', min: 2000, max: 4000 }, { v: '4-6', l: '4,000 – 6,000 sq ft', min: 4000, max: 6000 }, { v: '6-10', l: '6,000 – 10,000 sq ft', min: 6000, max: 10000 }, { v: '10-20', l: '10,000 – 20,000 sq ft', min: 10000, max: 20000 }, { v: '20-30', l: '20,000 – 30,000 sq ft', min: 20000, max: 30000 }, { v: '30p', l: '30,000+ sq ft', min: 30000, max: 1e12 }];
-  static SHADES = ['People 65 and older', 'Household income', 'Population growth', 'Families with children', 'People with health insurance', 'Women by age'];
+  static SHADES = ['People 65 and older', 'Household income', 'Families with children', 'People with health insurance'];
+  /* Real U.S. Census data by ZIP code (ACS 2019–2023 5-year). Colors split the ZIP codes in view into fifths; b = U.S. fallback. */
+  static CENSUS_KEY = 'cf3c22d2a287cfb61b9ac8af7384767316588b34';
+  static SHADE_META = [
+    { v: 'DP05_0024PE', b: [13.8, 17.2, 20.2, 24.4], unit: '%', tip: 'age 65 and older' },
+    { v: 'DP03_0062E', b: [53750, 65071, 77270, 96964], unit: '$', tip: 'median household income' },
+    { v: 'DP02_0014PE', b: [21.8, 26.7, 30.7, 36], unit: '%', tip: 'of households have kids under 18' },
+    { v: 'DP03_0096PE', b: [87.8, 92.1, 94.7, 96.8], unit: '%', tip: 'have health insurance' }
+  ];
   static WOMEN_AGES = ['18 to 34', '35 to 44', '45 to 54', '55 to 64', '65 and older'];
-  static WOMEN = 5;
+  static WOMEN = 99;
 
   state = { sites: null, loadErr: '', fq: '', fDist: 'any', fSize: 'any', ringN: 0, tab: 0, womenAge: 0, w: 1200, compare: [], view: 'main', adv: false, more: false, sort: 'closest', scope: 'ring', sfRange: 'any', limit: 25, advLimit: 50, fs: false, shade: -1, sat: false, all: false, menuOpen: false, q: '', checkMsg: '', patientMsg: '', patients: false, toast: '', mapReady: false };
   rootRef = React.createRef(); mapRef = React.createRef(); mainRef = React.createRef(); fileRef = React.createRef();
@@ -447,7 +456,7 @@ class Component extends DCLogic {
     this.base = L.tileLayer(esri('World_Topo_Map'), { maxZoom: 18, attribution: 'Map © Esri and its data partners' }).addTo(this.map);
     this.satLayer = L.layerGroup([L.tileLayer(esri('World_Imagery'), { maxZoom: 18, attribution: 'Imagery © Esri' }), L.tileLayer(esri('Reference/World_Boundaries_and_Places'), { maxZoom: 18 })]);
     this.ring = L.circle([cur.lat, cur.lng], { radius: C.ringMiles * 1609.34, color: '#29374d', weight: 2, dashArray: '7 7', fillColor: '#29374d', fillOpacity: 0.04, interactive: false }).addTo(this.map);
-    this.shadeLayer = L.layerGroup().addTo(this.map); this.patientLayer = L.layerGroup().addTo(this.map); this.otherLayer = L.layerGroup(); this.checkLayer = L.layerGroup().addTo(this.map);
+    this.shadeLayer = L.layerGroup().addTo(this.map); this.map.on('moveend', () => { if (this.state.shade >= 0) { this._shadeSeq = (this._shadeSeq || 0) + 1; this.loadZips(this.state.shade, this._shadeSeq); } }); this.patientLayer = L.layerGroup().addTo(this.map); this.otherLayer = L.layerGroup(); this.checkLayer = L.layerGroup().addTo(this.map);
     L.marker([cur.lat, cur.lng], { zIndexOffset: 2000, icon: L.divIcon({ className: '', iconSize: [32, 32], iconAnchor: [16, 16], html: '<div style="width:32px;height:32px;border-radius:4px;background:#dc2f3a;color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font:700 13px \'Roboto Condensed\',sans-serif;box-shadow:0 2px 5px rgba(0,0,0,.35)">' + C.initials + '</div>' }) })
       .bindPopup('<div style="padding:12px;font:13px Archivo,sans-serif;width:260px"><b style="font:700 16px \'Roboto Condensed\',sans-serif;color:#29374d">' + cur.name + '</b><br>' + cur.addr + ', ' + cur.city + '<br>' + cur.sf.toLocaleString() + ' sq ft · ' + cur.typeLbl + '<br>' + this.money(cur.allIn, 2) + ' all-in per sq ft a month<br>Lease ends ' + this.endLbl() + '</div>').addTo(this.map);
     C.otherLocations.forEach(o => L.marker([o.lat, o.lng], { icon: L.divIcon({ className: '', iconSize: [24, 24], iconAnchor: [12, 12], html: '<div style="width:24px;height:24px;border-radius:4px;background:#fff;border:2px solid #dc2f3a;color:#dc2f3a;display:flex;align-items:center;justify-content:center;font:700 10px \'Roboto Condensed\',sans-serif">' + C.initials + '</div>' }) }).bindPopup('<div style="padding:12px;font:13px Archivo,sans-serif"><b style="color:#29374d">' + o.name + '</b><br>' + o.city + '</div>').addTo(this.otherLayer));
@@ -475,15 +484,35 @@ class Component extends DCLogic {
   inSf(b) { const r = Component.SF_RANGES.find(x => x.v === this.state.sfRange); if (!r || r.v === 'any') return true; return !!b.mc && b.mc >= r.min && b.mc < r.max; }
   applySfToMap() { if (!this.cluster || !this.markers) return; const keep = [], drop = []; this.calc().forEach(b => { const mk = this.markers[b.n]; if (!mk) return; const on = this.cluster.hasLayer(mk); if (this.inSf(b)) { if (!on) keep.push(mk); } else if (on) drop.push(mk); }); if (drop.length) this.cluster.removeLayers(drop); if (keep.length) this.cluster.addLayers(keep); }
   refreshPins(prev) { const now = this.state.compare, ch = new Set([...(prev || []), ...now]); ch.forEach(n => { const mk = this.markers[n]; if (mk) mk.setIcon(this.icon(n, now.includes(n))); }); this.refreshOpenPopup(); }
-  drawShade(i0, age) {
-    const L = window.L, cur = this.cur(); this.shadeLayer.clearLayers(); if (i0 < 0) return;
-    const i = i0 === Component.WOMEN ? i0 + (age ?? this.state.womenAge) * 0.83 : i0;
-    const ramp = ['#f6ecd8', '#e1c58d', '#d6ab5c', '#6c89b2', '#29374d'], step = 0.022;
-    for (let a = -6; a < 6; a++) for (let g = -8; g < 8; g++) {
-      const lat = cur.lat + a * step, lng = cur.lng + g * step * 1.2;
-      const v = (Math.sin(a * 0.9 + i * 1.7) + Math.cos(g * 0.7 - i) + Math.sin((a + g) * 0.45 + i * 2.3) + 3) / 6;
-      L.rectangle([[lat, lng], [lat + step, lng + step * 1.2]], { stroke: false, fillColor: ramp[Math.max(0, Math.min(4, Math.floor(v * 5)))], fillOpacity: 0.42, interactive: false }).addTo(this.shadeLayer);
-    }
+  fmtShade(m, x) { return m.unit === '$' ? '$' + Math.round(x / 1000) + 'K' : (Math.round(x * 10) / 10) + '%'; }
+  drawShade(i0) {
+    this._shadeI = i0; this._shadeSeq = (this._shadeSeq || 0) + 1;
+    if (!this.shadeLayer) return; this.shadeLayer.clearLayers();
+    if (i0 < 0 || !this.map) { this.setState({ shadeMsg: '' }); return; }
+    this.loadZips(i0, this._shadeSeq);
+  }
+  async loadZips(i0, seq) {
+    const L = window.L, map = this.map, m = Component.SHADE_META[i0], z = map.getZoom();
+    if (z < 7) { this.shadeLayer.clearLayers(); this.setState({ shadeMsg: 'Zoom in to see ZIP codes' }); return; }
+    this.setState({ shadeMsg: 'Loading ZIP codes…' });
+    try {
+      const b = map.getBounds().pad(0.15), off = (360 / (256 * Math.pow(2, z))) * 1.2;
+      const q = { geometry: [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map(v => v.toFixed(4)).join(','), geometryType: 'esriGeometryEnvelope', inSR: 4326, outSR: 4326, spatialRel: 'esriSpatialRelIntersects', returnGeometry: true, maxAllowableOffset: off.toFixed(5), geometryPrecision: 4, outFields: 'ZCTA5', where: '1=1', f: 'geojson' };
+      const gj = await fetch('https://tigerweb.geo.census.gov/arcgis/rest/services/TIGERweb/PUMA_TAD_TAZ_UGA_ZCTA/MapServer/11/query?' + Object.entries(q).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&')).then(r => r.json());
+      if (seq !== this._shadeSeq) return;
+      const cache = (this._zv = this._zv || {})[m.v] = (this._zv || {})[m.v] || {};
+      const need = gj.features.map(f => f.properties.ZCTA5).filter(k => !(k in cache));
+      const chunks = []; for (let i = 0; i < need.length; i += 150) chunks.push(need.slice(i, i + 150));
+      await Promise.all(chunks.map(c => fetch('https://api.census.gov/data/2023/acs/acs5/profile?get=' + m.v + '&for=zip%20code%20tabulation%20area:' + c.join(',') + '&key=' + Component.CENSUS_KEY).then(r => r.ok ? r.json() : []).then(rows => { c.forEach(k => { cache[k] = null; }); rows.slice(1).forEach(r => { const v = +r[0]; cache[r[1]] = isFinite(v) && v >= 0 ? v : null; }); }).catch(() => {})));
+      if (seq !== this._shadeSeq) return;
+      const ramp = ['#f6ecd8', '#e1c58d', '#d6ab5c', '#6c89b2', '#29374d'];
+      const vis = gj.features.map(f => cache[f.properties.ZCTA5]).filter(v => v != null).sort((a, b) => a - b);
+      const brk = vis.length >= 10 ? [0.2, 0.4, 0.6, 0.8].map(p => vis[Math.floor(p * vis.length)]) : m.b;
+      this.shadeLayer.clearLayers();
+      L.geoJSON(gj, { style: f => { const v = cache[f.properties.ZCTA5]; const k = v == null ? -1 : brk.filter(x => v >= x).length; return { color: '#ffffff', weight: 0.8, fillColor: k < 0 ? '#c9d2de' : ramp[k], fillOpacity: k < 0 ? 0.25 : 0.55 }; },
+        onEachFeature: (f, lyr) => { const zc = f.properties.ZCTA5, v = cache[zc]; lyr.bindTooltip('<b>ZIP ' + zc + '</b><br>' + (v == null ? 'Not reported' : this.fmtShade(m, v) + ' ' + m.tip), { sticky: true, direction: 'top' }); } }).addTo(this.shadeLayer);
+      this.setState({ shadeMsg: '', shadeBrk: brk });
+    } catch (e) { if (seq === this._shadeSeq) this.setState({ shadeMsg: 'ZIP data could not load — try again' }); }
   }
   sheetH() { return Math.min(400, Math.round((window.innerHeight || 844) * 0.45)); }
   endLbl() { const d = new Date(Component.CLIENT.current.leaseEnd + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
@@ -599,7 +628,7 @@ class Component extends DCLogic {
       allOn: s.all, allLabel: s.all ? 'Hide other client locations' : (mob ? 'All client locations' : 'Show all client locations'), allBg: s.all ? '#29374d' : '#fff', allFg: s.all ? '#fff' : '#29374d',
       toggleSat: () => { if (!this.map) return; const on = !s.sat; this.setState({ sat: on }); if (on) { this.map.removeLayer(this.base); this.satLayer.addTo(this.map); } else { this.map.removeLayer(this.satLayer); this.base.addTo(this.map); } },
       satLabel: s.sat ? 'Map' : 'Satellite', satBg: s.sat ? '#29374d' : '#fff', satFg: s.sat ? '#fff' : '#29374d',
-      shadeOn: s.shade >= 0, shades, shadeWrap: mob ? 'nowrap' : 'wrap',
+      shadeOn: s.shade >= 0, shades, shadeMsg: s.shadeMsg || '', shadeLo: s.shade >= 0 ? 'Under ' + this.fmtShade(Component.SHADE_META[s.shade], (s.shadeBrk || Component.SHADE_META[s.shade].b)[0]) : '', shadeHi: s.shade >= 0 ? this.fmtShade(Component.SHADE_META[s.shade], (s.shadeBrk || Component.SHADE_META[s.shade].b)[3]) + '+' : '', shadeWrap: mob ? 'nowrap' : 'wrap',
       shadeName: s.shade < 0 ? '' : s.shade === Component.WOMEN ? 'Women ages ' + Component.WOMEN_AGES[s.womenAge] : Component.SHADES[s.shade],
       womenOn: s.shade === Component.WOMEN,
       womenAges: Component.WOMEN_AGES.map((label, k) => ({ label, ...btnS(s.womenAge === k), go: () => { this.setState({ womenAge: k }); this.drawShade(Component.WOMEN, k); } })),
