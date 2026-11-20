@@ -633,6 +633,29 @@ body.ss2-full .suggest-fab{display:none}
   .kpi-card .kpi-val{font-size:13px!important}
   #content{max-height:calc(100vh - 128px)!important}
 }
+
+/* Expiration page on phones: map and Key Deadlines stack full width instead of squeezing side by side */
+@media (max-width:900px){
+  .expir-mapdead{grid-template-columns:1fr!important;height:auto!important}
+  .expir-mapdead > .card{height:auto!important}
+  .expir-mapdead > .card:first-child .map-wrap{height:300px;flex:none!important}
+  .expir-mapdead #expir-timeline-rows{max-height:420px}
+}
+
+/* Key Deadlines on phones: bigger text, wider bars (the color badge is dropped — the bar and date already carry the color) */
+@media (max-width:900px){
+  .kd-tag{display:none!important}
+  .kd-head,.kd-months{padding-left:103px!important}
+  .kd-name{font-size:12px!important;width:88px!important}
+  .kd-date{font-size:11px!important;width:40px!important}
+  .kd-mo{font-size:11px!important;width:38px!important}
+  .kd-bar{height:16px!important}
+  .kd-months > div{font-size:10px!important}
+  .kd-months > div:nth-child(even){visibility:hidden}
+  .kd-head span{font-size:11px!important}
+  .map-btn{white-space:nowrap;padding:6px 9px}
+  .map-ctrls{right:8px;flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
@@ -1869,13 +1892,13 @@ function buildExpirTimelineRows(filterName){
     :         {color:'#2e7d32', tc:'#fff', tag:'18+ Mo'};
   const months=[];
   for(let i=0;i<7;i++){const d=new Date(now);d.setMonth(d.getMonth()+i*3);months.push(d.toLocaleString('default',{month:'short',year:'2-digit'}));}
-  let html=(_keyDeadlinesShowOptions ? `<div style="display:flex;align-items:center;gap:5px;padding-left:148px;margin-bottom:4px">
+  let html=(_keyDeadlinesShowOptions ? `<div class="kd-head" style="display:flex;align-items:center;gap:5px;padding-left:148px;margin-bottom:4px">
     <span style="display:inline-block;width:12px;height:8px;background:#29374d;border:1px solid #fff;outline:1px solid #29374d;box-sizing:border-box;border-radius:2px;flex-shrink:0"></span>
     <span style="font-size:9px;color:#888">Option 1 Window</span>
     <span style="display:inline-block;width:12px;height:8px;background:#8a97ad;border:1px solid #fff;outline:1px solid #8a97ad;box-sizing:border-box;border-radius:2px;flex-shrink:0;margin-left:8px"></span>
     <span style="font-size:9px;color:#888">Option 2 Window</span>
   </div>` : '')+
-  `<div style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
+  `<div class="kd-months" style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
   const items = [...LOCATIONS].filter(l=>l.expiry && monthsUntil(l.expiry)<18).sort((a,b)=>monthsUntil(a.expiry)-monthsUntil(b.expiry));
   items.forEach(loc=>{
     const mo = monthsUntil(loc.expiry);
@@ -1895,14 +1918,14 @@ function buildExpirTimelineRows(filterName){
     }
     const optBars = _keyDeadlinesShowOptions ? optWindows.map(w=>`<div style="position:absolute;left:${w.l}%;top:2px;height:10px;width:${Math.max(w.r-w.l,1)}%;background:${w.c};border:2px solid #fff;box-sizing:border-box;border-radius:2px"></div>`).join('') : '';
     html+=`<div onclick="selectExpirProperty('${loc.name}')" style="display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:6px;margin-bottom:5px;cursor:pointer;background:${sel?'rgba(13,32,64,.07)':'transparent'};border:1px solid ${sel?'#0d2040':'transparent'};transition:background .15s">
-      <div style="font-size:10px;font-weight:${sel?700:500};color:#0d2040;width:78px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
-      <span style="font-size:8px;font-weight:700;background:${cfg.color};color:${cfg.tc};padding:1px 5px;border-radius:3px;flex-shrink:0;width:74px;box-sizing:border-box;white-space:nowrap;text-align:center">${cfg.tag}</span>
-      <div style="flex:1;height:14px;background:#eef0f3;border-radius:3px;position:relative;overflow:hidden">
+      <div class="kd-name" style="font-size:10px;font-weight:${sel?700:500};color:#0d2040;width:78px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
+      <span class="kd-tag" style="font-size:8px;font-weight:700;background:${cfg.color};color:${cfg.tc};padding:1px 5px;border-radius:3px;flex-shrink:0;width:74px;box-sizing:border-box;white-space:nowrap;text-align:center">${cfg.tag}</span>
+      <div class="kd-bar" style="flex:1;height:14px;background:#eef0f3;border-radius:3px;position:relative;overflow:hidden">
         <div style="position:absolute;left:0;top:0;height:100%;width:${deadPct}%;background:${cfg.color};border-radius:3px;opacity:${sel?1:.7}"></div>
         ${optBars}
       </div>
-      <div style="font-size:9px;color:${cfg.color};font-weight:600;width:34px;text-align:right;flex-shrink:0">${dateStr}</div>
-      <div style="font-size:9px;color:#aaa;width:26px;text-align:right;flex-shrink:0">${rightTxt}</div>
+      <div class="kd-date" style="font-size:9px;color:${cfg.color};font-weight:600;width:34px;text-align:right;flex-shrink:0">${dateStr}</div>
+      <div class="kd-mo" style="font-size:9px;color:#aaa;width:26px;text-align:right;flex-shrink:0">${rightTxt}</div>
     </div>`;
   });
   html+=`<div style="font-size:9px;color:#bbb;margin-top:3px;padding-left:8px">Click any property to filter all panels${filterName?' — <span style="color:#1565c0;cursor:pointer" onclick="clearExpirSelection()">clear selection</span>':''}</div>`;
@@ -1992,7 +2015,7 @@ function buildExpirActionCenter(){
   if(!el||el.children.length) return;
   _categorizeExpir();
   el.innerHTML=`<div class="card" id="expir-stacked-bar-section" style="display:flex;flex-direction:column;margin-bottom:14px"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;height:344px">
+  <div class="expir-mapdead" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;height:344px">
     <div class="card" style="padding:10px;display:flex;flex-direction:column;height:100%;min-height:0;overflow:hidden">
       <div class="card-title">Location Map</div>
       <div class="map-wrap" id="map-wrap-expir" style="flex:1;min-height:0;position:relative">
