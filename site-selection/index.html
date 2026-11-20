@@ -205,7 +205,7 @@
 <span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px"><b style="color:#29374d;font-weight:600">{{ b.name }}</b><span style="color:#5a6b82;font-size:12px">{{ b.addr }}, {{ b.city }}</span></span>
 <span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px"><b style="color:#29374d">{{ b.monthlyLbl }}</b><span style="color:#5a6b82;font-size:12px">{{ b.fitLbl }}</span></span>
 <span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center;color:{{ b.diffColor }};font-weight:600">{{ b.monthDiffShort }}</span>
-<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px"><span>{{ b.allInLbl }}</span><span style="font-size:11px;color:#dc2f3a">{{ b.flag }}</span></span>
+<span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;flex-direction:column;justify-content:center;gap:2px"><span>{{ b.allInLbl }}</span><span style="font-size:11px;color:#dc2f3a">{{ b.flagShort }}</span></span>
 <span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center;color:#5a6b82">{{ b.drive }} min</span>
 <span style="padding:10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center;font-size:13px">{{ b.spaceShort }}</span>
 <span style="padding:8px 10px;border-top:1px solid #eef1f5;height:100%;display:flex;align-items:center"><button onClick="{{ b.onCompare }}" style="width:100%;padding:8px;border-radius:6px;font-size:13px;font-weight:600;border:1px solid #29374d;background:{{ b.btnBg }};color:#29374d;cursor:pointer">{{ b.btn }}</button></span>
@@ -317,7 +317,7 @@ class Component extends DCLogic {
     searchSummary: 'Medical office space with room available in Orange County, San Diego and Phoenix',
     ringMiles: 5, targetSf: 4500,
     current: { name: 'PulsePath Health – Sample Clinic', addr: '100 Sample Medical Plaza, Suite 200', city: 'Irvine, CA', lat: 33.6846, lng: -117.8265,
-      sf: 4500, typeLbl: 'triple net', rent: 3.50, opex: 0.85, leaseEnd: '2027-12-31', suite: 'Suite 200', parking: '4 per 1,000 sq ft', year: 1999 },
+      sf: 4500, typeLbl: 'triple net', rent: 3.50, opex: 0.85, leaseEnd: (() => { /* sample lease end rolls forward monthly — written for Nov 2026 */ const n = new Date(), k = Math.max(0, (n.getFullYear() - 2026) * 12 + n.getMonth() - 10), e = new Date(2027, 12 + k, 0); return e.getFullYear() + '-' + String(e.getMonth() + 1).padStart(2, '0') + '-' + String(e.getDate()).padStart(2, '0'); })(), suite: 'Suite 200', parking: '4 per 1,000 sq ft', year: 1999 },
     demographic: { label: 'People 65 and older', value: 21840, note: 'within 3 miles · sample figure' },
     otherLocations: [
       { name: 'PulsePath Health – Sample Clinic 2', city: 'Mission Viejo', lat: 33.6000, lng: -117.6720 },
@@ -556,7 +556,7 @@ class Component extends DCLogic {
     const lowest = [...pool].sort((a, b) => a.allIn - b.allIn)[0];
     const closest = [...pool].filter(b => b !== lowest).sort((a, b) => a.dist - b.dist)[0];
     const room = [...pool].filter(b => b !== lowest && b !== closest && b.mc <= T * 2).sort((a, b) => b.mc - a.mc)[0];
-    const picks = [{ tag: 'LOWEST ALL-IN RENT', b: lowest }, { tag: 'CLOSEST TO YOUR CLINIC', b: closest }, { tag: 'MOST ROOM', b: room }].filter(p => p.b);
+    const picks = [{ tag: 'LOWEST ALL-IN RENT', b: lowest }, { tag: 'NEXT CLOSEST THAT FITS', b: closest }, { tag: 'ROOM TO GROW', b: room }].filter(p => p.b);
     const sortFns = { closest: (a, b) => a.dist - b.dist, cost: (a, b) => (a.allIn ?? 1e9) - (b.allIn ?? 1e9), space: (a, b) => (b.mc || 0) - (a.mc || 0), number: (a, b) => a.n - b.n };
     const bsF = bs.filter(b => this.inSf(b)), ringF = bsF.filter(b => b.dist <= R);
     const scoped = s.scope === 'ring' ? ringF : s.scope === '10' ? bsF.filter(b => b.dist <= 10) : bsF;
