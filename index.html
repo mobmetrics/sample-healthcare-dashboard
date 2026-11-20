@@ -622,6 +622,17 @@ body.ss-full .suggest-fab{display:none}
 body.ss2-full #ss2-frame{position:fixed;left:0;top:0;width:100vw;height:100vh;min-height:0;z-index:30000;border-radius:0}
 body.ss2-full .suggest-fab{display:none}
 @media (max-width:900px){#ss2-frame{height:calc(100vh - 110px);min-height:520px}}
+
+/* Phone header: slim pinned strip — 4 summary numbers in one row, shorter title (layout only, no color changes) */
+@media (max-width:900px){
+  #topbar{padding:8px 12px!important}
+  #topbar .title{font-size:17px!important;line-height:1.2}
+  #kpi-bar{grid-template-columns:repeat(4,1fr)!important;gap:6px!important;padding:8px 10px 0!important}
+  .kpi-card{padding:6px 7px!important;border-top-width:2px!important}
+  .kpi-card .kpi-lbl{font-size:8px!important;letter-spacing:.3px!important;line-height:1.15}
+  .kpi-card .kpi-val{font-size:13px!important}
+  #content{max-height:calc(100vh - 128px)!important}
+}
 </style>
 </head>
 <body>
@@ -691,7 +702,7 @@ body.ss2-full .suggest-fab{display:none}
     <div style="display:flex;align-items:center;gap:12px;min-width:0">
       <button id="nav-toggle" onclick="toggleSidebar()" aria-label="Open menu" aria-expanded="false">☰</button>
       <div style="min-width:0">
-        <div class="subtitle">Updated October 2026</div>
+        <div class="subtitle" id="updated-month">Updated October 2026</div>
         <div class="title">PulsePath Health — Portfolio Dashboard</div>
       </div>
     </div>
@@ -721,7 +732,7 @@ body.ss2-full .suggest-fab{display:none}
       <div id="exec-pulse" style="margin-bottom:14px"></div>
       <div class="two-col">
         <div class="card">
-          <div class="card-title">Total Monthly Rent by Location</div>
+          <div class="card-title">Monthly Base Rent by Location</div>
           <div style="position:relative;height:260px"><canvas id="chart-monthly"></canvas></div>
         </div>
         <div class="card">
@@ -768,9 +779,9 @@ body.ss2-full .suggest-fab{display:none}
             <thead>
               <tr>
                 <th>#</th><th id="th-expir-name" data-label="Location Name" onclick="sortExpirTable('name')" style="cursor:pointer">Location Name ⇅</th><th>Options</th>
-                <th>Option 1 Notification Begins</th><th>Month Until Option 1 Opens</th>
+                <th>Option 1 Notification Begins</th><th>Months Until Option 1 Opens</th>
                 <th>Option 1 Notice End</th><th>Option 2 Notification Begins</th>
-                <th>Month Until Option 2 Opens</th><th>Option 2 Notice End</th>
+                <th>Months Until Option 2 Opens</th><th>Option 2 Notice End</th>
                 <th id="th-expir-mo" data-label="Months to Expiration" onclick="sortExpirTable('mo')" style="cursor:pointer">Months to Expiration ⇅</th><th id="th-expir-expiry" data-label="Expiration" onclick="sortExpirTable('expiry')" style="cursor:pointer">Expiration ⇅</th>
               </tr>
             </thead>
@@ -792,14 +803,14 @@ body.ss2-full .suggest-fab{display:none}
       <div class="section-title">Operating Expenses</div>
       <div class="two-col">
         <div class="card">
-          <div class="card-title">Operating Cost (Base Rent + CAMs)</div>
+          <div class="card-title">Operating Expenses by Location</div>
           <div class="tbl-wrap" style="overflow-y:auto">
             <table class="dtbl" id="tbl-opex">
               <thead>
                 <tr>
                   <th>#</th><th>Location Name</th>
                   <th>Operating Expenses Monthly</th>
-                  <th>Square Feet</th><th>Contract Monthly Cost by Sq Ft</th>
+                  <th>Square Feet</th><th>Base Rent per Sq Ft / Month</th>
                 </tr>
               </thead>
               <tbody id="tbody-opex"></tbody>
@@ -807,7 +818,7 @@ body.ss2-full .suggest-fab{display:none}
           </div>
         </div>
         <div class="card">
-          <div class="card-title">All-In Cost $/SF/Mo (Base Rent + OpEx)</div>
+          <div class="card-title">All-In Cost per Sq Ft / Month (Base Rent + Operating Expenses)</div>
           <div style="position:relative;flex:1;min-height:200px"><canvas id="chart-opex-stacked"></canvas></div>
         </div>
       </div>
@@ -835,13 +846,13 @@ body.ss2-full .suggest-fab{display:none}
         <div id="rate1-compare-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px"></div>
       </div>
       <div class="full card">
-        <div class="card-title">Contract Monthly Cost vs. Market Gross Monthly by Sq Ft</div>
+        <div class="card-title">All-In Contract Cost vs. Market Gross Rent per Sq Ft</div>
         <div class="tbl-wrap" style="overflow-y:auto;max-height:220px">
           <table class="dtbl">
             <thead>
               <tr>
                 <th style="text-align:left">#</th><th style="text-align:left">Location Name</th>
-                <th style="max-width:90px">Contract Monthly Cost by SF</th><th style="max-width:90px">Market Gross Monthly by SF</th>
+                <th style="max-width:90px">Contract All-In Cost per Sq Ft (Rent + Expenses)</th><th style="max-width:90px">Market Gross Rent per Sq Ft</th>
                 <th style="max-width:80px">Contract vs Market</th><th style="max-width:80px">% Contract vs Market</th>
                 <th style="max-width:90px">Remaining Rent for Year</th>
               </tr>
@@ -851,21 +862,12 @@ body.ss2-full .suggest-fab{display:none}
         </div>
       </div>
       <div class="full card">
-        <div class="card-title">Contract vs. Market Rent by Month</div>
-        <div style="position:relative;height:300px"><canvas id="chart-rate2"></canvas></div>
-        <div class="legend" style="margin-top:8px">
-          <div class="leg"><div class="leg-box" style="background:#0d2040"></div>Market Gross Monthly Rent</div>
-          <div class="leg"><div class="leg-box" style="background:#d6ab5c"></div>Contract Total Monthly Gross</div>
-        </div>
-      </div>
-      <div class="full card">
         <div class="card-title">Monthly Rent Schedule by Location</div>
         <div class="tbl-wrap">
           <table class="dtbl">
             <thead>
-              <tr>
-                <th>Location Name</th><th>Contract Monthly Base Rent</th><th>Expiration Year</th>
-                <th>2026</th><th>2027</th><th>2028</th><th>2029</th><th>2030</th><th>2031</th><th>2032</th><th>2033</th>
+              <tr id="rentschedule-head">
+                <th>Location Name</th><th>Contract Monthly Rent (All-In)</th><th>Expiration Year</th>
               </tr>
             </thead>
             <tbody id="tbody-rentschedule"></tbody>
@@ -1054,7 +1056,7 @@ body.ss2-full .suggest-fab{display:none}
             <option>Extension</option><option>Renewal</option><option>Relocation</option><option>Expansion</option>
             <option>New Location</option><option>Blend &amp; Extend</option><option>Build-to-Suit</option><option>Purchase</option>
           </select>
-          <select id="p-stage"><option value="Prospecting">Searching</option><option>Touring</option><option>Proposal</option><option value="LOI">Letter of Intent</option><option selected>Lease Negotiation</option><option value="Lease Execution">Signed</option></select>
+          <select id="p-stage"><option value="Prospecting" selected>Searching</option><option>Touring</option><option>Proposal</option><option value="LOI">Letter of Intent</option><option>Lease Negotiation</option><option value="Lease Execution">Signed</option></select>
           <input id="p-sf" placeholder="Size (sq ft)" type="number"/>
           <input id="p-rent" placeholder="Rent per sq ft / mo" type="number" step="0.01"/>
           <input id="p-prob" placeholder="Chance of closing %" type="number" min="0" max="100" style="max-width:150px"/>
@@ -1212,37 +1214,103 @@ body.ss2-full .suggest-fab{display:none}
 // DATA
 // ============================================================
 const LOCATIONS = [
-  { name:"Property 1",  address:"301 W Huntington",          suite:"408",   city:"Arcadia",       state:"CA", zip:"91007", lat:34.1397, lng:-118.0353, termMo:63,   sqft:5446,  monthly:22383.06,  annual:268596.72,  expiry:"2027-05-31", opexAnnual:75808.32,  opexMonthly:6317.36,  contractSF:2.95, marketSF:3.00, remaining:72540.72,   options:"1, 5 year",  rentSchedule:{2026:268596.72,2027:276654.62,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-05-31", opt1MonthsUntil:2,    opt1NoticeEnd:"2026-08-29", opt2NotifBegins:"2031-05-31", opt2MonthsUntil:59, opt2NoticeEnd:"2031-08-29" },
-  { name:"Property 2",  address:"285 El Camino Real",         suite:"114",   city:"Encinitas",     state:"CA", zip:"92024", lat:33.0369, lng:-117.2920, termMo:null, sqft:5005,  monthly:22272.25,  annual:267267.00,  expiry:"2028-08-30", opexAnnual:57057.00,  opexMonthly:4754.75,  contractSF:3.50, marketSF:5.00, remaining:-33033.00,  options:"1, 5 year",  rentSchedule:{2026:267267,2027:275285.01,2028:283543.56,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2027-08-31", opt1MonthsUntil:17,   opt1NoticeEnd:"2027-11-29", opt2NotifBegins:"2032-08-30", opt2MonthsUntil:74, opt2NoticeEnd:"2032-11-28" },
-  { name:"Property 3",  address:"499 El Camino Real",         suite:"106",   city:"Encinitas",     state:"CA", zip:"92024", lat:33.0400, lng:-117.2950, termMo:null, sqft:3788,  monthly:19583.96,  annual:235007.52,  expiry:"2027-03-31", opexAnnual:53183.52,  opexMonthly:4431.96,  contractSF:4.00, marketSF:5.00, remaining:7727.52,    options:"1, 5 year",  rentSchedule:{2026:235007.52,2027:242057.75,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-03-31", opt1MonthsUntil:0,    opt1NoticeEnd:"2026-06-29", opt2NotifBegins:"2031-03-31", opt2MonthsUntil:57, opt2NoticeEnd:"2031-06-29" },
+  { name:"Property 1",  address:"301 W Huntington",          suite:"408",   city:"Arcadia",       state:"CA", zip:"91007", lat:34.1397, lng:-118.0353, termMo:63,   sqft:5446,  monthly:22383.06,  annual:268596.72,  expiry:"2027-05-31", opexAnnual:75808.32,  opexMonthly:6317.36,  contractSF:2.95, marketSF:3.00, remaining:72540.72,   options:"2, 5 year",  rentSchedule:{2026:268596.72,2027:276654.62,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-05-31", opt1MonthsUntil:2,    opt1NoticeEnd:"2026-08-29", opt2NotifBegins:"2031-05-31", opt2MonthsUntil:59, opt2NoticeEnd:"2031-08-29" },
+  { name:"Property 2",  address:"285 El Camino Real",         suite:"114",   city:"Encinitas",     state:"CA", zip:"92024", lat:33.0369, lng:-117.2920, termMo:null, sqft:5005,  monthly:22272.25,  annual:267267.00,  expiry:"2028-08-30", opexAnnual:57057.00,  opexMonthly:4754.75,  contractSF:3.50, marketSF:5.00, remaining:-33033.00,  options:"2, 5 year",  rentSchedule:{2026:267267,2027:275285.01,2028:283543.56,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2027-08-31", opt1MonthsUntil:17,   opt1NoticeEnd:"2027-11-29", opt2NotifBegins:"2032-08-30", opt2MonthsUntil:74, opt2NoticeEnd:"2032-11-28" },
+  { name:"Property 3",  address:"499 El Camino Real",         suite:"106",   city:"Encinitas",     state:"CA", zip:"92024", lat:33.0400, lng:-117.2950, termMo:null, sqft:3788,  monthly:19583.96,  annual:235007.52,  expiry:"2027-03-31", opexAnnual:53183.52,  opexMonthly:4431.96,  contractSF:4.00, marketSF:5.00, remaining:7727.52,    options:"2, 5 year",  rentSchedule:{2026:235007.52,2027:242057.75,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-03-31", opt1MonthsUntil:0,    opt1NoticeEnd:"2026-06-29", opt2NotifBegins:"2031-03-31", opt2MonthsUntil:57, opt2NoticeEnd:"2031-06-29" },
   { name:"Property 4",  address:"222 W Eulalia St",           suite:"310",   city:"Glendale",      state:"CA", zip:"91204", lat:34.1425, lng:-118.2551, termMo:null, sqft:5218,  monthly:23324.46,  annual:279893.52,  expiry:"2026-12-31", opexAnnual:13775.52,  opexMonthly:1147.96,  contractSF:4.25, marketSF:5.50, remaining:-64494.48,  options:null,         rentSchedule:{2026:279893.52,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
   { name:"Property 5",  address:"1500 Chevy Chase",           suite:"200B",  city:"Glendale",      state:"CA", zip:"91206", lat:34.1480, lng:-118.2480, termMo:null, sqft:2928,  monthly:15459.84,  annual:185518.08,  expiry:"2032-01-31", opexAnnual:16865.28,  opexMonthly:1405.44,  contractSF:4.80, marketSF:4.75, remaining:18622.08,   options:null,         rentSchedule:{2026:185518.08,2027:191083.62,2028:196816.13,2029:202720.62,2030:208802.23,2031:215066.30,2032:221518.29,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
-  { name:"Property 6",  address:"114 Pacifica",               suite:"450",   city:"Irvine",        state:"CA", zip:"92618", lat:33.6846, lng:-117.8265, termMo:null, sqft:9835,  monthly:59010.00,  annual:708120.00,  expiry:"2029-03-31", opexAnnual:194733.00, opexMonthly:16227.75, contractSF:4.35, marketSF:5.50, remaining:59010.00,   options:"1, 5 year",  rentSchedule:{2026:708120,2027:729363.60,2028:751244.51,2029:773781.84,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-03-31", opt1MonthsUntil:24,   opt1NoticeEnd:"2028-06-29", opt2NotifBegins:"2033-03-31", opt2MonthsUntil:81, opt2NoticeEnd:"2033-06-29" },
-  { name:"Property 7",  address:"3500 Barranca",              suite:"150",   city:"Irvine",        state:"CA", zip:"92606", lat:33.6900, lng:-117.8300, termMo:null, sqft:2230,  monthly:11373.00,  annual:136476.00,  expiry:"2027-01-31", opexAnnual:32647.20,  opexMonthly:2720.60,  contractSF:3.88, marketSF:5.50, remaining:-10704.00,  options:"1, 5 year",  rentSchedule:{2026:136476,2027:140570.28,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-01-31", opt1MonthsUntil:null, opt1NoticeEnd:"2026-05-01", opt2NotifBegins:"2031-01-31", opt2MonthsUntil:55, opt2NoticeEnd:"2031-05-01" },
-  { name:"Property 8",  address:"16100 Sand Canyon Ave",      suite:"130",   city:"Irvine",        state:"CA", zip:"92618", lat:33.6780, lng:-117.8120, termMo:null, sqft:7495,  monthly:42946.35,  annual:515356.20,  expiry:"2029-03-31", opexAnnual:20686.20,  opexMonthly:1723.85,  contractSF:5.50, marketSF:4.00, remaining:155596.20,  options:"1, 5 year",  rentSchedule:{2026:515356.20,2027:530816.89,2028:546741.39,2029:563143.63,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-03-31", opt1MonthsUntil:24,   opt1NoticeEnd:"2028-06-29", opt2NotifBegins:"2033-03-31", opt2MonthsUntil:81, opt2NoticeEnd:"2033-06-29" },
-  { name:"Property 9",  address:"8950 Villa La Jolla",        suite:"C207",  city:"La Jolla",      state:"CA", zip:"92037", lat:32.8328, lng:-117.2713, termMo:null, sqft:6031,  monthly:25088.96,  annual:301067.52,  expiry:"2028-01-31", opexAnnual:26053.92,  opexMonthly:2171.16,  contractSF:3.80, marketSF:4.25, remaining:-6513.48,   options:"1, 5 year",  rentSchedule:{2026:301067.52,2027:310099.55,2028:319402.53,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2027-01-31", opt1MonthsUntil:10,   opt1NoticeEnd:"2027-05-01", opt2NotifBegins:"2032-01-31", opt2MonthsUntil:67, opt2NoticeEnd:"2032-04-30" },
-  { name:"Property10",  address:"24331 El Toro Rd",           suite:"150",   city:"Laguna Woods",  state:"CA", zip:"92637", lat:33.6097, lng:-117.7258, termMo:null, sqft:9096,  monthly:32927.52,  annual:395130.24,  expiry:"2030-02-28", opexAnnual:73131.84,  opexMonthly:6094.32,  contractSF:2.95, marketSF:3.85, remaining:-25104.96,  options:"2, 5 year",  rentSchedule:{2026:395130.24,2027:406984.15,2028:419193.67,2029:431769.48,2030:444722.57,2031:null,2032:null,2033:null}, opt1NotifBegins:"2029-02-28", opt1MonthsUntil:35,   opt1NoticeEnd:"2029-05-29", opt2NotifBegins:"2034-02-28", opt2MonthsUntil:91, opt2NoticeEnd:"2034-05-29" },
-  { name:"Property11",  address:"5750 Downey",                suite:"203",   city:"Lakewood",      state:"CA", zip:"90712", lat:33.8536, lng:-118.1339, termMo:null, sqft:1634,  monthly:5408.54,   annual:64902.48,   expiry:"2029-03-31", opexAnnual:3137.28,   opexMonthly:261.44,   contractSF:3.15, marketSF:3.70, remaining:-7647.12,   options:null,         rentSchedule:{2026:64902.48,2027:66849.55,2028:68855.04,2029:70920.69,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
-  { name:"Property12",  address:"47649 Caleo Bay",            suite:"210",   city:"La Quinta",     state:"CA", zip:"92253", lat:33.6636, lng:-116.3100, termMo:null, sqft:3726,  monthly:10991.70,  annual:131900.40,  expiry:"2026-09-30", opexAnnual:0,         opexMonthly:0,        contractSF:2.95, marketSF:3.65, remaining:-31298.40,  options:"1, 5 year",  rentSchedule:{2026:131900.40,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2025-09-30", opt1MonthsUntil:null, opt1NoticeEnd:"2025-12-29", opt2NotifBegins:"2030-09-30", opt2MonthsUntil:51, opt2NoticeEnd:"2030-12-29" },
-  { name:"Property13",  address:"351 & 361 Hospital Road",    suite:"522",   city:"Newport Beach", state:"CA", zip:"92663", lat:33.6189, lng:-117.9289, termMo:null, sqft:1825,  monthly:10274.75,  annual:123297.00,  expiry:"2025-05-31", opexAnnual:41172.00,  opexMonthly:3431.00,  contractSF:3.75, marketSF:6.10, remaining:-10293.00,  options:null,         rentSchedule:{2026:null,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
-  { name:"Property14",  address:"72780 Country Club Dr",      suite:"305B",  city:"Rancho Mirage", state:"CA", zip:"92270", lat:33.7394, lng:-116.4500, termMo:null, sqft:2433,  monthly:10218.60,  annual:122623.20,  expiry:"2027-06-30", opexAnnual:16057.80,  opexMonthly:1338.15,  contractSF:3.65, marketSF:4.08, remaining:3503.52,    options:"1, 10 year", rentSchedule:{2026:122623.20,2027:126301.90,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-06-30", opt1MonthsUntil:2,    opt1NoticeEnd:"2026-09-28", opt2NotifBegins:"2036-06-29", opt2MonthsUntil:120,opt2NoticeEnd:"2036-09-27" },
-  { name:"Property15",  address:"100 N Green Valley Pkwy",    suite:"125",   city:"Henderson",     state:"NV", zip:"89074", lat:36.0395, lng:-114.9817, termMo:null, sqft:19319, monthly:80753.42,  annual:969041.04,  expiry:"2030-03-31", opexAnnual:99686.04,  opexMonthly:8307.17,  contractSF:3.75, marketSF:3.95, remaining:53320.44,   options:"2, 5 year",  rentSchedule:{2026:969041.04,2027:998112.27,2028:1028055.64,2029:1058897.31,2030:1090664.23,2031:null,2032:null,2033:null}, opt1NotifBegins:"2029-03-31", opt1MonthsUntil:36,   opt1NoticeEnd:"2029-06-29", opt2NotifBegins:"2034-03-31", opt2MonthsUntil:93, opt2NoticeEnd:"2034-06-29" },
-  { name:"Property16",  address:"2270 Ridgeview Dr",          suite:"127",   city:"Yuma",          state:"AZ", zip:"85364", lat:32.6927, lng:-114.6277, termMo:null, sqft:8885,  monthly:21324.00,  annual:255888.00,  expiry:"2029-02-28", opexAnnual:5331.00,   opexMonthly:444.25,   contractSF:2.35, marketSF:2.78, remaining:-40515.60,  options:"1, 5 year",  rentSchedule:{2026:255888,2027:263564.64,2028:271471.58,2029:279615.73,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-10-28", opt1MonthsUntil:20,   opt1NoticeEnd:"2028-11-27", opt2NotifBegins:"2033-02-28", opt2MonthsUntil:79, opt2NoticeEnd:"2033-05-29" }
+  { name:"Property 6",  address:"114 Pacifica",               suite:"450",   city:"Irvine",        state:"CA", zip:"92618", lat:33.6846, lng:-117.8265, termMo:null, sqft:9835,  monthly:59010.00,  annual:708120.00,  expiry:"2029-03-31", opexAnnual:194733.00, opexMonthly:16227.75, contractSF:4.35, marketSF:5.50, remaining:59010.00,   options:"2, 5 year",  rentSchedule:{2026:708120,2027:729363.60,2028:751244.51,2029:773781.84,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-03-31", opt1MonthsUntil:24,   opt1NoticeEnd:"2028-06-29", opt2NotifBegins:"2033-03-31", opt2MonthsUntil:81, opt2NoticeEnd:"2033-06-29" },
+  { name:"Property 7",  address:"3500 Barranca",              suite:"150",   city:"Irvine",        state:"CA", zip:"92606", lat:33.6900, lng:-117.8300, termMo:null, sqft:2230,  monthly:11373.00,  annual:136476.00,  expiry:"2027-01-31", opexAnnual:32647.20,  opexMonthly:2720.60,  contractSF:3.88, marketSF:5.50, remaining:-10704.00,  options:"2, 5 year",  rentSchedule:{2026:136476,2027:140570.28,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-01-31", opt1MonthsUntil:null, opt1NoticeEnd:"2026-05-01", opt2NotifBegins:"2031-01-31", opt2MonthsUntil:55, opt2NoticeEnd:"2031-05-01" },
+  { name:"Property 8",  address:"16100 Sand Canyon Ave",      suite:"130",   city:"Irvine",        state:"CA", zip:"92618", lat:33.6780, lng:-117.8120, termMo:null, sqft:7495,  monthly:42946.35,  annual:515356.20,  expiry:"2029-03-31", opexAnnual:20686.20,  opexMonthly:1723.85,  contractSF:5.50, marketSF:4.00, remaining:155596.20,  options:"2, 5 year",  rentSchedule:{2026:515356.20,2027:530816.89,2028:546741.39,2029:563143.63,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-03-31", opt1MonthsUntil:24,   opt1NoticeEnd:"2028-06-29", opt2NotifBegins:"2033-03-31", opt2MonthsUntil:81, opt2NoticeEnd:"2033-06-29" },
+  { name:"Property 9",  address:"8950 Villa La Jolla",        suite:"C207",  city:"La Jolla",      state:"CA", zip:"92037", lat:32.8328, lng:-117.2713, termMo:null, sqft:6031,  monthly:25088.96,  annual:301067.52,  expiry:"2028-01-31", opexAnnual:26053.92,  opexMonthly:2171.16,  contractSF:3.80, marketSF:4.25, remaining:-6513.48,   options:"2, 5 year",  rentSchedule:{2026:301067.52,2027:310099.55,2028:319402.53,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2027-01-31", opt1MonthsUntil:10,   opt1NoticeEnd:"2027-05-01", opt2NotifBegins:"2032-01-31", opt2MonthsUntil:67, opt2NoticeEnd:"2032-04-30" },
+  { name:"Property 10", address:"24331 El Toro Rd",           suite:"150",   city:"Laguna Woods",  state:"CA", zip:"92637", lat:33.6097, lng:-117.7258, termMo:null, sqft:9096,  monthly:32927.52,  annual:395130.24,  expiry:"2030-02-28", opexAnnual:73131.84,  opexMonthly:6094.32,  contractSF:2.95, marketSF:3.85, remaining:-25104.96,  options:"2, 5 year",  rentSchedule:{2026:395130.24,2027:406984.15,2028:419193.67,2029:431769.48,2030:444722.57,2031:null,2032:null,2033:null}, opt1NotifBegins:"2029-02-28", opt1MonthsUntil:35,   opt1NoticeEnd:"2029-05-29", opt2NotifBegins:"2034-02-28", opt2MonthsUntil:91, opt2NoticeEnd:"2034-05-29" },
+  { name:"Property 11", address:"5750 Downey",                suite:"203",   city:"Lakewood",      state:"CA", zip:"90712", lat:33.8536, lng:-118.1339, termMo:null, sqft:1634,  monthly:6699.40,   annual:80392.80,   expiry:"2029-03-31", opexAnnual:18627.60,  opexMonthly:1552.30,   contractSF:3.15, marketSF:3.70, remaining:-7647.12,   options:null,         rentSchedule:{2026:64902.48,2027:66849.55,2028:68855.04,2029:70920.69,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
+  { name:"Property 12", address:"47649 Caleo Bay",            suite:"210",   city:"La Quinta",     state:"CA", zip:"92253", lat:33.6636, lng:-116.3100, termMo:null, sqft:3726,  monthly:10991.70,  annual:131900.40,  expiry:"2026-09-30", opexAnnual:0,         opexMonthly:0,        contractSF:2.95, marketSF:3.65, remaining:-31298.40,  options:"2, 5 year",  rentSchedule:{2026:131900.40,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2025-09-30", opt1MonthsUntil:null, opt1NoticeEnd:"2025-12-29", opt2NotifBegins:"2030-09-30", opt2MonthsUntil:51, opt2NoticeEnd:"2030-12-29" },
+  { name:"Property 13", address:"351 & 361 Hospital Road",    suite:"522",   city:"Newport Beach", state:"CA", zip:"92663", lat:33.6189, lng:-117.9289, termMo:null, sqft:1825,  monthly:10274.75,  annual:123297.00,  expiry:"2025-05-31", opexAnnual:41172.00,  opexMonthly:3431.00,  contractSF:3.75, marketSF:6.10, remaining:-10293.00,  options:null,         rentSchedule:{2026:null,2027:null,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:null, opt1MonthsUntil:null, opt1NoticeEnd:null, opt2NotifBegins:null, opt2MonthsUntil:null, opt2NoticeEnd:null },
+  { name:"Property 14", address:"72780 Country Club Dr",      suite:"305B",  city:"Rancho Mirage", state:"CA", zip:"92270", lat:33.7394, lng:-116.4500, termMo:null, sqft:2433,  monthly:10218.60,  annual:122623.20,  expiry:"2027-06-30", opexAnnual:16057.80,  opexMonthly:1338.15,  contractSF:3.65, marketSF:4.08, remaining:3503.52,    options:"2, 10 year", rentSchedule:{2026:122623.20,2027:126301.90,2028:null,2029:null,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2026-06-30", opt1MonthsUntil:2,    opt1NoticeEnd:"2026-09-28", opt2NotifBegins:"2036-06-29", opt2MonthsUntil:120,opt2NoticeEnd:"2036-09-27" },
+  { name:"Property 15", address:"100 N Green Valley Pkwy",    suite:"125",   city:"Henderson",     state:"NV", zip:"89074", lat:36.0395, lng:-114.9817, termMo:null, sqft:19319, monthly:80753.42,  annual:969041.04,  expiry:"2030-03-31", opexAnnual:99686.04,  opexMonthly:8307.17,  contractSF:3.75, marketSF:3.95, remaining:53320.44,   options:"2, 5 year",  rentSchedule:{2026:969041.04,2027:998112.27,2028:1028055.64,2029:1058897.31,2030:1090664.23,2031:null,2032:null,2033:null}, opt1NotifBegins:"2029-03-31", opt1MonthsUntil:36,   opt1NoticeEnd:"2029-06-29", opt2NotifBegins:"2034-03-31", opt2MonthsUntil:93, opt2NoticeEnd:"2034-06-29" },
+  { name:"Property 16", address:"2270 Ridgeview Dr",          suite:"127",   city:"Yuma",          state:"AZ", zip:"85364", lat:32.6927, lng:-114.6277, termMo:null, sqft:8885,  monthly:28432.00,  annual:341184.00,  expiry:"2029-02-28", opexAnnual:90627.00,  opexMonthly:7552.25,   contractSF:2.35, marketSF:2.78, remaining:-40515.60,  options:"2, 5 year",  rentSchedule:{2026:255888,2027:263564.64,2028:271471.58,2029:279615.73,2030:null,2031:null,2032:null,2033:null}, opt1NotifBegins:"2028-02-29", opt1MonthsUntil:15,   opt1NoticeEnd:"2028-05-29", opt2NotifBegins:"2033-02-28", opt2MonthsUntil:79, opt2NoticeEnd:"2033-05-29" }
 ];
 
-const RENT_YEARS = [2026,2027,2028,2029,2030,2031,2032,2033];
+// ============================================================
+// AUTO MONTHLY UPDATE
+// The sample lease dates above were written for November 2026. On the 1st of
+// every month all of them roll forward one month, so the sample portfolio
+// always looks current. Everything date-based (months to expiration, months
+// until each option opens, rent left this year, rent schedule years, the
+// "Updated" month) is worked out from today's date when the page opens.
+// ============================================================
+const DATA_AS_OF = {y:2026, m:10};   // November 2026 (months count from 0)
+const ROLL_MONTHS = (()=>{ const n=new Date(); return Math.max(0,(n.getFullYear()-DATA_AS_OF.y)*12 + n.getMonth()-DATA_AS_OF.m); })();
+const CUR_YEAR = new Date().getFullYear();
+function rollDate(str, n){
+  if(!str) return str;
+  n = (n===undefined) ? ROLL_MONTHS : n;
+  if(!n) return str;
+  const [y,m,d] = str.split('-').map(Number);
+  const wasMonthEnd = d===new Date(y,m,0).getDate();
+  const t = new Date(y, m-1+n, 1);
+  const dim = new Date(t.getFullYear(), t.getMonth()+1, 0).getDate();
+  const dd = wasMonthEnd ? dim : Math.min(d, dim);
+  return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(dd).padStart(2,'0');
+}
+function rollYM(str){ const m=/^(\d{4})-(\d{2})$/.exec(str||''); return m ? rollDate(str+'-01').slice(0,7) : str; }
+function _parseDay(str){ const [y,m,d]=str.split('-').map(Number); return new Date(y,m-1,d); }
+// Months until an option window opens, or where it stands if it has already started
+function optStatus(begins, ends){
+  if(!begins) return '—';
+  const now = new Date();
+  if(ends && _parseDay(ends) < now) return 'Passed';
+  if(_parseDay(begins) <= now) return 'Open now';
+  return Math.max(0, Math.round((_parseDay(begins)-now)/(1000*60*60*24*30.44)));
+}
+(function refreshLocationData(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const yearEnd = new Date(today.getFullYear(), 11, 31);
+  LOCATIONS.forEach(loc=>{
+    ['expiry','opt1NotifBegins','opt1NoticeEnd','opt2NotifBegins','opt2NoticeEnd'].forEach(k=>{ loc[k] = rollDate(loc[k]); });
+    if(loc.monthly!=null) loc.annual = Math.round(loc.monthly*12*100)/100;
+    if(loc.opexMonthly!=null) loc.opexAnnual = Math.round(loc.opexMonthly*12*100)/100;
+    // All-in monthly cost per sq ft (base rent + operating expenses) — this is what gets compared to market gross rent
+    loc.allInSF = (loc.monthly && loc.sqft) ? Math.round(loc.monthly/loc.sqft*100)/100 : null;
+    loc.opt1MonthsUntil = optStatus(loc.opt1NotifBegins, loc.opt1NoticeEnd);
+    loc.opt2MonthsUntil = optStatus(loc.opt2NotifBegins, loc.opt2NoticeEnd);
+    // Rent left this year: from today through Dec 31 (or the lease end if sooner); $0 once expired
+    if(loc.monthly && loc.expiry){
+      const exp = _parseDay(loc.expiry);
+      const end = exp < yearEnd ? exp : yearEnd;
+      const days = Math.max(0, Math.round((end - today)/86400000) + 1);
+      loc.remaining = exp < today ? 0 : Math.round(loc.monthly*12/365*days*100)/100;
+    } else loc.remaining = null;
+    // Rent schedule: this year forward, 3% a year, until the lease's expiration year
+    const expYr = loc.expiry ? Number(loc.expiry.slice(0,4)) : null;
+    loc.rentSchedule = {};
+    for(let i=0;i<8;i++){
+      const y = CUR_YEAR+i;
+      loc.rentSchedule[y] = (loc.monthly && expYr && y<=expYr) ? Math.round(loc.monthly*12*Math.pow(1.03,i)*100)/100 : null;
+    }
+  });
+})();
+
+const RENT_YEARS = Array.from({length:8},(_,i)=>CUR_YEAR+i);
 const YEAR_COLORS = ['#d6ab5c','#f99a52','#fbb97a','#fcd4a8','#a5d6a7','#66bb6a','#388e3c','#1b5e20'];
 const DOT_COLORS = ['#d6ab5c','#0d2040','#f99a52','#1a3560','#fbb97a','#243e72','#fcd4a8','#2e5294','#c59d55','#3a6ab5','#c45a10','#4d80cc','#0a1830','#f6924a','#122848','#fca872'];
+const CHART_PRIMARY = '#0d2040';   // original chart navy
+const CHART_ACCENT  = '#d6ab5c';   // original chart gold
 const GOLD_NAVY_COLORS = ['#0d2040','#8f6420','#253754','#a97a2e','#3e4d68','#b8873c','#56647c','#c59d55','#6e7a90','#d6ab5c','#8691a4','#dab876','#9fa7b8','#e1c58d','#b7becc','#efdfc7'];
 
-const KPI_DEFAULTS = {
-  locations: String(LOCATIONS.length),
-  sqft: '94,894',
-  monthly: '$413,340.41',
-  contractsf: '$4.36'
-};
+const KPI_DEFAULTS = (()=>{
+  const sf = LOCATIONS.reduce((a,l)=>a+(l.sqft||0),0);
+  const mo = LOCATIONS.reduce((a,l)=>a+(l.monthly||0),0);
+  return { locations:String(LOCATIONS.length), sqft:sf.toLocaleString('en-US'), monthly:fmt$(Math.round(mo*100)/100), contractsf:fmt$(sf?Math.round(mo/sf*100)/100:null) };
+})();
 
 let _selectedKpiLocation = null;
+setTimeout(()=>{
+  try{ resetKPIs(); }catch(e){}
+  const um = document.getElementById('updated-month');
+  if(um) um.textContent = 'Updated ' + new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'});
+},0);
 
 // ---- Default seed data (used when localStorage is empty) ----
 const DEFAULT_PIPELINE = [
@@ -1273,6 +1341,45 @@ let _expandedDeals = new Set();
 let _editingDeals = new Set();
 const STAGE_PROB_DEFAULT = {Prospecting:20,Touring:40,Proposal:50,LOI:60,'Lease Negotiation':90,'Lease Execution':100};
 let _leaseNotes   = (()=>{ const n=JSON.parse(localStorage.getItem('pp_notes')||'null');    return(n&&n.length)?n:DEFAULT_NOTES.map(x=>({...x}));    })();
+// ---- Sample deals & lease notes stay current (auto monthly update) ----
+// The built-in sample deals (ids 1000001–1000007) and sample lease notes
+// (ids 2000001–2000010) get their target dates, holdover dates, note dates and
+// next-step text worked out from today's date, wherever they are loaded from.
+// Deals and notes the team adds are never changed.
+function _relMonth(n){ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()+n); return d; }
+function _relLabel(n){ return _relMonth(n).toLocaleDateString('en-US',{month:'short',year:'numeric'}); }
+function _relYM(n){ const d=_relMonth(n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function _relEOM(n){ const d=_relMonth(n); const e=new Date(d.getFullYear(),d.getMonth()+1,0); return e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0'); }
+function _relDay(daysAgo){ const d=new Date(); d.setDate(d.getDate()-daysAgo); return (d.getMonth()+1)+'/'+d.getDate()+'/'+d.getFullYear(); }
+function _fillRel(t){ return t.replace(/\{mo:([+-]?\d+)\}/g,(_,n)=>_relLabel(+n)); }
+const SAMPLE_DEAL_DATES = {
+  1000001:{close:3, orig:-17, notes:'Holdover since {mo:-17}. Counter sent on TI request ($18/SF). Follow-up call set for this month.'},
+  1000002:{close:5, notes:'Current lease ends {mo:+7}. Must occupy by {mo:+5}. Prefers North Clairemont corridor; needs 4/1000 parking.'},
+  1000003:{close:2, notes:'Blended rate at $3.20/SF/Mo accepted in principle. $15/SF TI. LOI drafted; execution {mo:+2}.'},
+  1000004:{close:2, orig:-20, notes:'Holdover since {mo:-20}. Verbal agreement: 3-yr renewal at $3.85/SF/Mo NNN. Lease amendment in draft.'},
+  1000005:{close:8, notes:'Early-stage. Board approval required by {mo:+3} before LOI. Initial site tours completed.'},
+  1000006:{close:3, notes:'Expanding into adjacent Ste 310B. LOI submitted. Requesting 12-mo abatement + $40/SF TI.'},
+  1000007:{close:0, notes:'LOI executed. 5-yr term at $3.10/SF/Mo NNN, $45/SF TI confirmed. Lease docs out for signature.'}
+};
+const SAMPLE_NOTE_DATES = {
+  2000001:{ago:5,  note:'Tenant requested TI allowance of $25/SF. Counter at $18/SF sent. Follow-up call scheduled to confirm or negotiate further.'},
+  2000002:{ago:8,  note:'Toured 3252 Holiday Ct and 8880 Rio San Diego Dr. Client preferred Holiday Ct layout but wants parking ratio of 4/1000 min. Landlord at Holiday Ct willing to negotiate. Decision expected within two weeks.'},
+  2000003:{ago:13, note:'Lease execution package sent to tenant counsel for review. Signed docs expected back within 10 days. Final TI walk-through to follow with contractor.'},
+  2000004:{ago:15, note:'LOI submitted to landlord for expansion into adjacent Ste 310B (3,500 SF). Requesting 12-month rent abatement on new space and $40/SF TI. Landlord counter expected within 10 business days.'},
+  2000005:{ago:18, note:'Blend & extend proposal accepted in principle by tenant. Blended rate locked at $3.20/SF/Mo NNN with $15/SF TI for minor refresh. Formal LOI being drafted this week.'},
+  2000006:{ago:23, note:'Tenant has been in holdover since the {mo:-20} expiration. Both parties verbally agreed: 3-year extension at $3.85/SF/Mo NNN. Lease amendment drafting underway. Tenant attorney engaged.'},
+  2000007:{ago:28, note:'Initial site tour of Escondido Medical Arts campus and 1011 Nordahl Rd. Client is early-stage — board approval required by {mo:+3} before proceeding. Will re-engage after internal vote.'},
+  2000008:{ago:36, note:'Kick-off call with practice manager. Lease expired {mo:-17}; tenant in holdover at original rate. Open to 3-yr renewal at updated market rate. Two competing landlord proposals noted — must move quickly to retain.'},
+  2000009:{ago:44, note:'Initial needs assessment complete. Growing from 4,100 SF → ~5,800 SF to add surgical suite. Budget $4.00–4.50/SF/Mo NNN. Hard deadline: occupancy by {mo:+5}, before current lease expires {mo:+7}.'},
+  2000010:{ago:49, note:'LOI executed. 5-year term at $3.10/SF/Mo NNN accepted by both parties. $45/SF TI allowance confirmed in writing. Deal advancing to lease negotiation with landlord counsel.'}
+};
+function refreshSampleDeals(){
+  (_pipelineData||[]).forEach(d=>{ const t=SAMPLE_DEAL_DATES[d.id]; if(!t) return;
+    d.closeDate=_relYM(t.close); if(t.orig!=null) d.origExpiry=_relEOM(t.orig); d.notes=_fillRel(t.notes); });
+  (_leaseNotes||[]).forEach(n=>{ const t=SAMPLE_NOTE_DATES[n.id]; if(!t) return;
+    n.date=_relDay(t.ago); n.note=_fillRel(t.note); });
+}
+refreshSampleDeals();
 let _ganttShowOptions = true;
 let _chartInstances = {};
 let _mapInstances = {};
@@ -1361,7 +1468,7 @@ function selectLocation(name){
   document.getElementById('kpi-locations').textContent = '1';
   document.getElementById('kpi-sqft').textContent = loc.sqft ? loc.sqft.toLocaleString() : '—';
   document.getElementById('kpi-monthly').textContent = loc.monthly ? fmt$(loc.monthly) : '—';
-  document.getElementById('kpi-contractsf').textContent = loc.contractSF ? fmt$(loc.contractSF) : '—';
+  document.getElementById('kpi-contractsf').textContent = loc.allInSF ? fmt$(loc.allInSF) : '—';
   document.getElementById('kpi-bar').style.background = '#f7f9fc';
 }
 
@@ -1501,11 +1608,11 @@ function initExecCharts(){
 
   const locs = LOCATIONS.filter(l=>l.monthly);
   const labels = locs.map(l=>l.name);
-  const colors = '#d6ab5c';
+  const colors = [CHART_ACCENT, CHART_ACCENT];
 
   _chartInstances['monthly'] = new Chart(document.getElementById('chart-monthly'),{
     type:'bar',
-    data:{ labels, datasets:[{label:'Monthly Gross',data:locs.map(l=>l.monthly),backgroundColor:colors,borderRadius:4}] },
+    data:{ labels, datasets:[{label:'Monthly Base Rent',data:locs.map(l=>Math.round((l.contractSF||0)*(l.sqft||0)*100)/100),backgroundColor:colors[0],borderRadius:4}] },
     options:{ responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt$(c.raw)}}},
       scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()}},x:{ticks:{maxRotation:45,font:{size:9}}}},
@@ -1515,7 +1622,7 @@ function initExecCharts(){
 
   _chartInstances['annual'] = new Chart(document.getElementById('chart-annual'),{
     type:'bar',
-    data:{ labels, datasets:[{label:'Total Monthly Cost',data:locs.map(l=>(l.monthly||0)+(l.opexMonthly||0)),backgroundColor:colors,borderRadius:4}] },
+    data:{ labels, datasets:[{label:'Total Monthly Cost',data:locs.map(l=>l.monthly||0),backgroundColor:colors[1],borderRadius:4}] },
     options:{ responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},
       tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt$(c.raw)}}},
       scales:{y:{ticks:{callback:v=>'$'+v.toLocaleString()}},x:{ticks:{maxRotation:45,font:{size:9}}}},
@@ -1529,7 +1636,7 @@ function initExecCharts(){
 
 function buildGanttChart(){
   destroyChart('gantt');
-  const startYear = 2025, endYear = 2035;
+  const startYear = CUR_YEAR-1, endYear = startYear+10;
   const startMs = new Date(startYear+'-01-01').getTime();
   const endMs   = new Date(endYear+'-01-01').getTime();   // axis labels run 2025–2035, so 100% = Jan 1 2035
   const total   = endMs - startMs;
@@ -1541,7 +1648,7 @@ function buildGanttChart(){
     return mo===null?'#888':mo<0?'#222':mo<6?'#c62828':mo<12?'#e65100':mo<18?'#f2a900':'#2e7d32';
   });
 
-  const fixedStartMs = new Date('2025-01-01').getTime();
+  const fixedStartMs = startMs;
   const datasets = [{
     label:'Time to Expiration',
     data: locs.map(loc=>{
@@ -1596,6 +1703,7 @@ function buildGanttChart(){
     options:{
       grouped:false,
       indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      layout:{padding:{right:16}},
       plugins:{
         legend:{ display:_ganttShowOptions, labels:{boxWidth:11,font:{size:9}} },
         tooltip:{ callbacks:{ label:c=>{ const loc=locs[c.dataIndex]; return loc.name+' | Exp: '+loc.expiry+(loc.options?' | Opt: '+loc.options:''); } } }
@@ -1768,7 +1876,7 @@ function buildExpirTimelineRows(filterName){
     <span style="font-size:9px;color:#888">Option 2 Window</span>
   </div>` : '')+
   `<div style="display:flex;padding-left:148px;margin-bottom:5px">${months.map(m=>`<div style="flex:1;font-size:8px;color:#aaa;text-align:center">${m}</div>`).join('')}</div>`;
-  const items = [...LOCATIONS].filter(l=>l.expiry).sort((a,b)=>monthsUntil(a.expiry)-monthsUntil(b.expiry));
+  const items = [...LOCATIONS].filter(l=>l.expiry && monthsUntil(l.expiry)<18).sort((a,b)=>monthsUntil(a.expiry)-monthsUntil(b.expiry));
   items.forEach(loc=>{
     const mo = monthsUntil(loc.expiry);
     const cfg = bucketCfg(mo);
@@ -1940,7 +2048,7 @@ function renderExpirTableRows(){
   tb.innerHTML = '';
   const dir = _expirSortDir==='asc' ? 1 : -1;
   const sorted = [...LOCATIONS].sort((a,b)=>{
-    if(_expirSortCol==='name') return a.name.localeCompare(b.name)*dir;
+    if(_expirSortCol==='name') return a.name.localeCompare(b.name,undefined,{numeric:true})*dir;
     if(_expirSortCol==='expiry'){
       const va = a.expiry?new Date(a.expiry).getTime():Infinity;
       const vb = b.expiry?new Date(b.expiry).getTime():Infinity;
@@ -2216,12 +2324,12 @@ function initOpexChart(){
   _chartInstances['opex-stacked'] = new Chart(document.getElementById('chart-opex-stacked'),{
     type:'bar',
     data:{ labels, datasets:[
-      {label:'Base Rent $/SF/Mo',data:baseRent,backgroundColor:'#0d2040',borderRadius:3},
-      {label:'OpEx $/SF/Mo',data:opex,backgroundColor:'#d6ab5c',borderRadius:3}
+      {label:'Base Rent per Sq Ft / Month',data:baseRent,backgroundColor:CHART_PRIMARY,borderRadius:3},
+      {label:'Operating Expenses per Sq Ft / Month',data:opex,backgroundColor:CHART_ACCENT,borderRadius:3}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       indexAxis:'y',
-      scales:{x:{stacked:true,ticks:{callback:v=>`$${v}/SF`}},y:{stacked:true,ticks:{font:{size:9}}}},
+      scales:{x:{stacked:true,grace:'8%',ticks:{callback:v=>`$${v}/SF`}},y:{stacked:true,ticks:{font:{size:9}}}},layout:{padding:{right:16}},
       plugins:{legend:{position:'top'},tooltip:{mode:'index',intersect:false,callbacks:{label:c=>c.dataset.label+': $'+c.raw.toFixed(2)+'/SF'}}}
     }
   });
@@ -2300,11 +2408,11 @@ function buildRate1CompareStrip(){
   grid.innerHTML = [..._rate1Selected].map(name=>{
     const loc = LOCATIONS.find(l=>l.name===name);
     if(!loc) return '';
-    const diff = loc.contractSF&&loc.marketSF ? (((loc.contractSF-loc.marketSF)/loc.marketSF)*100).toFixed(1) : null;
+    const diff = loc.allInSF&&loc.marketSF ? (((loc.allInSF-loc.marketSF)/loc.marketSF)*100).toFixed(1) : null;
     const cvmColor = diff===null ? '#888' : parseFloat(diff)<0 ? '#2e7d32' : '#c62828';
     return `<div style="border:1px solid #e0e3e8;border-radius:6px;padding:10px 12px">
       <div style="font-size:12px;font-weight:700;color:#0d2040;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${loc.name}">${loc.name}</div>
-      <div style="font-size:11px;color:#555;display:flex;justify-content:space-between;margin-bottom:3px"><span>Contract $/SF</span><span style="font-weight:600;color:#0d2040">${loc.contractSF?fmt$(loc.contractSF):'—'}</span></div>
+      <div style="font-size:11px;color:#555;display:flex;justify-content:space-between;margin-bottom:3px"><span>Contract $/SF</span><span style="font-weight:600;color:#0d2040">${loc.allInSF?fmt$(loc.allInSF):'—'}</span></div>
       <div style="font-size:11px;color:#555;display:flex;justify-content:space-between;margin-bottom:3px"><span>Market $/SF</span><span style="font-weight:600;color:#0d2040">${loc.marketSF?fmt$(loc.marketSF):'—'}</span></div>
       <div style="font-size:11px;color:#555;display:flex;justify-content:space-between;margin-bottom:3px"><span>% vs Market</span><span style="font-weight:600;color:${cvmColor}">${diff!==null?diff+'%':'—'}</span></div>
       <div style="font-size:11px;color:#555;display:flex;justify-content:space-between"><span>Remaining Rent</span><span style="font-weight:600;color:#0d2040">${loc.remaining!==null?fmt$(loc.remaining):'—'}</span></div>
@@ -2319,13 +2427,13 @@ function buildRate1Table(){
   let idx=0;
   LOCATIONS.forEach(loc=>{
     if(_rate1Selected.size>0 && !_rate1Selected.has(loc.name)) return;
-    if(!loc.contractSF&&!loc.marketSF) return;
+    if(!loc.allInSF&&!loc.marketSF) return;
     idx++;
-    const diff = loc.contractSF&&loc.marketSF ? (((loc.contractSF-loc.marketSF)/loc.marketSF)*100).toFixed(1) : null;
+    const diff = loc.allInSF&&loc.marketSF ? (((loc.allInSF-loc.marketSF)/loc.marketSF)*100).toFixed(1) : null;
     const cvm  = diff ? (parseFloat(diff)<0?'<span class="lower">Lower</span>':'<span class="higher">Higher</span>') : '—';
     const tr = document.createElement('tr');
     tr.innerHTML = `<td style="text-align:left">${idx}</td><td style="cursor:pointer;color:#0d2040;font-weight:600;text-align:left" onclick="selectLocation('${loc.name}')">${loc.name}</td>
-      <td class="ctr">${loc.contractSF?fmt$(loc.contractSF):'—'}</td>
+      <td class="ctr">${loc.allInSF?fmt$(loc.allInSF):'—'}</td>
       <td class="ctr">${loc.marketSF?fmt$(loc.marketSF):'—'}</td>
       <td class="ctr">${cvm}</td>
       <td class="ctr">${diff!==null?diff+'%':'—'}</td>
@@ -2337,13 +2445,14 @@ function buildRate1Table(){
 
 function buildRate2Chart(){
   destroyChart('rate2');
-  const locs = LOCATIONS.filter(l=>l.contractSF&&l.marketSF&&(_rate1Selected.size===0||_rate1Selected.has(l.name)));
+  if(!document.getElementById('chart-rate2')) return;
+  const locs = LOCATIONS.filter(l=>l.allInSF&&l.marketSF&&(_rate1Selected.size===0||_rate1Selected.has(l.name)));
   const labels = locs.map(l=>l.name);
   _chartInstances['rate2'] = new Chart(document.getElementById('chart-rate2'),{
     type:'bar',
     data:{ labels, datasets:[
-      {label:'Market Gross Monthly',data:locs.map(l=>l.marketSF),backgroundColor:'#0d2040',borderRadius:3},
-      {label:'Contract Monthly',data:locs.map(l=>l.contractSF),backgroundColor:'#d6ab5c',borderRadius:3}
+      {label:'Market Gross Monthly',data:locs.map(l=>l.marketSF),backgroundColor:CHART_PRIMARY,borderRadius:3},
+      {label:'Contract Monthly',data:locs.map(l=>l.allInSF),backgroundColor:CHART_ACCENT,borderRadius:3}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
@@ -2364,27 +2473,27 @@ function buildRate2Chart(){
             const dp = ctx.tooltip?.dataPoints;
             if(!dp||!dp.length) return '#333';
             const loc = locs[dp[0].dataIndex];
-            if(!loc?.contractSF||!loc?.marketSF) return '#333';
-            return (loc.contractSF-loc.marketSF)>=0?'#2e7d32':'#c62828';
+            if(!loc?.allInSF||!loc?.marketSF) return '#333';
+            return (loc.allInSF-loc.marketSF)>=0?'#2e7d32':'#c62828';
           },
           callbacks:{
             title: items => items.length ? locs[items[0].dataIndex].name : '',
             label: item => {
               const loc = locs[item.dataIndex];
               if(item.datasetIndex===0) return 'Market:    $'+loc.marketSF.toFixed(2)+'/SF/Mo';
-              if(item.datasetIndex===1) return 'Contract:  $'+loc.contractSF.toFixed(2)+'/SF/Mo';
+              if(item.datasetIndex===1) return 'Contract:  $'+loc.allInSF.toFixed(2)+'/SF/Mo';
               return '';
             },
             footer: items => {
               if(!items.length) return '';
               const loc = locs[items[0].dataIndex];
-              if(!loc.contractSF||!loc.marketSF) return '';
-              const pct = ((loc.contractSF-loc.marketSF)/loc.marketSF*100);
+              if(!loc.allInSF||!loc.marketSF) return '';
+              const pct = ((loc.allInSF-loc.marketSF)/loc.marketSF*100);
               const sign = pct>=0?'+':'';
               const arrow = pct>=0?'▲':'▼';
               return sign+pct.toFixed(1)+'% '+arrow+' '+(pct>=0?'Above Market':'Below Market');
             },
-            labelTextColor: item => item.datasetIndex===0?'#0d2040':'#d6ab5c'
+            labelTextColor: item => item.datasetIndex===0?CHART_PRIMARY:CHART_ACCENT
           }
         }
       }
@@ -2426,6 +2535,8 @@ function buildHeatmap(){
 function buildRentScheduleTable(){
   const tb = document.getElementById('tbody-rentschedule');
   if(!tb||tb.children.length) return;
+  const head = document.getElementById('rentschedule-head');
+  if(head && !head.dataset.years){ head.insertAdjacentHTML('beforeend', RENT_YEARS.map(y=>'<th>'+y+'</th>').join('')); head.dataset.years='1'; }
   LOCATIONS.forEach((loc,i)=>{
     const tr = document.createElement('tr');
     const expYr = loc.expiry ? loc.expiry.split('-')[0] : '—';
@@ -2497,12 +2608,12 @@ function initAnalyticsCharts(){
   if(_chartInstances['projline']) return;
 
   // Projected line — 3% escalation assumed
-  const years = [2026,2027,2028,2029,2030,2031,2032,2033,2034];
+  const years = Array.from({length:9},(_,i)=>CUR_YEAR+i);
   const totals = years.map(y=>{
     let sum=0;
     LOCATIONS.forEach(loc=>{
       const base = loc.annual||0;
-      const yrs = y-2026;
+      const yrs = y-CUR_YEAR;
       sum += base*Math.pow(1.03,yrs);
     });
     return Math.round(sum/12);
@@ -2521,8 +2632,8 @@ function initAnalyticsCharts(){
   _chartInstances['projline'] = new Chart(document.getElementById('chart-projline'),{
     type:'line',
     data:{ labels:years.map(y=>y+''), datasets:[
-      {label:'Contracted Monthly Obligations',data:projected,borderColor:'#0d2040',backgroundColor:'rgba(13,32,64,0.07)',fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:'#0d2040',borderWidth:2},
-      {label:'Assumed 3% Escalation',data:totals,borderColor:'#d6ab5c',backgroundColor:'transparent',fill:false,tension:0.3,pointRadius:4,pointBackgroundColor:'#d6ab5c',borderDash:[6,4],borderWidth:2}
+      {label:'Contracted Monthly Obligations',data:projected,borderColor:CHART_PRIMARY,backgroundColor:'rgba(13,32,64,0.07)',fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:CHART_PRIMARY,borderWidth:2},
+      {label:'Assumed 3% Escalation',data:totals,borderColor:CHART_ACCENT,backgroundColor:'transparent',fill:false,tension:0.3,pointRadius:4,pointBackgroundColor:CHART_ACCENT,borderDash:[6,4],borderWidth:2}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:true,position:'top',labels:{usePointStyle:true,font:{size:11}}}},
@@ -2544,13 +2655,13 @@ function initAnalyticsCharts(){
   });
 
   // Bar: contract vs market
-  const sLocs = LOCATIONS.filter(l=>l.contractSF&&l.marketSF).sort((a,b)=>a.name.localeCompare(b.name));
+  const sLocs = LOCATIONS.filter(l=>l.allInSF&&l.marketSF).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
   window._scatterLocs = sLocs;
   _chartInstances['scatter'] = new Chart(document.getElementById('chart-scatter'),{
     type:'bar',
     data:{ labels:sLocs.map(l=>l.name), datasets:[
-      {label:'Market $/SF/Mo',data:sLocs.map(l=>l.marketSF),backgroundColor:'#0d2040',borderRadius:3},
-      {label:'Contract $/SF/Mo',data:sLocs.map(l=>l.contractSF),backgroundColor:'#d6ab5c',borderRadius:3}
+      {label:'Market Gross Rent per Sq Ft',data:sLocs.map(l=>l.marketSF),backgroundColor:CHART_PRIMARY,borderRadius:3},
+      {label:'Contract All-In Cost per Sq Ft',data:sLocs.map(l=>l.allInSF),backgroundColor:CHART_ACCENT,borderRadius:3}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
@@ -2571,27 +2682,27 @@ function initAnalyticsCharts(){
             const dp = ctx.tooltip?.dataPoints;
             if(!dp||!dp.length) return '#333';
             const loc = sLocs[dp[0].dataIndex];
-            if(!loc?.contractSF||!loc?.marketSF) return '#333';
-            return (loc.contractSF-loc.marketSF)>=0?'#2e7d32':'#c62828';
+            if(!loc?.allInSF||!loc?.marketSF) return '#333';
+            return (loc.allInSF-loc.marketSF)>=0?'#2e7d32':'#c62828';
           },
           callbacks:{
             title: items => items.length ? sLocs[items[0].dataIndex].name : '',
             label: item => {
               const loc = sLocs[item.dataIndex];
               if(item.datasetIndex===0) return 'Market:    $'+loc.marketSF.toFixed(2)+'/SF/Mo';
-              if(item.datasetIndex===1) return 'Contract:  $'+loc.contractSF.toFixed(2)+'/SF/Mo';
+              if(item.datasetIndex===1) return 'Contract:  $'+loc.allInSF.toFixed(2)+'/SF/Mo';
               return '';
             },
             footer: items => {
               if(!items.length) return '';
               const loc = sLocs[items[0].dataIndex];
-              if(!loc.contractSF||!loc.marketSF) return '';
-              const pct = ((loc.contractSF-loc.marketSF)/loc.marketSF*100);
+              if(!loc.allInSF||!loc.marketSF) return '';
+              const pct = ((loc.allInSF-loc.marketSF)/loc.marketSF*100);
               const sign = pct>=0?'+':'';
               const arrow = pct>=0?'▲':'▼';
               return sign+pct.toFixed(1)+'% '+arrow+' '+(pct>=0?'Above Market':'Below Market');
             },
-            labelTextColor: item => item.datasetIndex===0?'#0d2040':'#d6ab5c'
+            labelTextColor: item => item.datasetIndex===0?CHART_PRIMARY:CHART_ACCENT
           }
         }
       }
@@ -2603,7 +2714,7 @@ function initAnalyticsCharts(){
   window._donutLocs = sorted;
   const dLabels = sorted.map(l=>l.name);
   const dData   = sorted.map(l=>l.monthly);
-  const DONUT_COLOR_OVERRIDES = {'Property11':'#29374d','Property13':'#29374d','Property14':'#29374d'};
+  const DONUT_COLOR_OVERRIDES = {'Property 11':'#29374d','Property 13':'#29374d','Property 14':'#29374d'};
   const dColors = sorted.map(l=>DONUT_COLOR_OVERRIDES[l.name] || GOLD_NAVY_COLORS[LOCATIONS.indexOf(l)%GOLD_NAVY_COLORS.length]);
   _chartInstances['donut'] = new Chart(document.getElementById('chart-donut'),{
     type:'doughnut',
@@ -2629,17 +2740,17 @@ function initAnalyticsCharts(){
   });
 
   // Over vs Under Market donut
-  const overMkt  = LOCATIONS.filter(l=>l.contractSF&&l.marketSF&&l.contractSF>l.marketSF);
-  const underMkt = LOCATIONS.filter(l=>l.contractSF&&l.marketSF&&l.contractSF<=l.marketSF);
-  const noData   = LOCATIONS.filter(l=>!l.contractSF||!l.marketSF);
-  const overAmt  = overMkt.reduce((s,l)=>s+((l.contractSF-l.marketSF)*12*(l.sqft||0)),0);
-  const underAmt = underMkt.reduce((s,l)=>s+((l.marketSF-l.contractSF)*12*(l.sqft||0)),0);
+  const overMkt  = LOCATIONS.filter(l=>l.allInSF&&l.marketSF&&l.allInSF>l.marketSF);
+  const underMkt = LOCATIONS.filter(l=>l.allInSF&&l.marketSF&&l.allInSF<=l.marketSF);
+  const noData   = LOCATIONS.filter(l=>!l.allInSF||!l.marketSF);
+  const overAmt  = overMkt.reduce((s,l)=>s+((l.allInSF-l.marketSF)*12*(l.sqft||0)),0);
+  const underAmt = underMkt.reduce((s,l)=>s+((l.marketSF-l.allInSF)*12*(l.sqft||0)),0);
   window._overUnderData = {over:overMkt, under:underMkt, no:noData};
   _chartInstances['overunder'] = new Chart(document.getElementById('chart-overunder'),{
     type:'doughnut',
     data:{ labels:['Over Market','Under Market',...(noData.length?['No Rate Data']:[])],
            datasets:[{data:[overMkt.length,underMkt.length,...(noData.length?[noData.length]:[])],
-             backgroundColor:['#d6ab5c','#0d2040',...(noData.length?['#ccc']:[])],borderWidth:1}]},
+             backgroundColor:[CHART_ACCENT,CHART_PRIMARY,...(noData.length?['#ccc']:[])],borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,
       onClick:(_,el)=>{ if(!el[0]) return; const key=el[0].index===0?'over':el[0].index===1?'under':'no'; highlightOverUnderBars(key); },
       plugins:{
@@ -2689,7 +2800,7 @@ function applyOverUnderHighlight(){
   const chart = _chartInstances['scatter'];
   const locs = window._scatterLocs;
   if(!chart || !locs) return;
-  const baseColors = ['#0d2040','#d6ab5c'];
+  const baseColors = [CHART_PRIMARY,CHART_ACCENT];
   if(_donutActiveName){
     chart.data.datasets.forEach((ds,i)=>{
       ds.backgroundColor = locs.map(l => l.name===_donutActiveName ? baseColors[i] : 'rgba(190,195,205,0.35)');
@@ -2797,6 +2908,7 @@ async function loadSharedPipeline(){
       _leaseNotes = DEFAULT_NOTES.map(x=>({...x}));
       await pushSharedPipeline();
     }
+    refreshSampleDeals();
     const ids = new Set(_pipelineData.map(d=>String(d.id)));
     const defIds = new Set(DEFAULT_PIPELINE.map(d=>String(d.id)));
     _pipeLocalOnly = _pipeLocalAtLoad.filter(d=>d && !ids.has(String(d.id)) && !defIds.has(String(d.id)));
